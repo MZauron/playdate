@@ -1,13 +1,30 @@
 import { describe, expect, it } from "vitest";
 import { parseEnv } from "@/env";
 
+const valid = {
+  NEXT_PUBLIC_SUPABASE_URL: "http://127.0.0.1:54521",
+  NEXT_PUBLIC_SUPABASE_ANON_KEY: "anon",
+  SUPABASE_SERVICE_ROLE_KEY: "service",
+  PHONE_HASH_KEY: "k".repeat(32),
+};
+
 describe("parseEnv", () => {
   it("defaults NODE_ENV to development", () => {
-    expect(parseEnv({}).NODE_ENV).toBe("development");
+    expect(parseEnv(valid).NODE_ENV).toBe("development");
   });
 
   it("fails fast and names the bad variable, not its value", () => {
-    expect(() => parseEnv({ NODE_ENV: "secret-value" })).toThrow(/NODE_ENV/);
-    expect(() => parseEnv({ NODE_ENV: "secret-value" })).not.toThrow(/secret-value/);
+    expect(() => parseEnv({ ...valid, NODE_ENV: "secret-value" })).toThrow(/NODE_ENV/);
+    expect(() => parseEnv({ ...valid, NODE_ENV: "secret-value" })).not.toThrow(/secret-value/);
+  });
+
+  it("names every missing variable", () => {
+    expect(() => parseEnv({})).toThrow(/NEXT_PUBLIC_SUPABASE_URL.*NEXT_PUBLIC_SUPABASE_ANON_KEY.*SUPABASE_SERVICE_ROLE_KEY.*PHONE_HASH_KEY/);
+  });
+
+  it("refuses a phone hash key shorter than 32 characters, without printing it", () => {
+    const short = "short-key-value";
+    expect(() => parseEnv({ ...valid, PHONE_HASH_KEY: short })).toThrow(/PHONE_HASH_KEY/);
+    expect(() => parseEnv({ ...valid, PHONE_HASH_KEY: short })).not.toThrow(new RegExp(short));
   });
 });

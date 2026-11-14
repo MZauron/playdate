@@ -17,6 +17,12 @@ jobs:
       - run: npm run typecheck
       - run: npm test
       - run: npm run build
+        env:
+          # Placeholders: the build only needs the variables to exist (the app fails fast without them). Nothing here is a real key.
+          NEXT_PUBLIC_SUPABASE_URL: http://127.0.0.1:54521
+          NEXT_PUBLIC_SUPABASE_ANON_KEY: ci-placeholder
+          SUPABASE_SERVICE_ROLE_KEY: ci-placeholder
+          PHONE_HASH_KEY: ci-placeholder-phone-hash-key-0123456789
 
   # The database tests (supabase/tests: constraints, privileges and who can read what) against a real local Supabase.
   # Realtime stays on: the migration adds tables to its publication.

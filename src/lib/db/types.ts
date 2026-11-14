@@ -237,7 +237,10 @@ isOneToOne: false
             [_ in never]: never
           }
           Functions: {
-            "is_invited_to":
+            "create_profile_with_children":
+{ Args: { "p_children": Json,"p_first_name": string,"p_id": string,"p_phone_hash": string }; Returns: undefined
+                           },
+"is_invited_to":
 { Args: { "p_playdate": string }; Returns: boolean
                            },
 "is_organizer_of":
