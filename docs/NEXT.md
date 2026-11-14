@@ -8,8 +8,8 @@ Read CLAUDE.md + only the docs a task names.
 Estimates are session time (1–2 h each).
 
 ## Where we are (2026-11-14)
-- **Built:** nothing yet. This repo holds the starter kit: `CLAUDE.md`, `docs/DESIGN.md` (from the Kindred design doc, on the owner's Next.js + Supabase stack), `docs/schema.sql` + `docs/schema.test.sql` (46 checks passing on Postgres 16), `docs/QUESTIONS.md`.
-- **Next:** T01, then T02 and T03 (both [phone], they can run in parallel after T01).
+- **Built:** the T01 scaffold (Next.js app, tooling, CI, `/api/health`, placeholder home). Also in the repo, the starter kit: `CLAUDE.md`, `docs/DESIGN.md` (from the Kindred design doc, on the owner's Next.js + Supabase stack), `docs/schema.sql` + `docs/schema.test.sql` (46 checks passing on Postgres 16), `docs/QUESTIONS.md`.
+- **Next:** T02 and T03 (both [phone], they can run in parallel after T01).
 - **Alongside the code:** test the clickable prototype with 5–8 parents (the doc's next step 2). Note what they stumble on in `docs/QUESTIONS.md`.
 
 ## Plan
@@ -21,7 +21,7 @@ Estimates are session time (1–2 h each).
 ## Open tasks
 
 ### Phase 0 · Foundation
-- [ ] **T01 Scaffold the app** [phone]
+- [x] **T01 Scaffold the app** [phone]
   Next.js App Router, TypeScript strict, Tailwind, zod, date-fns + @date-fns/tz, libphonenumber-js, Vitest, ESLint, Playwright; exact versions (copy from `../aquatix/package.json` if attached, else current stable).
   `.nvmrc` 22, `src/env.ts` (zod, fails fast; only the vars this task needs), `GET /api/health`, `.env.example`, README with the commands, `src/lib/i18n/en-CA.ts` (empty to start), Tailwind theme with the colours and radii of DESIGN.md "Visual design", a web manifest (name, teal theme colour, icons placeholder).
   CI (GitHub Actions): install, lint, typecheck, test, build. Copy `security-headers.ts` (+ tests) from `../aquatix` if attached and wire it into `next.config.ts`.
@@ -130,3 +130,4 @@ Estimates are session time (1–2 h each).
 
 ## Done
 (Move each task here when it is ticked, with its note.)
+- **T01 Scaffold the app** (2026-11-14). Notes: versions copied from Aquatix @ 4a87d68 (TypeScript 6.0.3, ESLint 9, Tailwind 4.3.3, React 19.3.0, …) except: `next` 16.4.6 + `eslint-config-next` 16.4.6 and `zod` 4.6.7, because Aquatix's next 16.3.8 has critical RCE advisories (GHSA-2464-fhr4-w9xw, GHSA-673q-mjm6-r5xr) and zod 4.6.5 a high one (GHSA-mrhx-c7xc-m3w5); `vitest` 5.1.0, because 5.0.3 crashes npm's peer resolution alongside `@playwright/test`. Packages Aquatix doesn't use are the current stable release. `src/platform/security-headers.ts` (+ tests) copied from Aquatix and wired into `next.config.ts`, with Aquatix's `agentRules: false`. `src/env.ts` validates only `NODE_ENV` for now and loads at boot from `src/instrumentation.ts`. The manifest icon is a placeholder SVG (PNG icons come with T20). Playwright is installed with one smoke spec (`tests/smoke`), not in CI yet (T11). `npm audit`: one moderate minimatch advisory inside `eslint-config-next`'s dev-only lint toolchain.

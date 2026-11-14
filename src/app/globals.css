@@ -1,0 +1,33 @@
+@import "tailwindcss";
+
+/* Colours and radii: docs/DESIGN.md "Visual design". */
+@theme {
+  --color-primary: #0b6b66;
+  --color-primary-tint: #e6f2f1;
+  --color-accent: #e2583a;
+  --color-accent-tint: #fdeee9;
+  --color-success: #18794e;
+  --color-danger: #c4321f;
+  --color-purple: #6c5ce7;
+  --color-page: #f5f6f8;
+  --color-card: #ffffff;
+  --color-ink: #0f1a1f;
+  --color-muted: #64707a;
+
+  --radius-card: 16px;
+  --radius-button: 14px;
+
+  --shadow-card: 0 1px 3px rgb(15 26 31 / 0.06), 0 4px 12px rgb(15 26 31 / 0.05);
+
+  --font-sans: system-ui, -apple-system, "SF Pro Text", "Segoe UI", Roboto, sans-serif;
+
+  --text-title: 32px;
+  --text-label: 13px;
+}
+
+body {
+  background: var(--color-page);
+  color: var(--color-ink);
+  font-family: var(--font-sans);
+  font-size: 16px;
+}

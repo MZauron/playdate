@@ -11,3 +11,5 @@ supabase/.branches/
 .DS_Store
 playwright-report/
 test-results/
+next-env.d.ts
+*.tsbuildinfo
