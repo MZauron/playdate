@@ -1,8 +1,109 @@
-// Every user-facing string lives here (Canadian English). Starts with only what the placeholder needs.
+// Every user-facing string lives here (Canadian English), with the date and time formatters.
+import type { FriendStatus } from "@/lib/rules/answers";
+import type { DeclineReason } from "@/lib/rules/types";
+
 export const enCA = {
   app: {
     name: "Kindred",
     description: "Plan a playdate with families you already know.",
     comingSoon: "Coming soon.",
   },
+  tabs: {
+    label: "Main",
+    home: "Home",
+    groups: "Groups",
+    ask: "Ask",
+    explore: "Explore",
+  },
+  home: {
+    welcome: (firstName: string) => `Welcome, ${firstName}`,
+    greeting: {
+      morning: "Good morning",
+      afternoon: "Good afternoon",
+      evening: "Good evening",
+    },
+    planFor: (childName: string) => `Plan playdates for ${childName}.`,
+    planCard: "Plan a playdate",
+    sections: {
+      needsYou: "Needs you",
+      upcoming: "Upcoming",
+      waiting: "Waiting for answers",
+    },
+    answered: (answered: number, total: number) => `${answered} of ${total} ${total === 1 ? "family" : "families"} answered`,
+    noPlace: "Place to be decided",
+  },
+  status: {
+    coming: "Coming",
+    responded: "Responded",
+    waiting: "Waiting",
+    cantMakeIt: "Can't make it",
+  },
+  // KD-07 reason chips, as the doc words them.
+  reasons: {
+    maybe_another_time: "Maybe another time",
+    busy: "We're busy then",
+    not_feeling_well: "Not feeling well",
+    too_far: "Too far for us",
+    other_plans: "Other plans this week",
+  } satisfies Record<DeclineReason, string>,
 } as const;
+
+/** KD-08: the words of a friend's status line, e.g. "Can't make it · We're busy then". */
+export function friendStatusLabel(status: FriendStatus): string {
+  switch (status.status) {
+    case "coming":
+      return enCA.status.coming;
+    case "responded":
+      return enCA.status.responded;
+    case "waiting":
+      return enCA.status.waiting;
+    case "cant_make_it":
+      return `${enCA.status.cantMakeIt} · ${enCA.reasons[status.reason]}`;
+  }
+}
+
+// --- Dates and times -------------------------------------------------------------------------------------------------
+// A playdate's times are shown in the zone passed in. KD-16 asks for the viewer's own zone, named only when it differs from
+// the playdate's: until a screen knows the viewer's zone (the browser's), callers pass the playdate's zone.
+
+const parts = (date: Date, zone: string, options: Intl.DateTimeFormatOptions) =>
+  new Intl.DateTimeFormat("en-CA", { timeZone: zone, ...options }).formatToParts(date);
+const part = (list: Intl.DateTimeFormatPart[], type: Intl.DateTimeFormatPartTypes) => list.find((p) => p.type === type)?.value ?? "";
+
+/** "9:00 AM" (the doc's style, not "9:00 a.m."). */
+export function formatTime(date: Date, zone: string): string {
+  const p = parts(date, zone, { hour: "numeric", minute: "2-digit", hour12: true });
+  const period = part(p, "dayPeriod").replace(/\./g, "").toUpperCase();
+  return `${part(p, "hour")}:${part(p, "minute")} ${period}`;
+}
+
+/** "9:00 AM to 12:00 PM" */
+export function formatTimeRange(start: Date, end: Date, zone: string): string {
+  return `${formatTime(start, zone)} to ${formatTime(end, zone)}`;
+}
+
+/** "Saturday, November 14": the banner's date. */
+export function formatLongDay(date: Date, zone: string): string {
+  const p = parts(date, zone, { weekday: "long", month: "long", day: "numeric" });
+  return `${part(p, "weekday")}, ${part(p, "month")} ${part(p, "day")}`;
+}
+
+/** "Mon, Nov 16" */
+export function formatShortDay(date: Date, zone: string): string {
+  const p = parts(date, zone, { weekday: "short", month: "short", day: "numeric" });
+  return `${part(p, "weekday")}, ${part(p, "month")} ${part(p, "day")}`;
+}
+
+/** The date tile: "Nov" over "16". */
+export function formatDateTile(date: Date, zone: string): { month: string; day: string } {
+  const p = parts(date, zone, { month: "short", day: "numeric" });
+  return { month: part(p, "month"), day: part(p, "day") };
+}
+
+export type DayPart = keyof typeof enCA.home.greeting;
+
+/** Morning until 11:59, afternoon until 16:59, evening after. The hour is read in the zone passed in. */
+export function dayPartOf(date: Date, zone: string): DayPart {
+  const hour = Number(part(parts(date, zone, { hour: "numeric", hourCycle: "h23" }), "hour"));
+  return hour < 12 ? "morning" : hour < 17 ? "afternoon" : "evening";
+}
