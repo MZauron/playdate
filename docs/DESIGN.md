@@ -2,6 +2,8 @@
 
 As of 2026-11-14. Source: "Kindred: Product & Design Document" (claude.ai doc, 2026-11-14) and its clickable prototype ("Kindred app preview"). Where this file and the doc disagree, the doc wins for **what the parent sees**; this file wins for **how it is built**. Decisions made here that the doc does not cover are marked *(build decision)*.
 
+**Platform:** the doc describes a native mobile app. It is built here as a mobile-first web app on the owner's stack (Next.js on Railway + Supabase, as Lash and Aquatix). What that changes for parents is listed under "Platform" below; everything else follows the doc.
+
 ## Summary
 Kindred is a mobile app that lets a parent plan a playdate with families they already know, in a few taps, without the group-chat back and forth. Friends answer in the app, or from a text message link with nothing to install.
 
@@ -16,61 +18,48 @@ Kindred is a mobile app that lets a parent plan a playdate with families they al
 4. **Calm and simple.** One main action per screen, few words, only what matters right now on Home.
 5. **Private by default.** Friends and groups belong to each parent and are never shown to anyone else.
 
-## Architecture *(build decision)*
+## Platform *(build decision)*
+One Next.js app on Railway, one Supabase project per environment, the same stack and habits as Lash and Aquatix.
+
 ```mermaid
 flowchart TB
   subgraph Phones
-    APP["Kindred app<br/>Expo (React Native), iOS first"]
-    SMS["Organizer's own Messages app<br/>(opened by the Kindred app)"]
-    WEBP["Friend without the app<br/>any phone browser"]
+    PAR["Parent using Kindred<br/>phone browser, or added to Home Screen"]
+    MSG["Organizer's own Messages app<br/>(opened by an sms: link)"]
+    FR["Friend without Kindred<br/>any phone browser"]
   end
-  subgraph Railway["apps/web · Next.js on Railway"]
+  subgraph Railway["Kindred · Next.js on Railway"]
+    APP["Parent app<br/>(auth), (app) routes"]
     PAGE["Invite page /r/[token]"]
-    API["API /api/*<br/>runs packages/core rules,<br/>then writes with the service role"]
+    SRV["Server actions + route handlers<br/>src/lib/rules → src/lib/db (service role)"]
+    CRON["/api/cron/tick"]
   end
-  DB[(Supabase<br/>Postgres + RLS, phone sign-in,<br/>Realtime, pg_cron)]
+  DB[(Supabase · own project<br/>Postgres + RLS, phone sign-in, Realtime)]
   AI[Anthropic API]
   PL[Places provider · Q6]
-  PUSH[Expo push · Q11]
-  APP -- "reads (RLS) + Realtime" --> DB
-  APP -- "every playdate write" --> API
-  APP -- "compose text" --> SMS
-  SMS -. "link" .-> WEBP
-  WEBP --> PAGE --> API
-  API --> DB & AI & PL & PUSH
+  PUSH[Web Push · Q11]
+  PAR --> APP --> SRV
+  PAR -- "Realtime (read only, RLS)" --> DB
+  APP -- "Text Aisha" --> MSG
+  MSG -. "link" .-> FR --> PAGE --> SRV
+  SRV --> DB & AI & PL & PUSH
+  CRON --> SRV
 ```
-- **Why an API instead of writing from the app:** the rules (KD-xx) live once, in `packages/core`, in TypeScript. The app, the invite page and the API all use them. The database only accepts playdate writes from the API (service role); it still guards the invariants with constraints (tested in `docs/schema.test.sql`).
-- **Why Next.js on Railway:** friends without the app need a fast web page, and the same service hosts the API. It is the stack of the other apps in this account (Lash, Aquatix), so CI, env handling and deploys are familiar.
-- **Texts come from the organizer's own number.** Kindred never sends invite texts from a server. The app opens the phone's Messages composer (`expo-sms`) with the recipients and text filled in; the organizer taps Send. No SMS provider is needed for invites. Only the sign-in code is sent by a provider (Supabase phone auth, Q10).
+- **One place for the rules:** `src/lib/rules` (pure TypeScript). Pages, server actions, the invite page and the cron job all call it. The database only accepts writes from the server (service role) and still guards the invariants with constraints (`docs/schema.test.sql`).
+- **Texts come from the organizer's own number.** Kindred never sends invite texts from a server. After sending, the app shows a **Text Aisha** button per friend without Kindred; it opens an `sms:` link with that friend's number, the parent's message and that friend's link, and the organizer taps Send in Messages. No SMS provider is needed for invites; only the sign-in code uses one (Supabase phone sign-in, Q10).
 
-### Changes from the earlier starter kit (the doc's "Technical notes")
-| Earlier kit | Now | Why |
+### What the web platform changes from the doc
+| The doc (native app) | Here | Notes |
 | --- | --- | --- |
-| Expo + Expo Router + Zustand | Same | Unchanged. |
-| Supabase (RLS, phone code, Realtime, pg_cron) | Same | Unchanged. |
-| Edge Function `ask-kindred` | Route `POST /api/places/ask` in `apps/web` | One server, one place for the rules and keys. |
-| `answer.html` | `apps/web` page `/r/[token]` | Same page for both channels, shared rules. |
-| Data model | `docs/schema.sql` | Adds the two time options, availability slots, typed and saved places, required message, answer versions, update labels. |
-
-The earlier kit's code is not in this repo. If it turns up, use it only as reference.
+| Pick friends from the phone's contacts | **Add a friend:** "Choose from contacts" where the browser supports the Contact Picker (Android Chrome); everywhere else, name, child's name and number typed in, with "Paste a number" | iPhone browsers have no contact picker (Q15). Only chosen contacts leave the phone either way. |
+| The phone's Messages app opens addressed to the friend | Same, through an `sms:` link, one **Text …** button per friend | Each friend has their own link, so one tap per friend (Q3). |
+| Push notifications | Web Push for parents who added Kindred to their Home Screen; otherwise updates show in the app | iPhone needs iOS 16.4+ and Home Screen install (Q11). |
+| Add to calendar | `.ics` download on the invite page and in the app | Works on every phone. |
+| App Store / TestFlight | A URL; "Add to Home Screen" prompt after the first playdate | A native wrapper can come later if parents ask (Q15). |
+| Friends with the app get the invite in the app | Friends with Kindred see it on their Home; if they have no push, the organizer also gets a **Text** button for them (Q11 default) | A web app can't reach them otherwise. Same invite page for everyone. |
 
 ## Repo layout
-```
-apps/mobile/            Expo app (Expo Router, TypeScript strict, Zustand)
-  app/(setup)/          sign-in, setup
-  app/(tabs)/           home, groups, ask, explore
-  app/plan/             planning screen (new and edit)
-  app/playdate/[id]     organizer's playdate page
-  app/invite/[id]       invite page for app friends (same layout as the web page)
-  src/api/              typed client for apps/web/api
-  src/ui/               design system (colours, type, components below)
-apps/web/               Next.js (App Router): /r/[token] invite page, /api/*, landing + privacy pages
-packages/core/          PURE rules: no I/O, no Date.now() (clock injected). Used by mobile, web and API
-packages/ui-copy/       every user-facing string (en-CA), so web and app say the same thing
-packages/db/            generated Supabase types (T03), shared by app and web
-supabase/               migrations/, seed.sql, tests/, config.toml
-docs/                   this file, NEXT.md, QUESTIONS.md, schema.sql, schema.test.sql
-```
+See `CLAUDE.md` "Layout". The parent app lives under `src/app/(auth)` and `src/app/(app)`; the invite page under `src/app/r/[token]`; rules in `src/lib/rules`; repositories in `src/lib/db`; services in `src/lib/domain`; strings in `src/lib/i18n/en-CA.ts`.
 
 ## Core concepts
 | Term | Meaning |
@@ -91,14 +80,14 @@ docs/                   this file, NEXT.md, QUESTIONS.md, schema.sql, schema.tes
 - **Sign in:** phone number + one-time code. No passwords.
 - **Setup** (once): "Tell us about you" / "Friends will see this when you invite them." First name; child first name + age (Baby, 1 yr, 2 yrs…), "+ Add another child", × to remove; "Get started". Empty name → short message. No contacts step.
 - **Home:** welcome banner (date, greeting, "Plan playdates for Mia.", kite illustration, no buttons); **Plan a playdate** card (coral +); sections only when they have content: **Needs you**, **Upcoming** (date tile, time, place, initials), **Waiting for answers** ("2 of 3 families answered" + bar). Tabs: Home, Groups, Ask, Explore.
-- **Plan** (one scrolling screen, numbered steps turn into teal ticks): 1 Who's invited (Your friends first, then From your contacts with child and number; tag "has Kindred" / "gets a text"; a group pre-selects) · 2 When (choose Pick date and time or Share availability; two-part switch; Done folds into a summary; Edit reopens) · 3 Where (Find a place (or ask Kindred); favourites as chips) · Details (place name + address when typed, with saved-place suggestions and ☆ Save this place; Your name; **Message to the parents**, required, with ✨ Suggestions (3) and ↻ New ideas) · Send (Send invite / Share availability; line says how many by app and by text; Messages composer opens for text friends; Back with content → "Leave this playdate?" Keep planning / Discard).
+- **Plan** (one scrolling screen, numbered steps turn into teal ticks): 1 Who's invited (Your friends first, then **Add a friend**: Choose from contacts where supported, otherwise name, child and number (Q15); tag "has Kindred" / "gets a text"; a group pre-selects) · 2 When (choose Pick date and time or Share availability; two-part switch; Done folds into a summary; Edit reopens) · 3 Where (Find a place (or ask Kindred); favourites as chips) · Details (place name + address when typed, with saved-place suggestions and ☆ Save this place; Your name; **Message to the parents**, required, with ✨ Suggestions (3) and ↻ New ideas) · Send (Send invite / Share availability; line says how many by app and by text; then a **Text Aisha** button per text friend opens Messages with the message and link (Q3); Back with content → "Leave this playdate?" Keep planning / Discard).
 - **Invite page** (same for app and web): organizer initial + "Alex · Mia's parent", message as a chat bubble, **Updated** / **New time** label; calendar-style details card (date and time, place with indoor/outdoor and ages, Directions); answers; after answering "Thanks! Your answer is in" + Change my answer; Everyone's picks (availability); after confirmation "It's on! 🎉 …" bubble, green CONFIRMED band, Add to calendar.
 - **Organizer's playdate page** (same layout as Plan): 1 Who's invited with "2 of 3 answered · Live" and a status per friend; 2 When (set time: "2 families can come: Dev, Maya" + Confirm and send update, enabled at the first yes; availability: Your availability (sent), Times friends suggested, Most picked on top, tap one + Confirm and send update); 3 Where; Details; after confirming ✓ Update sent; Edit playdate and Cancel playdate at the bottom.
 - **Places:** Find a place (search + chips; results with address, indoor/outdoor, ages, price, rating, parents who like it; Select, Directions, Call, Website), Ask Kindred (AI, up to 4 places with a one-line reason, Plan a playdate here), Explore (Your favourites, Popular with parents, search), typed. Heart = favourite.
 - **Groups:** Create a group (name + friends; "only you can see it"), group page (initials, last playdate, friends with Remove, Edit), Plan a playdate · 3 families, Plan again: same place, next week, Delete group under ⋯ with confirmation.
 
-## Rules (KD-xx). Implemented once in `packages/core`, tested by id.
-Error codes are stable strings; the UI maps them to copy in `packages/ui-copy`.
+## Rules (KD-xx). Implemented once in `src/lib/rules`, tested by id.
+Error codes are stable strings; the UI maps them to copy in `src/lib/i18n/en-CA.ts`.
 
 | Id | Rule | Codes |
 | --- | --- | --- |
@@ -116,30 +105,27 @@ Error codes are stable strings; the UI maps them to copy in `packages/ui-copy`.
 | KD-12 | Majority notice (text friends): when ≥ 2 families picked the same range and a text friend's pick differs, that friend gets ONE text, once ever per invite ("Most families picked Mon, Nov 16, 9:00 AM to 12:00 PM. Does that work for you?" + link). Who sends it is Q2. | — |
 | KD-13 | Home sections. **Needs you:** a collecting playdate where every friend answered, or an availability playdate with ≥ 1 pick, or a confirmed playdate where someone changed to Can't make it. **Upcoming:** confirmed and not over. **Waiting for answers:** collecting and not in Needs you. Over or cancelled playdates leave Home. | — |
 | KD-14 | Invite links: one per invite, a 128-bit random token (base64url, 22 chars), only its sha256 stored. A link shows that one playdate only. It expires at the playdate's end (final end, else set end, else the end of the last free slot) + 12 hours; an expired link shows "This playdate is over". | `LINK_EXPIRED` |
-| KD-15 | Cancel (Q1 default): organizer only, with a confirmation; status cancelled; invites show "Cancelled"; app friends get a push; text friends get a short text through the composer. | — |
-| KD-16 | Time zone: the organizer's device zone at creation (`playdates.timezone`); all times stored as `timestamptz`; shown in each viewer's own zone with the zone named only if it differs. | — |
+| KD-15 | Cancel (Q1 default): organizer only, with a confirmation; status cancelled; invites show "Cancelled"; Kindred users get a push if installed (Q11); text friends get a short text through a Text button. | — |
+| KD-16 | Time zone: the organizer's browser zone at creation (`playdates.timezone`); all times stored as `timestamptz`; shown in each viewer's own zone with the zone named only if it differs. | — |
 | KD-17 | Privacy: invitees see only the organizer's first name, their own child's first name in the title, the place, the message and other invitees' first names in Everyone's picks. Never phone numbers, groups, other friends, saved places, children's ages. | — |
 
 ## Data access *(build decision)*
-| Data | App reads | App writes | Web invite page |
-| --- | --- | --- | --- |
-| profiles, children | own (+ organizer first name for invitees) | direct (RLS) | via API payload |
-| friends | own | add via API (`POST /api/friends`: matches numbers); rename or remove direct | — |
-| groups, group_members, saved_places | own | direct (RLS) | — |
-| playdates, availability_slots | organizer: own; invitee: invited | via API | via API with token |
-| invites, answers | organizer: all of own playdates; invitee: own | via API | via API with token |
-- Column privileges hide `profiles.phone_hash`, `friends.phone_hash` and `invites.token_hash` from every client.
-- **Live answers:** the organizer's playdate page subscribes to Realtime changes on `answers`, `invites` and `playdates` for that playdate; RLS limits what is delivered.
-- **Contact matching:** the app sends the numbers the parent picked (E.164) to `POST /api/friends`; the API computes `HMAC-SHA256(PHONE_HASH_KEY, number)`, stores the friend, and fills `kindred_user_id` if a profile has the same hash. The app never uploads the whole address book (doc: "Contacts stay on the phone"). Rate-limited per user.
-- **Searched places:** keep only the provider's place id plus the parent's label (provider terms, Q6); details are fetched when shown, through the API, with a short cache.
+Same rule as Lash and Aquatix: **clients never write to the database.**
+- **Writes:** server actions and route handlers → zod → `auth.getUser()` → `src/lib/rules` → repository in `src/lib/db` (service role), scoped to the signed-in parent. That covers setup, children, friends, groups, saved places, playdates, invites and answers.
+- **Reads:** server components read through the repositories, always filtered by the signed-in parent. The `authenticated` role keeps SELECT only (RLS, column privileges) as a second line of defence and for Realtime.
+- **Live answers:** the organizer's playdate page subscribes with the browser Supabase client (the parent's session) to `answers`, `invites` and `playdates` of that playdate; RLS limits what is delivered.
+- **Friends without Kindred:** the invite page and its answer action work only from the link token (sha256 lookup); no session, no direct database access.
+- **Hidden columns:** `profiles.phone_hash`, `friends.phone_hash`, `invites.token_hash` are never granted to clients.
+- **Contact matching:** the server receives only the friends the parent added (picked or typed), normalizes to E.164, computes `HMAC-SHA256(PHONE_HASH_KEY, number)`, stores the friend and fills `kindred_user_id` if a profile has the same hash. Rate-limited per parent.
+- **Searched places:** keep only the provider's place id plus the parent's label (provider terms, Q6); details are fetched when shown, on the server, with a short cache.
 
 ## Notifications and texts
-| Moment | Friends with the app | Friends without the app (text, from the organizer's phone) |
+| Moment | Friends with Kindred | Friends without Kindred (text, from the organizer's phone) |
 | --- | --- | --- |
-| Invite sent | Invite on their Home (+ push, Q11) | Composer opens with the message + link; organizer taps Send |
+| Invite sent | Invite on their Home (+ Web Push if installed, Q11) | Organizer taps **Text Aisha**: Messages opens with the message + link |
 | Another parent picks a time | Shown under Already suggested / Everyone's picks | Nothing, unless KD-12 applies |
 | Most families pick a different time (≥ 2) | Shown in Everyone's picks | One text, once only (KD-12, Q2) |
-| Organizer confirms | "It's on!" bubble and Confirmed card (+ push) | Text with the final date, time and place |
+| Organizer confirms | "It's on!" bubble and Confirmed card (+ push) | Text with the final date, time and place (Text button) |
 | Organizer edits and sends an update | Updated / New time label (+ push) | Text with the update + link; new invitees get the invite |
 | Organizer cancels | Cancelled (+ push) (Q1) | Short text (Q1) |
 
@@ -157,13 +143,13 @@ Calm, warm, clean: white cards on a light grey page, one deep teal for the brand
 | Purple | `#6C5CE7` | Message suggestions, Updated / New time labels |
 | Page / cards | `#F5F6F8` / `#FFFFFF` | Background and surfaces |
 | Text / muted | `#0F1A1F` / `#64707A` | Body text and secondary lines |
-- **Type:** system font (SF Pro on iPhone). Titles 32 px bold; section labels 13 px uppercase, letter-spaced, muted; body 15–16 px; names semi-bold.
+- **Type:** the phone's system font (`system-ui`; SF Pro on iPhone). Titles 32 px bold; section labels 13 px uppercase, letter-spaced, muted; body 15–16 px; names semi-bold.
 - **Components:** cards 16 px corners + soft shadow, no borders · buttons 50 px tall, 14 px corners (coral main, teal-tint secondary, red outline destructive) · numbered steps (coral circle → teal tick) · pickers in a grey box, pop-over calendar, scrolling time list centred on the selection · availability grid (days across, Morning/Afternoon/Evening down; teal ticks for the organizer, teal "Free" boxes and orange picks for friends) · two-part switch (grey pill, active side white) · chips · status lines (coloured words, not badges) · toasts (dark rounded bar at the top).
 - **Tone:** short, warm, plain, like a friend. Buttons say what happens ("Confirm and send update", "We're in!"). No jargon, no exclamation-heavy marketing, no generic text added to what parents write.
 
 ## Privacy and safety
 No public profiles, no discovery of strangers, no social feed.
-- Contacts stay on the phone; only numbers the parent picks are sent, and only to check which use Kindred. Nobody is added or messaged without the parent choosing them.
+- Only the contacts a parent chooses (picked or typed) are sent, and only to check which use Kindred. The address book is never read or uploaded. Nobody is added or messaged without the parent choosing them.
 - Friends lists and groups are private to their owner (RLS, tested).
 - Texts come from the parent's own number; Kindred never sends unsolicited texts.
 - Invite links are unique, unguessable, expire after the playdate and show only that playdate (KD-14).
@@ -174,8 +160,8 @@ No public profiles, no discovery of strangers, no social feed.
 - Logs: ids and codes only; phone numbers masked to the last 4; never message bodies, codes, tokens or children's names.
 
 ## Roadmap
-1. **Phase 0 · Foundation:** repo, CI, rules core, schema + tests, Supabase project.
-2. **Phase 1 · The core loop with text friends:** sign in, setup, Home, Plan with Pick date and time and a typed place, text invites through the composer, the web invite page, the organizer's live page, confirm and send update. Testable with real parents who don't have the app.
+1. **Phase 0 · Foundation:** app scaffold, CI, rules, schema + tests, Supabase and Railway.
+2. **Phase 1 · The core loop with text friends:** sign in, setup, Home, Plan with Pick date and time and a typed place, text invites through Text buttons, the web invite page, the organizer's live page, confirm and send update. Testable with real parents who don't have the app.
 3. **Phase 2 · The full design:** Share availability + Everyone's picks, app-to-app invites, edit and updates, places (Find, Ask Kindred, Explore, favourites, saved), groups.
-4. **Phase 3 · Private beta:** push notifications, cancel, add to calendar, privacy page, TestFlight, one school or class group (the doc's next step 4).
+4. **Phase 3 · Private beta:** Add to Home Screen and Web Push, cancel, add to calendar, privacy page, production on its own domain, one school or class group (the doc's next step 4).
 The doc's next step 2 (testing the prototype with 5–8 parents) does not wait on code and should run alongside Phase 0.

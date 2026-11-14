@@ -6,12 +6,8 @@ node_modules/
 dist/
 build/
 coverage/
-.expo/
-expo-env.d.ts
-ios/
-android/
-*.ipa
-*.apk
 supabase/.temp/
 supabase/.branches/
 .DS_Store
+playwright-report/
+test-results/

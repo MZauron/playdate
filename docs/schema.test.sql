@@ -1,4 +1,4 @@
--- Kindred schema tests, draft 1 (2026-11-14). 42 checks, all passing against Postgres 16.
+-- Kindred schema tests, draft 1 (2026-11-14). All checks pass against Postgres 16.
 -- How it was run (no Supabase needed): a scratch Postgres, the stand-ins below for Supabase's roles and auth,
 -- then docs/schema.sql, then this file. Each check prints "PASS <label>" or stops with "FAIL <label>".
 --   psql -d scratch -f <stand-ins> -f docs/schema.sql -f docs/schema.test.sql
@@ -76,11 +76,13 @@ select expect_error($$select token_hash from invites$$,'42501','token_hash hidde
 select expect_error($$select phone_hash from friends$$,'42501','friend phone_hash hidden');
 select expect_error($$insert into playdates(organizer_id,title,mode,start_at,end_at,message,links_expire_at) values ('aaaaaaaa-0000-0000-0000-000000000001','t','set_time',now(),now()+interval '1h','hi',now())$$,'42501','no direct playdate writes');
 select expect_error($$update answers set kind='yes'$$,'42501','no direct answer writes');
-select expect_error($$insert into friends(owner_id,parent_name,label,phone_e164,phone_hash) values ('aaaaaaaa-0000-0000-0000-000000000001','x','x','+14165550111','hq')$$,'42501','friends are added through the API');
-insert into children(parent_id,first_name,age_label) values ('aaaaaaaa-0000-0000-0000-000000000001','Leo','baby');
-select expect_error($$insert into children(parent_id,first_name,age_label) values ('dddddddd-0000-0000-0000-000000000002','Hack','3')$$,'42501','no child for another parent');
-insert into saved_places(owner_id,source,name,address) values ('aaaaaaaa-0000-0000-0000-000000000001','typed','Our place','12 Elm St');
-update profiles set first_name='Alexandra' where id='aaaaaaaa-0000-0000-0000-000000000001';
+select expect_error($$insert into friends(owner_id,parent_name,label,phone_e164,phone_hash) values ('aaaaaaaa-0000-0000-0000-000000000001','x','x','+14165550111','hq')$$,'42501','clients never add friends');
+select expect_error($$insert into children(parent_id,first_name,age_label) values ('aaaaaaaa-0000-0000-0000-000000000001','Leo','baby')$$,'42501','clients never write children, even their own');
+select expect_error($$insert into saved_places(owner_id,source,name,address) values ('aaaaaaaa-0000-0000-0000-000000000001','typed','Our place','12 Elm St')$$,'42501','clients never write saved places');
+select expect_error($$insert into groups(owner_id,name) values ('aaaaaaaa-0000-0000-0000-000000000001','x')$$,'42501','clients never write groups');
+select expect_error($$update profiles set first_name='Alexandra' where id='aaaaaaaa-0000-0000-0000-000000000001'$$,'42501','clients never update profiles');
+select expect_error($$delete from friends$$,'42501','clients never delete friends');
+select expect_count('select * from children',1,'organizer reads own children');
 reset role;
 
 -- ---- as Dev (invited, has the app) ----
@@ -92,13 +94,8 @@ select expect_count('select id, first_name from profiles',2,'invitee sees self +
 select expect_count('select * from children',0,'invitee cannot see organizer children');
 select expect_count('select id from friends',0,'invitee cannot see organizer friends');
 select expect_count('select * from saved_places',0,'invitee cannot see saved places (home address)');
-update profiles set first_name='Hacked' where id='aaaaaaaa-0000-0000-0000-000000000001';
+select expect_error($$update profiles set first_name='Hacked' where id='aaaaaaaa-0000-0000-0000-000000000001'$$,'42501','invitee cannot rename organizer');
 reset role;
-select expect_count($$select * from profiles where first_name='Alexandra'$$,1,'invitee cannot rename organizer');
-set role authenticated; select set_config('request.uid','dddddddd-0000-0000-0000-000000000002',false);
-delete from friends;  -- silently affects 0 rows
-reset role;
-select expect_count('select id from friends',3,'invitee cannot delete organizer friends');
 
 -- ---- as Maya (friend of someone else, not invited) and Xan ----
 set role authenticated; select set_config('request.uid','eeeeeeee-0000-0000-0000-000000000003',false);

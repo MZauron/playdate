@@ -2,13 +2,12 @@
 -- Source of truth for the first migration (T03 copies it to supabase/migrations/0001_init.sql).
 -- Rules referenced as KD-xx are in docs/DESIGN.md.
 --
--- Access model (DESIGN.md "Data access"):
--- * Owner-only tables (children, groups, group_members, saved_places): the app reads AND writes them directly, RLS = owner.
--- * friends: the app reads its own rows directly; inserts go through the API (it matches numbers to Kindred users).
--- * playdates, availability_slots, invites, answers: the app READS directly (organizer: everything of their playdates,
---   with Realtime; invitee: their own invite, answer and the playdate). ALL writes go through the API (service role),
---   which runs the rules in packages/core first.
--- * Friends without the app never touch the database: the web answer page calls the API with the link's token.
+-- Access model (DESIGN.md "Data access"), same as Lash and Aquatix:
+-- * Clients never write. Every write is a server action or route handler: zod -> auth.getUser() -> src/lib/rules
+--   -> repository (service role), scoped to the signed-in parent.
+-- * The browser keeps SELECT only, limited by RLS, for Supabase Realtime on the organizer's playdate page
+--   and as a second line of defence for server reads made with the user's session.
+-- * Friends without an account never touch the database: the invite page acts only through the link token.
 -- * Secrets kept away from clients by column privileges: profiles.phone_hash, friends.phone_hash, invites.token_hash.
 
 create extension if not exists pgcrypto;
@@ -56,7 +55,7 @@ create table friends (
   parent_name      text not null check (length(btrim(parent_name)) between 1 and 60),  -- as in the owner's contacts
   child_first_name text check (child_first_name is null or length(btrim(child_first_name)) between 1 and 40),
   label            text not null,                   -- what the owner sees, e.g. "Arjun's dad"
-  phone_e164       text not null check (phone_e164 ~ '^\+[1-9][0-9]{7,14}$'),  -- needed to open the SMS composer (Q12)
+  phone_e164       text not null check (phone_e164 ~ '^\+[1-9][0-9]{7,14}$'),  -- needed for the sms: link (Q12)
   phone_hash       text not null,                   -- HMAC, same key as profiles.phone_hash
   kindred_user_id  uuid references profiles (id) on delete set null,  -- set when the number belongs to a Kindred parent
   created_at       timestamptz not null default now(),
@@ -218,15 +217,10 @@ grant execute on function is_invited_to(uuid), is_organizer_of(uuid), organizes_
 -- ---------------------------------------------------------------------------
 revoke all on all tables in schema public from anon, authenticated;
 
+-- SELECT only; no client ever gets INSERT, UPDATE or DELETE (tested).
 grant select (id, first_name, created_at, updated_at) on profiles to authenticated;
-grant insert (id, first_name) on profiles to authenticated;
-grant update (first_name) on profiles to authenticated;
-
-grant select, insert, update, delete on children, groups, group_members, saved_places to authenticated;
-
+grant select on children, groups, group_members, saved_places to authenticated;
 grant select (id, owner_id, parent_name, child_first_name, label, phone_e164, kindred_user_id, created_at) on friends to authenticated;
-grant update (label, child_first_name) on friends to authenticated;
-grant delete on friends to authenticated;
 
 grant select on playdates, availability_slots, answers to authenticated;
 grant select (id, playdate_id, organizer_id, friend_id, invitee_user_id, channel, label, majority_notice_at, created_at)
@@ -246,23 +240,18 @@ alter table availability_slots enable row level security;
 alter table invites            enable row level security;
 alter table answers            enable row level security;
 
-create policy profiles_self_read   on profiles for select to authenticated using (id = auth.uid() or organizes_for_me(id));
-create policy profiles_self_insert on profiles for insert to authenticated with check (id = auth.uid());
-create policy profiles_self_update on profiles for update to authenticated using (id = auth.uid()) with check (id = auth.uid());
-
-create policy children_owner on children      for all to authenticated using (parent_id = auth.uid()) with check (parent_id = auth.uid());
-create policy friends_owner_read on friends   for select to authenticated using (owner_id = auth.uid());
-create policy friends_owner_update on friends for update to authenticated using (owner_id = auth.uid()) with check (owner_id = auth.uid());
-create policy friends_owner_delete on friends for delete to authenticated using (owner_id = auth.uid());
-create policy groups_owner on groups          for all to authenticated using (owner_id = auth.uid()) with check (owner_id = auth.uid());
-create policy group_members_owner on group_members for all to authenticated using (owner_id = auth.uid()) with check (owner_id = auth.uid());
-create policy saved_places_owner on saved_places   for all to authenticated using (owner_id = auth.uid()) with check (owner_id = auth.uid());
+create policy profiles_read      on profiles      for select to authenticated using (id = auth.uid() or organizes_for_me(id));
+create policy children_read      on children      for select to authenticated using (parent_id = auth.uid());
+create policy friends_read       on friends       for select to authenticated using (owner_id = auth.uid());
+create policy groups_read        on groups        for select to authenticated using (owner_id = auth.uid());
+create policy group_members_read on group_members for select to authenticated using (owner_id = auth.uid());
+create policy saved_places_read  on saved_places  for select to authenticated using (owner_id = auth.uid());
 
 create policy playdates_read on playdates for select to authenticated
   using (organizer_id = auth.uid() or is_invited_to(id));
 create policy slots_read on availability_slots for select to authenticated
   using (is_organizer_of(playdate_id) or is_invited_to(playdate_id));
--- Invitees see only their own invite and answer; other families' picks reach them through the API payload (KD-11).
+-- Invitees see only their own invite and answer; other families' picks reach them through the server's payload (KD-11).
 create policy invites_read on invites for select to authenticated
   using (organizer_id = auth.uid() or invitee_user_id = auth.uid());
 create policy answers_read on answers for select to authenticated
