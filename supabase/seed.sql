@@ -1,0 +1,1 @@
+-- Local seed data for `npm run db:reset`. Empty for now: test users and fixed codes come with phone sign-in (T04/T05).

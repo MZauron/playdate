@@ -17,3 +17,50 @@ jobs:
       - run: npm run typecheck
       - run: npm test
       - run: npm run build
+
+  # The database tests (supabase/tests: constraints, privileges and who can read what) against a real local Supabase.
+  # Realtime stays on: the migration adds tables to its publication.
+  db:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+      - run: npm ci
+      - name: Start the local Supabase (only what the tests use)
+        run: npx supabase start -x imgproxy,mailpit,postgres-meta,studio,edge-runtime,logflare,vector,supavisor
+      - run: npm run test:db
+      - name: Stop Supabase
+        if: always()
+        run: npx supabase stop --no-backup
+
+  # src/lib/db/types.ts must be what `npm run db:types` generates from the migrations (same pinned CLI and Postgres as on a laptop).
+  # When it differs, the log shows the generated file between the markers: that is the file to commit.
+  types:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+      - run: npm ci
+      - name: Start the local Supabase (the type generator needs postgres-meta)
+        run: npx supabase start -x imgproxy,mailpit,studio,edge-runtime,logflare,vector,supavisor
+      - run: npm run db:types
+      - name: Show the generated types
+        run: |
+          echo "=====BEGIN src/lib/db/types.ts====="
+          cat src/lib/db/types.ts
+          echo "=====END src/lib/db/types.ts====="
+      - name: Check they are committed and up to date
+        run: |
+          git add -N src/lib/db/types.ts
+          git diff --exit-code src/lib/db/types.ts
+      - name: Stop Supabase
+        if: always()
+        run: npx supabase stop --no-backup

@@ -18,6 +18,10 @@ Node 22 (`.nvmrc`), npm.
 | `npm run typecheck` | `tsc --noEmit` |
 | `npm test` / `npm run test:watch` | Vitest |
 | `npm run test:smoke` | Playwright smoke tests (run `npx playwright install chromium` once) |
+| `npm run db:start` / `db:stop` | Local Supabase in Docker (ports 54520–54529, so it runs beside Lash and Aquatix) |
+| `npm run db:reset` | Rebuild the LOCAL database from `supabase/migrations` and `supabase/seed.sql` |
+| `npm run db:types` | Regenerate `src/lib/db/types.ts` from the local database (commit it; CI fails when it drifts) |
+| `npm run test:db` | Database tests in `supabase/tests` against the local Supabase (`db:start` first) |
 
 Before every commit: `npm run lint && npm run typecheck && npm test`. Copy `.env.example` to `.env.local` when a task needs variables.
 

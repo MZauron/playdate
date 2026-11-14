@@ -1,3 +1,4 @@
+-- SUPERSEDED (T03, 2026-11-14): supabase/migrations is now the source of truth. This file is the draft 0001_init.sql was copied from; do not edit it to change the schema.
 -- Kindred schema, draft 1 (2026-11-14). Target: Supabase Postgres 15+.
 -- Source of truth for the first migration (T03 copies it to supabase/migrations/0001_init.sql).
 -- Rules referenced as KD-xx are in docs/DESIGN.md.

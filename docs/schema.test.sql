@@ -1,3 +1,4 @@
+-- SUPERSEDED (T03, 2026-11-14): these checks now run in CI as supabase/tests/schema.test.ts (one test per label, kept in step by schema-labels.test.ts).
 -- Kindred schema tests, draft 1 (2026-11-14). All checks pass against Postgres 16.
 -- How it was run (no Supabase needed): a scratch Postgres, the stand-ins below for Supabase's roles and auth,
 -- then docs/schema.sql, then this file. Each check prints "PASS <label>" or stops with "FAIL <label>".
