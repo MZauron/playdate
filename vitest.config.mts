@@ -11,11 +11,16 @@ export default defineConfig({
   },
   test: {
     environment: "node",
-    // Placeholders so modules that read src/env.ts load in tests. Nothing here is a real key.
+    // Placeholders so modules that read src/env.ts load in tests. Nothing here is a real key. The database tests (scripts/test-db.sh)
+    // bring the local Supabase's own address and keys instead (KD_LOCAL_API=1) and keep only the hash key from here.
     env: {
-      NEXT_PUBLIC_SUPABASE_URL: "http://127.0.0.1:54521",
-      NEXT_PUBLIC_SUPABASE_ANON_KEY: "test-anon-key",
-      SUPABASE_SERVICE_ROLE_KEY: "test-service-role-key",
+      ...(process.env.KD_LOCAL_API === "1"
+        ? {}
+        : {
+            NEXT_PUBLIC_SUPABASE_URL: "http://127.0.0.1:54521",
+            NEXT_PUBLIC_SUPABASE_ANON_KEY: "test-anon-key",
+            SUPABASE_SERVICE_ROLE_KEY: "test-service-role-key",
+          }),
       PHONE_HASH_KEY: "test-phone-hash-key-0123456789abcdef",
     },
     include: ["src/**/*.test.ts", "src/**/*.test.tsx", "supabase/tests/**/*.test.ts"],
