@@ -6,7 +6,8 @@ test("health answers", async ({ request }) => {
   expect(await res.json()).toEqual({ ok: true });
 });
 
-test("home renders at phone width", async ({ page }) => {
+test("a signed-out visitor lands on sign-in at phone width", async ({ page }) => {
   await page.goto("/");
+  await expect(page).toHaveURL(/\/sign-in$/);
   await expect(page.getByRole("heading", { level: 1 })).toBeVisible();
 });

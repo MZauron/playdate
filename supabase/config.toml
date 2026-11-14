@@ -34,5 +34,29 @@ port = 54523
 enabled = true
 port = 54524
 
+[auth]
+enabled = true
+site_url = "http://127.0.0.1:3000"
+additional_redirect_urls = ["http://localhost:3000"]
+jwt_expiry = 3600
+enable_refresh_token_rotation = true
+
+# Phone sign-in. Development uses test phone numbers with fixed codes: no real SMS until Q10 is decided.
+[auth.sms]
+enable_signup = true
+enable_confirmations = false
+# Phone number -> fixed code, so nothing is sent. LOCAL ONLY. The staging project gets its own list in the dashboard (T04).
+[auth.sms.test_otp]
+14165550101 = "123456"
+14165550102 = "123456"
+14165550103 = "123456"
+# LOCAL ONLY: GoTrue only accepts phone sign-in with an SMS provider switched on. Nothing is ever sent through it
+# (test_otp answers first), so these are dummies. Never put real provider credentials in this committed file (Q10).
+[auth.sms.twilio]
+enabled = true
+account_sid = "local-dummy"
+message_service_sid = "local-dummy"
+auth_token = "local-dummy"
+
 [analytics]
 enabled = false

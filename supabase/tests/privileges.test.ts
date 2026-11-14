@@ -39,6 +39,18 @@ describe.skipIf(!enabled)("privileges on every table", () => {
     expect(rows).toEqual([]);
   });
 
+  it("the functions a client may call are only the three row-level-security helpers", async () => {
+    // Supabase grants new functions to everyone; a migration must revoke that for anything meant for the server only.
+    const rows = await q<{ proname: string }>(
+      `select p.proname from pg_proc p join pg_namespace n on n.oid = p.pronamespace
+       where n.nspname = 'public' and p.prokind = 'f'
+         and p.prorettype <> 'trigger'::regtype -- a trigger function cannot be called directly, whoever may execute it
+         and (has_function_privilege('anon', p.oid, 'execute') or has_function_privilege('authenticated', p.oid, 'execute'))
+       order by p.proname`,
+    );
+    expect(rows.map((r) => r.proname)).toEqual(["is_invited_to", "is_organizer_of", "organizes_for_me"]);
+  });
+
   it("Realtime publishes answers, invites and playdates", async () => {
     const rows = await q<{ tablename: string }>(
       "select tablename from pg_publication_tables where pubname = 'supabase_realtime' and schemaname = 'public' order by tablename",
