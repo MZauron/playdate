@@ -9,7 +9,7 @@ Solo dev, ~8 h/week plus background sessions started from a phone. Keep changes 
 - `docs/DESIGN.md` — platform, screens, rules KD-01…KD-17, data access, visual design, privacy. Read the parts your task touches.
 - `docs/NEXT.md` — task list. Do ONE task per session; tick it when its "done when" is met.
 - `docs/QUESTIONS.md` — open decisions. Code built on an open question uses its default and says so in a comment with the id (`// Q3 default`).
-- `docs/schema.sql` + `docs/schema.test.sql` — the first migration and its checks, until T03 moves them into `supabase/`.
+- `supabase/migrations/` + `supabase/tests/` — the schema and its tests (T03). `docs/schema.sql` and `docs/schema.test.sql` are the superseded drafts.
 - `docs/rules.test-cases.md` — cases the rules must pass (created by T02). Test names reuse the ids (`KD-03a`…).
 
 ## Stack (same as Lash and Aquatix)
@@ -37,7 +37,7 @@ supabase/                migrations/, seed.sql, tests/
 
 ## Commands (created by T01; keep this list in sync)
 `npm run dev` · `build` · `lint` · `typecheck` · `test` (vitest) · `test:watch` · `test:smoke` (Playwright)
-`npm run db:start` (local Supabase) · `db:reset` · `db:types` (regenerate `src/lib/db/types.ts`) · `test:db`
+`npm run db:start` (local Supabase) · `db:stop` · `db:reset` (local only) · `db:types` (regenerate `src/lib/db/types.ts`) · `test:db`
 Before every commit: `npm run lint && npm run typecheck && npm test`.
 
 ## Reusing Aquatix code (optional)
