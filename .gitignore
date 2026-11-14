@@ -1,0 +1,17 @@
+node_modules/
+.env
+.env.local
+.env*.local
+.next/
+dist/
+build/
+coverage/
+.expo/
+expo-env.d.ts
+ios/
+android/
+*.ipa
+*.apk
+supabase/.temp/
+supabase/.branches/
+.DS_Store
