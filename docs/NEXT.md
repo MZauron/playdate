@@ -8,8 +8,8 @@ Read CLAUDE.md + only the docs a task names.
 Estimates are session time (1–2 h each).
 
 ## Where we are (2026-11-14)
-- **Built:** the T01 scaffold (Next.js app, tooling, CI, `/api/health`, placeholder home). Also in the repo, the starter kit: `CLAUDE.md`, `docs/DESIGN.md` (from the Kindred design doc, on the owner's Next.js + Supabase stack), `docs/schema.sql` + `docs/schema.test.sql` (46 checks passing on Postgres 16), `docs/QUESTIONS.md`.
-- **Next:** T02 and T03 (both [phone], they can run in parallel after T01).
+- **Built:** the T01 scaffold (Next.js app, tooling, CI, `/api/health`, placeholder home); the T02 rules in `src/lib/rules` (86 cases in `docs/rules.test-cases.md`). Also in the repo, the starter kit: `CLAUDE.md`, `docs/DESIGN.md` (from the Kindred design doc, on the owner's Next.js + Supabase stack), `docs/schema.sql` + `docs/schema.test.sql` (46 checks passing on Postgres 16), `docs/QUESTIONS.md`.
+- **Next:** T03 (both [phone], they can run in parallel after T01).
 - **Alongside the code:** test the clickable prototype with 5–8 parents (the doc's next step 2). Note what they stumble on in `docs/QUESTIONS.md`.
 
 ## Plan
@@ -27,7 +27,7 @@ Estimates are session time (1–2 h each).
   CI (GitHub Actions): install, lint, typecheck, test, build. Copy `security-headers.ts` (+ tests) from `../aquatix` if attached and wire it into `next.config.ts`.
   Done when: `npm run lint && npm run typecheck && npm test && npm run build` pass locally and in CI; `/api/health` answers; the home route renders a placeholder at 375 px.
 
-- [ ] **T02 Rules** [phone]
+- [x] **T02 Rules** [phone]
   `src/lib/rules`: `types.ts` (`Decision = {ok, errors: {code, field?}[]}`, the codes in DESIGN.md), `time.ts` (zone passed in, clock injected), `config.ts` (slot times, link grace 12 h, min pick 30 min, reason chips), and one module per rule group: `plan.ts` (KD-02, 03, 04, 05, 06), `answers.ts` (KD-07, 08), `confirm.ts` (KD-09), `edit.ts` (KD-10: returns what to change, never writes), `picks.ts` (KD-11, 12), `home.ts` (KD-13), `links.ts` (KD-14 expiry; token generation lives in `src/lib/domain`).
   Create `docs/rules.test-cases.md`: cases with ids (`KD-03a`…), each with input and expected result. Test names reuse the ids.
   Done when: every case in the file has a test named by its id (a test enforces it, both ways), and `no-clock.test.ts` fails if anything in `src/lib/rules` reads the clock or imports I/O.
@@ -131,3 +131,4 @@ Estimates are session time (1–2 h each).
 ## Done
 (Move each task here when it is ticked, with its note.)
 - **T01 Scaffold the app** (2026-11-14). Notes: versions copied from Aquatix @ 4a87d68 (TypeScript 6.0.3, ESLint 9, Tailwind 4.3.3, React 19.3.0, …) except: `next` 16.4.6 + `eslint-config-next` 16.4.6 and `zod` 4.6.7, because Aquatix's next 16.3.8 has critical RCE advisories (GHSA-2464-fhr4-w9xw, GHSA-673q-mjm6-r5xr) and zod 4.6.5 a high one (GHSA-mrhx-c7xc-m3w5); `vitest` 5.1.0, because 5.0.3 crashes npm's peer resolution alongside `@playwright/test`. Packages Aquatix doesn't use are the current stable release. `src/platform/security-headers.ts` (+ tests) copied from Aquatix and wired into `next.config.ts`, with Aquatix's `agentRules: false`. `src/env.ts` validates only `NODE_ENV` for now and loads at boot from `src/instrumentation.ts`. The manifest icon is a placeholder SVG (PNG icons come with T20). Playwright is installed with one smoke spec (`tests/smoke`), not in CI yet (T11). `npm audit`: one moderate minimatch advisory inside `eslint-config-next`'s dev-only lint toolchain.
+- **T02 Rules** (2026-11-14). Notes: two codes added to DESIGN.md: `MESSAGE_TOO_LONG` (KD-05, over 1000) and `INVALID_ANSWER` (KD-07: answers the schema would refuse). Rules return data only; `planEdit` and the derivations (`playdateTitle`, `groupPicks`, `homeSection`…) return plain values, the checks return a `Decision`. Where the doc is silent the case file marks the reading used *(reading)*: an unconfirmed availability playdate takes answers until its link expires; "changed to Can't make it" (KD-13) = a no after `confirmed_at`; KD-12 compares with the Most picked range. `playdateTitle` takes one child name per family: what to do for a friend saved without a child's name is left to T08. Copy for the error codes is not in `en-CA.ts` yet (the screens that show them add it). Built on the T01 branch while PR #1 was open.
