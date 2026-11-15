@@ -11,15 +11,17 @@ const variants: Record<ButtonVariant, string> = {
 };
 
 const base =
-  "inline-flex h-[50px] min-w-11 items-center justify-center rounded-button px-5 text-base font-semibold disabled:cursor-not-allowed disabled:opacity-50 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary";
+  "inline-flex min-w-11 items-center justify-center rounded-button px-5 text-base font-semibold disabled:cursor-not-allowed disabled:opacity-50 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary";
 
-type Common = { variant?: ButtonVariant; fullWidth?: boolean };
+type Common = { variant?: ButtonVariant; fullWidth?: boolean; /** 44 px instead of 50: for buttons inside a list row. Never smaller. */ compact?: boolean };
 
-export function Button({ variant = "secondary", fullWidth, className, type = "button", ...rest }: Common & React.ComponentPropsWithoutRef<"button">) {
-  return <button type={type} className={cx(base, variants[variant], fullWidth && "w-full", className)} {...rest} />;
+const height = (compact?: boolean) => (compact ? "h-11" : "h-[50px]");
+
+export function Button({ variant = "secondary", fullWidth, compact, className, type = "button", ...rest }: Common & React.ComponentPropsWithoutRef<"button">) {
+  return <button type={type} className={cx(base, height(compact), variants[variant], fullWidth && "w-full", className)} {...rest} />;
 }
 
 /** The same look for a link that goes to another screen. */
-export function ButtonLink({ variant = "secondary", fullWidth, className, ...rest }: Common & React.ComponentProps<typeof Link>) {
-  return <Link className={cx(base, variants[variant], fullWidth && "w-full", className)} {...rest} />;
+export function ButtonLink({ variant = "secondary", fullWidth, compact, className, ...rest }: Common & React.ComponentProps<typeof Link>) {
+  return <Link className={cx(base, height(compact), variants[variant], fullWidth && "w-full", className)} {...rest} />;
 }

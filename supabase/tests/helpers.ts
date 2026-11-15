@@ -9,6 +9,8 @@ import { randomBytes, randomUUID } from "node:crypto";
 import { Pool, type PoolClient, type QueryResultRow } from "pg";
 
 export const enabled = process.env.KD_DB_TESTS === "1";
+/** The repository tests also need the local Supabase API (scripts/test-db.sh sets this when the CLI is there). */
+export const apiEnabled = enabled && process.env.KD_LOCAL_API === "1";
 
 let pool: Pool | undefined;
 export const db = (): Pool => {
