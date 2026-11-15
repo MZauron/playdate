@@ -13,6 +13,7 @@ const ID = "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa";
 
 const invite = (id: string, parentName: string, label: string, answer: OrganizerInvite["answer"] = null, channel: OrganizerInvite["channel"] = "text"): OrganizerInvite => ({
   id,
+  friendId: `f-${id}`,
   parentName,
   label,
   channel,

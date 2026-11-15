@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { ButtonLink } from "@/components/Button";
 import { Card } from "@/components/Card";
 import { NumberedStep } from "@/components/NumberedStep";
 import { FriendStatusLine, StatusLine } from "@/components/StatusLine";
@@ -100,6 +101,12 @@ export function PlaydatePage({ playdate: p, view, live, texts }: { playdate: Org
           <p className="mt-1 whitespace-pre-wrap break-words">{p.message}</p>
         </Card>
       </section>
+
+      {!view.cancelled && (
+        <ButtonLink href={`/playdates/${p.id}/edit`} fullWidth>
+          {t.edit}
+        </ButtonLink>
+      )}
     </div>
   );
 }

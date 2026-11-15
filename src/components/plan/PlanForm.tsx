@@ -3,6 +3,7 @@
 import { useActionState, useEffect, useState, startTransition } from "react";
 import { useRouter } from "next/navigation";
 import { sendInviteAction, type SendInviteState } from "@/app/(app)/plan/actions";
+import { sendUpdateAction } from "@/app/(app)/playdates/[id]/edit/actions";
 import { Button } from "@/components/Button";
 import { Card } from "@/components/Card";
 import { cx } from "@/components/cx";
@@ -21,26 +22,47 @@ const t = enCA.plan;
 
 export type SavedPlace = { name: string; address: string };
 
-/** The planning screen (T08): 1 Who's invited, 2 When, Details, Send. The server decides on Send; nothing here is trusted. */
-export function PlanForm({ friends, savedPlaces, firstName }: { friends: Friend[]; savedPlaces: SavedPlace[]; firstName: string }) {
-  const router = useRouter();
-  const [state, action, pending] = useActionState<SendInviteState, FormData>(sendInviteAction, { errors: {} });
+/** Edit playdate (T16): the same screen, filled in, in the playdate's own zone (KD-16), ending in Send update. */
+export type EditPlaydate = {
+  playdateId: string;
+  zone: string;
+  initial: { friendIds: string[]; day: string; start: string; end: string; placeName: string; placeAddress: string; message: string };
+};
 
-  const [selected, setSelected] = useState<string[]>([]);
+/** The planning screen (T08): 1 Who's invited, 2 When, Details, Send. The server decides on Send; nothing here is trusted. */
+export function PlanForm({ friends, savedPlaces, firstName, edit }: { friends: Friend[]; savedPlaces: SavedPlace[]; firstName: string; edit?: EditPlaydate }) {
+  const router = useRouter();
+  const [state, action, pending] = useActionState<SendInviteState, FormData>(edit ? sendUpdateAction : sendInviteAction, { errors: {} });
+  const initial = edit?.initial;
+  const zone = () => edit?.zone ?? browserZone();
+  const leaveTo = edit ? `/playdates/${edit.playdateId}` : "/";
+
+  const [selected, setSelected] = useState<string[]>(initial?.friendIds ?? []);
   const [addingFriend, setAddingFriend] = useState(false);
-  const [when, setWhen] = useState<WhenState>({ mode: "set_time", day: "", start: DEFAULT_START, end: DEFAULT_END, done: false });
-  const [placeName, setPlaceName] = useState("");
-  const [placeAddress, setPlaceAddress] = useState("");
+  const [when, setWhen] = useState<WhenState>(
+    initial ? { mode: "set_time", day: initial.day, start: initial.start, end: initial.end, done: true } : { mode: "set_time", day: "", start: DEFAULT_START, end: DEFAULT_END, done: false },
+  );
+  const [placeName, setPlaceName] = useState(initial?.placeName ?? "");
+  const [placeAddress, setPlaceAddress] = useState(initial?.placeAddress ?? "");
   const [savePlace, setSavePlace] = useState(false);
   const [yourName, setYourName] = useState(firstName);
-  const [message, setMessage] = useState("");
+  const [message, setMessage] = useState(initial?.message ?? "");
   const [leaving, setLeaving] = useState(false);
   // An error from the last Send goes away once the parent changes that part of the plan.
   const [edited, setEdited] = useState<{ after: SendInviteState; fields: string[] }>({ after: state, fields: [] });
   const touch = (field: string) => setEdited((e) => ({ after: state, fields: e.after === state ? [...e.fields, field] : [field] }));
 
   const invited = friends.filter((f) => selected.includes(f.id));
-  const dirty = !state.sent && (selected.length > 0 || when.day !== "" || placeName !== "" || placeAddress !== "" || message !== "" || yourName !== firstName);
+  const start = initial ?? { friendIds: [], day: "", start: when.start, end: when.end, placeName: "", placeAddress: "", message: "" };
+  const dirty =
+    !state.sent &&
+    ([...selected].sort().join() !== [...start.friendIds].sort().join() ||
+      when.day !== start.day ||
+      (initial !== undefined && (when.start !== start.start || when.end !== start.end)) ||
+      placeName !== start.placeName ||
+      placeAddress !== start.placeAddress ||
+      message !== start.message ||
+      yourName !== firstName);
 
   // A reload or a closed tab with a plan half done asks first, like Back does.
   useEffect(() => {
@@ -50,7 +72,7 @@ export function PlanForm({ friends, savedPlaces, firstName }: { friends: Friend[
     return () => window.removeEventListener("beforeunload", warn);
   }, [dirty]);
 
-  if (state.sent) return <SentView texts={state.sent.texts} />;
+  if (state.sent) return <SentView texts={state.sent.texts} update={state.sent.update} backTo={leaveTo} />;
 
   const fixed = edited.after === state ? edited.fields : [];
   const errors = Object.fromEntries(Object.entries(state.errors).filter(([field]) => !fixed.includes(field)));
@@ -69,7 +91,8 @@ export function PlanForm({ friends, savedPlaces, firstName }: { friends: Friend[
       form.set("startTime", when.start);
       form.set("endTime", when.end);
     }
-    form.set("zone", browserZone());
+    form.set("zone", zone());
+    if (edit) form.set("playdateId", edit.playdateId);
     form.set("placeName", placeName);
     form.set("placeAddress", placeAddress);
     if (savePlace) form.set("savePlace", "1");
@@ -85,12 +108,12 @@ export function PlanForm({ friends, savedPlaces, firstName }: { friends: Friend[
       <header className="flex flex-col gap-1">
         <button
           type="button"
-          onClick={() => (dirty ? setLeaving(true) : router.push("/"))}
+          onClick={() => (dirty ? setLeaving(true) : router.push(leaveTo))}
           className="-ml-2 flex min-h-11 w-fit items-center px-2 text-[15px] font-semibold text-primary"
         >
           ← {t.back}
         </button>
-        <h1 className="text-title font-bold leading-tight">{t.title}</h1>
+        <h1 className="text-title font-bold leading-tight">{edit ? t.editTitle : t.title}</h1>
       </header>
 
       <NumberedStep number={1} done={selected.length > 0} title={t.whoTitle}>
@@ -146,6 +169,7 @@ export function PlanForm({ friends, savedPlaces, firstName }: { friends: Friend[
             setWhen(value);
           }}
           serverError={errors.time}
+          zone={edit?.zone}
         />
       </NumberedStep>
 
@@ -246,11 +270,11 @@ export function PlanForm({ friends, savedPlaces, firstName }: { friends: Friend[
         {invited.length > 0 && <p className="text-[15px] text-muted">{t.sendLine(appCount, invited.length - appCount)}</p>}
         {errors.form ? <ErrorLine>{errors.form}</ErrorLine> : Object.keys(errors).length > 0 && <ErrorLine>{t.fixAbove}</ErrorLine>}
         <Button variant="main" fullWidth disabled={pending} onClick={send}>
-          {t.send}
+          {edit ? t.sendUpdate : t.send}
         </Button>
       </div>
 
-      {leaving && <LeaveDialog onKeep={() => setLeaving(false)} onDiscard={() => router.push("/")} />}
+      {leaving && <LeaveDialog onKeep={() => setLeaving(false)} onDiscard={() => router.push(leaveTo)} />}
     </div>
   );
 }

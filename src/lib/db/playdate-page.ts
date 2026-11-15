@@ -22,6 +22,7 @@ type Row = {
   availability_slots: { day: string; slot: DaySlot }[];
   invites: {
     id: string;
+    friend_id: string;
     channel: InviteChannel;
     created_at: string;
     friends: { parent_name: string; label: string; phone_e164: string } | null;
@@ -36,7 +37,7 @@ export const playdatePageStore: PlaydatePageStore = {
     const { data, error } = await adminClient()
       .from("playdates")
       .select(
-        "id, title, mode, status, timezone, start_at, end_at, final_start_at, final_end_at, confirmed_at, place_name, place_address, message, time_version, availability_slots(day, slot), invites(id, channel, created_at, friends(parent_name, label, phone_e164), answers(kind, reason, note, answered_at, time_version))",
+        "id, title, mode, status, timezone, start_at, end_at, final_start_at, final_end_at, confirmed_at, place_name, place_address, message, time_version, availability_slots(day, slot), invites(id, friend_id, channel, created_at, friends(parent_name, label, phone_e164), answers(kind, reason, note, answered_at, time_version))",
       )
       .eq("id", playdateId)
       .eq("organizer_id", organizerId)
@@ -65,6 +66,7 @@ export const playdatePageStore: PlaydatePageStore = {
         const a = i.answers && i.answers.time_version === data.time_version ? i.answers : null;
         return {
           id: i.id,
+          friendId: i.friend_id,
           label: i.friends?.label ?? "",
           parentName: i.friends?.parent_name ?? "",
           channel: i.channel,

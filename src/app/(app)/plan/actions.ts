@@ -8,7 +8,7 @@ import { parsePlanForm, playdatesLimiter, sendInvite, type PlanError, type TextT
 import { enCA } from "@/lib/i18n/en-CA";
 
 /** Field → the message shown under it ("form" for the rest). `sent` holds the Text buttons: the links exist only here (KD-14). */
-export type SendInviteState = { errors: Record<string, string>; sent?: { playdateId: string; texts: TextToSend[] } };
+export type SendInviteState = { errors: Record<string, string>; sent?: { playdateId: string; texts: TextToSend[]; update?: boolean } };
 
 function errorMessages(errors: readonly PlanError[]): Record<string, string> {
   const out: Record<string, string> = {};

@@ -10,6 +10,7 @@ import { firstWord } from "./playdates";
 
 export type OrganizerInvite = {
   id: string;
+  friendId: string;
   label: string;
   parentName: string;
   channel: InviteChannel;
