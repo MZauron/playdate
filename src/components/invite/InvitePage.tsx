@@ -83,6 +83,15 @@ export function InvitePage({ view, token }: { view: InviteView; token: string })
         </div>
       </Card>
 
+      {view.confirmed && view.state !== "cancelled" && (
+        <a
+          href={`/r/${token}/calendar.ics`}
+          className="inline-flex h-[50px] w-full items-center justify-center rounded-button bg-primary-tint px-5 text-base font-semibold text-primary"
+        >
+          {t.addToCalendar}
+        </a>
+      )}
+
       {view.state === "cancelled" ? (
         <StatusLine tone="danger">{t.cancelled}</StatusLine>
       ) : view.state === "started" ? (

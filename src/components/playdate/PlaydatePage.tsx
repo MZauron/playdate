@@ -44,6 +44,12 @@ export function PlaydatePage({ playdate: p, view, live, texts }: { playdate: Org
           </h2>
           <p className="text-[15px] text-muted">{t.updateNote}</p>
           <TextButtons texts={texts} />
+          <a
+            href={`/playdates/${p.id}/calendar.ics`}
+            className="inline-flex h-[50px] w-full items-center justify-center rounded-button bg-primary-tint px-5 text-base font-semibold text-primary"
+          >
+            {enCA.invite.addToCalendar}
+          </a>
         </section>
       )}
 
