@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { at } from "@/lib/rules/time";
-import { checkWhen, clockLabel, endForNewStart, timeOptions, whenRange, whenSummary } from "./plan-time";
+import { addDays, checkSlots, checkWhen, clockLabel, dayHeading, dayLabel, endForNewStart, slotValues, timeOptions, weekFrom, whenRange, whenSummary } from "./plan-time";
 
 const ZONE = "America/Toronto";
 const NOW = at("2026-11-14", 10, 0, ZONE);
@@ -31,5 +31,34 @@ describe("the When step", () => {
   it("folds into a summary with the length", () => {
     const range = whenRange({ day: "2026-11-16", start: "10:00", end: "11:30" }, ZONE)!;
     expect(whenSummary(range, ZONE)).toBe("Mon, Nov 16 · 10:00 AM to 11:30 AM · 1 hr 30 min");
+  });
+});
+
+describe("the Share availability grid (T12)", () => {
+  it("counts days without any zone shifting them, across months and the DST change", () => {
+    expect(addDays("2026-11-30", 1)).toBe("2026-12-01");
+    expect(addDays("2026-03-07", 1)).toBe("2026-03-08");
+    expect(addDays("2026-11-22", -7)).toBe("2026-11-15");
+    expect(weekFrom("2026-11-15")).toEqual(["2026-11-15", "2026-11-16", "2026-11-17", "2026-11-18", "2026-11-19", "2026-11-20", "2026-11-21"]);
+  });
+  it("labels days the doc's way", () => {
+    expect(dayHeading("2026-11-16")).toEqual({ weekday: "Mon", date: "16", month: "Nov" });
+    expect(dayLabel("2026-11-16")).toBe("Mon, Nov 16");
+  });
+  it("Done asks the rule: no slot is NO_FREE_SLOTS, a day before today is IN_PAST", () => {
+    const codes = (v: string[]) => {
+      const d = checkSlots(v, ZONE, NOW);
+      return d.ok ? [] : d.errors.map((e) => e.code);
+    };
+    expect(codes([])).toEqual(["NO_FREE_SLOTS"]);
+    expect(codes(["2026-11-13|morning"])).toEqual(["IN_PAST"]);
+    expect(codes(["2026-11-14|evening", "2026-11-16|morning"])).toEqual([]);
+  });
+  it("sorts slots by day, then morning, afternoon, evening", () => {
+    expect(slotValues(["2026-11-17|morning", "2026-11-16|evening", "2026-11-16|morning"])).toEqual([
+      { day: "2026-11-16", slot: "morning" },
+      { day: "2026-11-16", slot: "evening" },
+      { day: "2026-11-17", slot: "morning" },
+    ]);
   });
 });

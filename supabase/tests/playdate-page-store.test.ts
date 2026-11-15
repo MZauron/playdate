@@ -52,7 +52,7 @@ describe.skipIf(!apiEnabled)("playdate page repository", () => {
     const result = await sendInvite(
       { store: playdates.playdateStore, limiter: { hit: () => ({ ok: true }) }, linkBase: "https://kindred.test" },
       { id: alex, firstName: "Alex", childFirstName: "Mia" },
-      { friendIds: [arjun], mode: "set_time", day: "2030-11-18", startTime: "10:00", endTime: "12:00", zone: "America/Toronto", placeName: "High Park", placeAddress: "", savePlace: false, yourName: "Alex", message: "Park?" },
+      { friendIds: [arjun], mode: "set_time", day: "2030-11-18", startTime: "10:00", endTime: "12:00", slots: [], zone: "America/Toronto", placeName: "High Park", placeAddress: "", savePlace: false, yourName: "Alex", message: "Park?" },
       NOW,
     );
     if (!result.ok) throw new Error(JSON.stringify(result.errors));

@@ -59,7 +59,7 @@ describe.skipIf(!apiEnabled)("Send update against the database", () => {
 
   const NOW = new Date("2030-11-01T12:00:00Z");
   const open = { hit: () => ({ ok: true as const }) };
-  const base = { mode: "set_time", day: "2030-11-18", startTime: "10:00", endTime: "12:00", zone: "America/Toronto", placeName: "High Park", placeAddress: "", savePlace: false, yourName: "Alex", message: "Park?" };
+  const base = { mode: "set_time", day: "2030-11-18", startTime: "10:00", endTime: "12:00", slots: [] as string[], zone: "America/Toronto", placeName: "High Park", placeAddress: "", savePlace: false, yourName: "Alex", message: "Park?" };
   const deps = () => ({ pages: pages.playdatePageStore, playdates: playdates.playdateStore, apply: playdates.applyPlaydateUpdate, limiter: open, linkBase: "https://kindred.test" });
   const answer = (token: string, timeVersion: number) =>
     answerInvite({ store: invites.inviteStore, limiters: { token: open, address: open } }, token, "1.2.3.4", { kind: "yes", reason: null, note: null, timeVersion }, NOW);
