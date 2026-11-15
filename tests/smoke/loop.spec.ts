@@ -2,11 +2,11 @@
 // in a separate browser with no account; the organizer sees it live and confirms; the friend sees it's on. Nothing is texted: the
 // test reads the friend's link from the organizer's Text button, as a phone would open it.
 import { devices, expect, test } from "@playwright/test";
-import { resetSmokeAccount } from "./reset";
+import { resetSmokeAccount, smokePhone } from "./reset";
 
 const ZONE = "America/Toronto";
 test.use({ timezoneId: ZONE, locale: "en-CA" });
-test.beforeEach(resetSmokeAccount); // every attempt, retries included, signs up from nothing
+test.beforeEach(({}, testInfo) => resetSmokeAccount(smokePhone(testInfo.retry))); // every attempt, retries included, signs up from nothing
 
 /** A day a few days ahead, as the date picker takes it. */
 function dayAhead(days: number): string {
@@ -14,11 +14,11 @@ function dayAhead(days: number): string {
   return new Intl.DateTimeFormat("en-CA", { timeZone: ZONE, year: "numeric", month: "2-digit", day: "2-digit" }).format(d);
 }
 
-test("sign up, invite a friend by text link, the friend answers, the organizer sees it live and confirms", async ({ page, browser }) => {
+test("sign up, invite a friend by text link, the friend answers, the organizer sees it live and confirms", async ({ page, browser }, testInfo) => {
   // 1. Sign in with the smoke test number (fixed code, nothing sent) and finish Setup.
   await page.goto("/");
   await expect(page).toHaveURL(/\/sign-in$/);
-  await page.getByLabel("Your phone number").fill("416 555 0109");
+  await page.getByLabel("Your phone number").fill(smokePhone(testInfo.retry).slice(1)); // without the leading 1
   await page.getByRole("button", { name: "Send code" }).click();
   await page.getByLabel("6-digit code").fill("123456");
   await page.getByRole("button", { name: "Sign in" }).click();
@@ -37,7 +37,8 @@ test("sign up, invite a friend by text link, the friend answers, the organizer s
   await page.getByLabel("Child's first name").fill("Ava");
   await page.getByLabel("Phone number").fill("416 555 0177");
   await page.getByRole("button", { name: "Add friend" }).click();
-  await page.getByRole("button", { name: /Ava's parent/ }).click();
+  // A friend added here is selected right away (C2).
+  await expect(page.getByRole("button", { name: /Ava's parent/ })).toHaveAttribute("aria-pressed", "true");
 
   await page.getByLabel("Date").fill(dayAhead(3));
   await page.getByRole("button", { name: "Done" }).click();

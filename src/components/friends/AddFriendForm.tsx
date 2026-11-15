@@ -13,8 +13,12 @@ import { contactsManager, pickContact } from "./contact-picker";
  * Add a friend: name, child's first name and number. Where the browser has a contact picker, "Choose from contacts" fills name and number.
  * On the Plan screen Send invite is the coral action, so the form's own button is secondary there.
  */
-export function AddFriendForm({ submitVariant = "main" }: { submitVariant?: ButtonVariant }) {
-  const [state, action, pending] = useActionState<AddFriendState, FormData>(addFriendAction, { version: 0, errors: {} });
+export function AddFriendForm({ submitVariant = "main", onAdded }: { submitVariant?: ButtonVariant; onAdded?: (friendId: string) => void }) {
+  const [state, action, pending] = useActionState<AddFriendState, FormData>(async (previous, form) => {
+    const next = await addFriendAction(previous, form);
+    if (next.addedId) onAdded?.(next.addedId); // e.g. the Plan screen selects the friend just added
+    return next;
+  }, { version: 0, errors: {} });
   // The boxes empty after each add: a new `key` remounts them.
   return (
     <Card>

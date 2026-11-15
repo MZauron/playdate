@@ -4,6 +4,7 @@ import { useState } from "react";
 import { Card } from "./Card";
 import { cx } from "./cx";
 import { enCA } from "@/lib/i18n/en-CA";
+import { markTexted } from "./saved-texts";
 import type { InviteChannel } from "@/lib/rules/types";
 
 export type TextButton = { key: string; name: string; label: string; channel: InviteChannel; href: string };
@@ -12,8 +13,8 @@ export type TextButton = { key: string; name: string; label: string; channel: In
  * One "Text Aisha" button per family (Q3): each opens Messages on the organizer's own phone with the text filled in, and ticks once
  * tapped. The next family to text gets the coral button; the rest stay quiet. Used after Send invite and after Confirm.
  */
-export function TextButtons({ texts }: { texts: TextButton[] }) {
-  const [texted, setTexted] = useState<string[]>([]);
+export function TextButtons({ texts, playdateId, initiallyTexted = [] }: { texts: TextButton[]; /** Remember ticks on this phone (saved-texts.ts). */ playdateId?: string; initiallyTexted?: string[] }) {
+  const [texted, setTexted] = useState<string[]>(initiallyTexted);
   const next = texts.find((x) => !texted.includes(x.key))?.key;
   return (
     <ul className="flex flex-col gap-3">
@@ -30,7 +31,10 @@ export function TextButtons({ texts }: { texts: TextButton[] }) {
               </span>
               <a
                 href={text.href}
-                onClick={() => setTexted((list) => (list.includes(text.key) ? list : [...list, text.key]))}
+                onClick={() => {
+                  setTexted((list) => (list.includes(text.key) ? list : [...list, text.key]));
+                  if (playdateId) markTexted(playdateId, text.key);
+                }}
                 className={cx(
                   "inline-flex h-11 shrink-0 items-center justify-center rounded-button px-4 text-[15px] font-semibold focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary",
                   done ? "text-success" : text.key === next ? "bg-accent text-white" : "bg-primary-tint text-primary",

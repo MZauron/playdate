@@ -50,8 +50,10 @@ enable_confirmations = false
 14165550101 = "123456"
 14165550102 = "123456"
 14165550103 = "123456"
-# The smoke test's organizer (tests/smoke): deleted and signed up again on every run.
+# The smoke test's organizer (tests/smoke): deleted and signed up again on every attempt; 0108 on a retry (the sign-in code limit
+# allows one code per number per minute, and a retry comes sooner).
 14165550109 = "123456"
+14165550108 = "123456"
 # LOCAL ONLY: GoTrue only accepts phone sign-in with an SMS provider switched on. Nothing is ever sent through it
 # (test_otp answers first), so these are dummies. Never put real provider credentials in this committed file (Q10).
 [auth.sms.twilio]

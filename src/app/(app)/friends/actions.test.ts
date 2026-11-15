@@ -29,7 +29,7 @@ beforeEach(() => {
 describe("addFriendAction", () => {
   it("adds the friend for the signed-in parent and ignores an owner_id in the form", async () => {
     const state = await addFriendAction(start, dev([["owner_id", SAM], ["ownerId", SAM], ["parent_id", SAM]]));
-    expect(state).toEqual({ version: 1, errors: {}, added: "Arjun's parent added." });
+    expect(state).toEqual({ version: 1, errors: {}, added: "Arjun's parent added.", addedId: fake.of(ALEX)[0]!.id });
     expect(fake.of(ALEX)).toHaveLength(1);
     expect(fake.of(SAM)).toHaveLength(0);
   });
