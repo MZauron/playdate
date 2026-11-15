@@ -171,6 +171,14 @@ export const enCA = {
     when: (day: string, time: string) => `${day}, ${time}`,
     at: (place: string) => ` at ${place}`,
   },
+  gate: {
+    title: "Kindred is being tested",
+    note: "Enter the password you were given to continue.",
+    label: "Password",
+    submit: "Continue",
+    wrong: "That password isn't right.",
+    tooMany: "Too many tries. Please wait a few minutes and try again.",
+  },
   somethingWentWrong: "Something went wrong. Please try again.",
   tabs: {
     label: "Main",

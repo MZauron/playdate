@@ -35,4 +35,10 @@ describe("parseEnv", () => {
     expect(env.AI_MODE).toBe("fake");
     expect(env.ANTHROPIC_API_KEY).toBeUndefined();
   });
+
+  it("treats an empty SITE_PASSWORD as no curtain and refuses one shorter than 8 characters", () => {
+    expect(parseEnv({ ...valid, SITE_PASSWORD: "" }).SITE_PASSWORD).toBeUndefined();
+    expect(parseEnv({ ...valid, SITE_PASSWORD: "long-enough" }).SITE_PASSWORD).toBe("long-enough");
+    expect(() => parseEnv({ ...valid, SITE_PASSWORD: "short" })).toThrow(/SITE_PASSWORD/);
+  });
 });
