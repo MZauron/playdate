@@ -1,5 +1,6 @@
 import { HomeView } from "@/components/home/HomeView";
 import { requireParent } from "@/lib/auth/require-parent";
+import { listInvitesForUser } from "@/lib/db/invites";
 import { listOpenAvailability } from "@/lib/db/playdate-page";
 import { listHomePlaydates } from "@/lib/db/playdates";
 import { homeNotices } from "@/lib/domain/majority";
@@ -21,6 +22,7 @@ export default async function HomePage({ searchParams }: { searchParams: Promise
       childName={profile.children[0]?.firstName} // Q4 default: the first child
       playdates={await listHomePlaydates(user.id, now)}
       notices={(await listOpenAvailability(user.id, now)).flatMap(homeNotices)}
+      invites={await listInvitesForUser(user.id, now)}
       now={now}
       zone={DEFAULT_ZONE}
     />

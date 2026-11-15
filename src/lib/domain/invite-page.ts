@@ -48,6 +48,8 @@ export type StoredAnswer = { kind: AnswerKind; reason: DeclineReason | null; not
 
 export type InviteStore = {
   findByTokenHash(tokenHash: string): Promise<StoredInvite | null>;
+  /** T15: a Kindred friend's own invite, found by its id and THEIR user id only; anyone else's id finds nothing. */
+  findForInvitee(inviteId: string, userId: string): Promise<StoredInvite | null>;
   /** Replaces this invite's answer (KD-07: one current answer per invite). */
   saveAnswer(inviteId: string, answer: Answer, timeVersion: number, answeredAt: Date): Promise<void>;
 };
@@ -121,6 +123,15 @@ export function toView(stored: StoredInvite, now: Date): InviteView {
   };
 }
 
+const isUuid = (id: string) => z.uuid().safeParse(id).success;
+
+/** T15: a Kindred friend's own invite, signed in; null for a malformed id or anyone else's invite. Same view as the link (toView). */
+export async function loadInviteForInvitee(store: InviteStore, inviteId: string, userId: string, now: Date): Promise<InviteView | null> {
+  if (!isUuid(inviteId)) return null;
+  const stored = await store.findForInvitee(inviteId, userId);
+  return stored ? toView(stored, now) : null;
+}
+
 /** The page's lookup: null when the token is malformed or matches no invite. */
 export async function loadInvite(store: InviteStore, token: string, now: Date): Promise<InviteView | null> {
   if (!TOKEN_PATTERN.test(token)) return null;
@@ -186,8 +197,18 @@ export async function answerInvite(deps: AnswerDeps, token: string, address: str
   if (!TOKEN_PATTERN.test(token)) return { ok: false, code: "NOT_FOUND" };
   const tokenHash = hashToken(token);
   if (!deps.limiters.address.hit(address).ok || !deps.limiters.token.hit(tokenHash).ok) return { ok: false, code: "TOO_MANY_TRIES" };
+  return answerStored(deps.store, await deps.store.findByTokenHash(tokenHash), form, now);
+}
 
-  const stored = await deps.store.findByTokenHash(tokenHash);
+/** T15: a Kindred friend answers signed in. The invite must be theirs (`invitee_user_id` = the session's user); the id only names it. */
+export async function answerInviteAsInvitee(deps: AnswerDeps, inviteId: string, userId: string, form: AnswerInput, now: Date): Promise<AnswerResult> {
+  if (!isUuid(inviteId)) return { ok: false, code: "NOT_FOUND" };
+  if (!deps.limiters.token.hit(`invite:${inviteId}`).ok) return { ok: false, code: "TOO_MANY_TRIES" };
+  return answerStored(deps.store, await deps.store.findForInvitee(inviteId, userId), form, now);
+}
+
+/** KD-07 through rules/answers.ts, for one invite already found. The same for both ways in. */
+async function answerStored(store: InviteStore, stored: StoredInvite | null, form: AnswerInput, now: Date): Promise<AnswerResult> {
   if (!stored) return { ok: false, code: "NOT_FOUND" };
   const p = stored.playdate;
   const decision = checkAnswer(
@@ -207,6 +228,6 @@ export async function answerInvite(deps: AnswerDeps, token: string, address: str
     const first = decision.errors[0]!;
     return { ok: false, code: first.code, field: first.field };
   }
-  await deps.store.saveAnswer(stored.inviteId, decision.value, p.timeVersion, now);
+  await store.saveAnswer(stored.inviteId, decision.value, p.timeVersion, now);
   return { ok: true, answer: decision.value };
 }

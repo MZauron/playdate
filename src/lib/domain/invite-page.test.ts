@@ -3,7 +3,7 @@
 import { describe, expect, it } from "vitest";
 import type { Answer } from "@/lib/rules/answers";
 import { at } from "@/lib/rules/time";
-import { answerInvite, loadInvite, parseAnswerForm, toView, type AnswerDeps, type InviteStore, type StoredInvite } from "./invite-page";
+import { answerInvite, answerInviteAsInvitee, loadInvite, loadInviteForInvitee, parseAnswerForm, toView, type AnswerDeps, type InviteStore, type StoredInvite } from "./invite-page";
 import { hashToken } from "./invite-token";
 
 const ZONE = "America/Toronto";
@@ -40,12 +40,18 @@ function stored(patch: Partial<StoredInvite["playdate"]> = {}, rest: Partial<Sto
 }
 
 /** One invite per token hash; saved answers are kept so a test can read them back. */
+/** T15: which signed-in user each invite belongs to (a Kindred friend). */
+const inviteeOf = new Map<string, string>([["invite-1", "user-dev"]]);
+
 function world(byToken: Record<string, StoredInvite>) {
   const invites = new Map(Object.entries(byToken).map(([token, s]) => [hashToken(token), structuredClone(s)]));
   const saved: { inviteId: string; answer: Answer; timeVersion: number }[] = [];
   const store: InviteStore = {
     async findByTokenHash(hash) {
       return invites.get(hash) ?? null;
+    },
+    async findForInvitee(inviteId, userId) {
+      return [...invites.values()].find((x) => x.inviteId === inviteId && inviteeOf.get(inviteId) === userId) ?? null;
     },
     async saveAnswer(inviteId, answer, timeVersion) {
       saved.push({ inviteId, answer, timeVersion });
@@ -146,7 +152,7 @@ describe("loadInvite and the view (KD-14, KD-17)", () => {
 
   it("finds nothing for a malformed token without asking the store", async () => {
     let asked = 0;
-    const store: InviteStore = { findByTokenHash: async () => (asked++, null), saveAnswer: async () => {} };
+    const store: InviteStore = { findByTokenHash: async () => (asked++, null), findForInvitee: async () => (asked++, null), saveAnswer: async () => {} };
     expect(await loadInvite(store, "../../etc/passwd", NOW)).toBeNull();
     expect(asked).toBe(0);
   });
@@ -226,5 +232,32 @@ describe("answering availability (T13: KD-04, KD-07, KD-11, KD-17)", () => {
       { range: b, others: [], families: 1, mostPicked: false, yours: true },
     ]);
     expect(JSON.stringify(view)).not.toMatch(/invite-2|invite-3|Patel|Chen/);
+  });
+});
+
+describe("a Kindred friend, signed in (T15)", () => {
+  const INVITE = "11111111-2222-4333-8444-555555555555";
+  const setup = () => {
+    inviteeOf.set(INVITE, "user-dev");
+    return world({ [TOKEN]: stored({}, { inviteId: INVITE }) });
+  };
+
+  it("opens their own invite by id: the same view as the link", async () => {
+    const { store } = setup();
+    expect(await loadInviteForInvitee(store, INVITE, "user-dev", NOW)).toEqual(await loadInvite(store, TOKEN, NOW));
+  });
+  it("finds nothing for anyone else's invite id, or a malformed one", async () => {
+    const { store } = setup();
+    expect(await loadInviteForInvitee(store, INVITE, "user-sam", NOW)).toBeNull();
+    expect(await loadInviteForInvitee(store, "not-an-id", "user-dev", NOW)).toBeNull();
+  });
+  it("answers their own invite through the same rules; another user cannot", async () => {
+    const { deps, saved } = setup();
+    expect(await answerInviteAsInvitee(deps, INVITE, "user-sam", yes, NOW)).toEqual({ ok: false, code: "NOT_FOUND" });
+    expect(await answerInviteAsInvitee(deps, "x", "user-dev", yes, NOW)).toEqual({ ok: false, code: "NOT_FOUND" });
+    expect(saved).toEqual([]);
+    expect((await answerInviteAsInvitee(deps, INVITE, "user-dev", yes, NOW)).ok).toBe(true);
+    expect(saved.map((x) => x.inviteId)).toEqual([INVITE]);
+    expect(await answerInviteAsInvitee(world({ [TOKEN]: stored({ status: "cancelled" }, { inviteId: INVITE }) }).deps, INVITE, "user-dev", yes, NOW)).toEqual({ ok: false, code: "PLAYDATE_CANCELLED" });
   });
 });

@@ -29,7 +29,10 @@ export function answerWords(answer: NonNullable<CurrentAnswer>, zone: string): s
  * KD-07 for a set time: We're in!, or Can't make it with a reason chip and an optional note. After answering: Thanks + Change my
  * answer. The server decides (rules/answers.ts); the page then shows the answer it saved.
  */
-export function AnswerPanel({ token, timeVersion, answer, zone, availability }: { token: string; timeVersion: number; answer: CurrentAnswer; zone: string; availability?: Availability }) {
+/** Which invite this is: the link's token (no account), or the invite id for the signed-in invitee (T15). */
+export type InviteKey = { token: string } | { inviteId: string };
+
+export function AnswerPanel({ inviteKey, timeVersion, answer, zone, availability }: { inviteKey: InviteKey; timeVersion: number; answer: CurrentAnswer; zone: string; availability?: Availability }) {
   const [state, action, pending] = useActionState<AnswerState, FormData>(answerAction, {});
   const [changing, setChanging] = useState(false);
   const [declining, setDeclining] = useState(false);
@@ -46,7 +49,7 @@ export function AnswerPanel({ token, timeVersion, answer, zone, availability }: 
 
   const hidden = (
     <>
-      <input type="hidden" name="token" value={token} />
+      {"token" in inviteKey ? <input type="hidden" name="token" value={inviteKey.token} /> : <input type="hidden" name="inviteId" value={inviteKey.inviteId} />}
       <input type="hidden" name="timeVersion" value={timeVersion} />
     </>
   );

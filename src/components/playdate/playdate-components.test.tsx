@@ -94,12 +94,12 @@ describe("InvitePage once confirmed", () => {
     picks: [],
   };
   it("shows the It's on! bubble and the CONFIRMED band, and still takes answers (KD-07m)", () => {
-    const html = renderToStaticMarkup(<InvitePage view={view} token="AAAAAAAAAAAAAAAAAAAAAA" />);
+    const html = renderToStaticMarkup(<InvitePage view={view} inviteKey={{ token: "AAAAAAAAAAAAAAAAAAAAAA" }} />);
     expect(html).toContain("It&#x27;s on! 🎉 See you Mon, Nov 16, 10:00 AM to 12:00 PM at High Park.");
     expect(html).toContain("Confirmed");
     expect(html).toContain("We&#x27;re in!");
     expect(html).toContain('href="/r/AAAAAAAAAAAAAAAAAAAAAA/calendar.ics"');
-    expect(renderToStaticMarkup(<InvitePage view={{ ...view, confirmed: false }} token="AAAAAAAAAAAAAAAAAAAAAA" />)).not.toContain("calendar.ics");
-    expect(renderToStaticMarkup(<InvitePage view={{ ...view, confirmed: false }} token="AAAAAAAAAAAAAAAAAAAAAA" />)).not.toContain("It&#x27;s on!");
+    expect(renderToStaticMarkup(<InvitePage view={{ ...view, confirmed: false }} inviteKey={{ token: "AAAAAAAAAAAAAAAAAAAAAA" }} />)).not.toContain("calendar.ics");
+    expect(renderToStaticMarkup(<InvitePage view={{ ...view, confirmed: false }} inviteKey={{ token: "AAAAAAAAAAAAAAAAAAAAAA" }} />)).not.toContain("It&#x27;s on!");
   });
 });

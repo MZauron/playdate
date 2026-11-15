@@ -36,7 +36,11 @@ describe("runMajorityNotices", () => {
       openAvailabilityPlaydates: async () => [{ ...tick(), invites: tick().invites.map((i) => ({ ...i, majorityNoticeAt: stamps.get(i.id) ?? null })) }],
       stampMajorityNotice: async (ids, when) => {
         let n = 0;
-        for (const id of ids) if (!stamps.has(id)) (stamps.set(id, when), n++);
+        for (const id of ids) {
+          if (stamps.has(id)) continue;
+          stamps.set(id, when);
+          n++;
+        }
         return n;
       },
     };

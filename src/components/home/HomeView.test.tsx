@@ -86,3 +86,32 @@ describe("groupForHome (KD-13)", () => {
     expect(sections.waiting.map((p) => p.id)).toEqual(["p-waiting"]);
   });
 });
+
+describe("Home: invites from other Kindred parents (T15)", () => {
+  const invite = {
+    inviteId: "11111111-2222-4333-8444-555555555555",
+    organizerFirstName: "Alex",
+    title: "Playdate: Mia & Noor",
+    mode: "set_time" as const,
+    confirmed: false,
+    zone: ZONE,
+    start: new Date("2026-11-29T15:00:00Z"),
+    end: new Date("2026-11-29T17:00:00Z"),
+    placeName: "Christie Pits",
+    myAnswer: null,
+  };
+  it("shows 'Alex invited Noor' with the time, place and this parent's own answer, linking to the invite", () => {
+    const page = html(<HomeView firstName="Priya" childName="Noor" playdates={[]} invites={[invite]} now={NOW} zone={ZONE} />);
+    expect(page).toContain("Invites");
+    expect(page).toContain("Alex invited Noor");
+    expect(page).toContain("Sun, Nov 29 · 10:00 AM to 12:00 PM · Christie Pits");
+    expect(page).toContain("Waiting for your answer");
+    expect(page).toContain(`href="/invites/${invite.inviteId}"`);
+    const answered = html(<HomeView playdates={[]} childName="Noor" invites={[{ ...invite, myAnswer: "yes", confirmed: true }, { ...invite, inviteId: "x", mode: "availability", start: null, end: null }]} now={NOW} zone={ZONE} />);
+    expect(answered).toContain("You&#x27;re in · Confirmed");
+    expect(answered).toContain("Pick a time that works");
+  });
+  it("has no Invites section without invites", () => {
+    expect(html(<HomeView playdates={[]} now={NOW} zone={ZONE} />)).not.toContain("Invites");
+  });
+});

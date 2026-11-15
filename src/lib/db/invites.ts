@@ -39,18 +39,21 @@ type PickRow = {
 
 const date = (value: string | null) => (value ? new Date(value) : null);
 
-export const inviteStore: InviteStore = {
-  async findByTokenHash(tokenHash) {
+/**
+ * One invite and its playdate, as the invite page shows it. `where` is either the link's hash (a friend without an account) or the
+ * invite id together with the signed-in invitee's own user id (a Kindred friend, T15): both read exactly the same fields.
+ */
+async function findOne(where: { token_hash: string } | { id: string; invitee_user_id: string }): Promise<StoredInvite | null> {
     const db = adminClient();
     const { data, error } = await db
       .from("invites")
       .select(
         "id, label, playdates(id, title, mode, status, timezone, start_at, end_at, final_start_at, final_end_at, place_name, place_address, message, time_version, links_expire_at, organizer_id, profiles(first_name), availability_slots(day, slot)), answers(kind, reason, note, pick_start_at, pick_end_at, time_version)",
       )
-      .eq("token_hash", tokenHash)
+      .match(where)
       .maybeSingle()
       .overrideTypes<Row, { merge: false }>();
-    if (error) throw new Error(`findByTokenHash failed: ${error.code}`);
+    if (error) throw new Error(`findInvite failed: ${error.code}`);
     const p = data?.playdates;
     if (!data || !p) return null;
 
@@ -112,7 +115,11 @@ export const inviteStore: InviteStore = {
       picks,
     };
     return stored;
-  },
+}
+
+export const inviteStore: InviteStore = {
+  findByTokenHash: (tokenHash) => findOne({ token_hash: tokenHash }),
+  findForInvitee: (inviteId, userId) => findOne({ id: inviteId, invitee_user_id: userId }),
 
   async saveAnswer(inviteId, answer, timeVersion, answeredAt) {
     const { error } = await adminClient()
@@ -133,3 +140,68 @@ export const inviteStore: InviteStore = {
     if (error) throw new Error(`saveAnswer failed: ${error.code}`);
   },
 };
+
+export type HomeInvite = {
+  inviteId: string;
+  organizerFirstName: string;
+  title: string;
+  mode: import("@/lib/rules/types").TimeMode;
+  confirmed: boolean;
+  zone: string;
+  start: Date | null;
+  end: Date | null;
+  placeName: string | null;
+  myAnswer: AnswerKind | null;
+};
+
+type HomeInviteRow = {
+  id: string;
+  playdates: {
+    title: string;
+    mode: TimeMode;
+    status: PlaydateStatus;
+    timezone: string;
+    start_at: string | null;
+    end_at: string | null;
+    final_start_at: string | null;
+    final_end_at: string | null;
+    place_name: string | null;
+    time_version: number;
+    links_expire_at: string;
+    profiles: { first_name: string } | null;
+  } | null;
+  answers: { kind: AnswerKind; time_version: number } | null;
+};
+
+/**
+ * T15: the invites a Kindred parent received, for their Home, while open (not cancelled, link not over). Only their own invites
+ * (`invitee_user_id`), and only what the invite page would show them anyway.
+ */
+export async function listInvitesForUser(userId: string, now: Date): Promise<HomeInvite[]> {
+  const { data, error } = await adminClient()
+    .from("invites")
+    .select("id, playdates(title, mode, status, timezone, start_at, end_at, final_start_at, final_end_at, place_name, time_version, links_expire_at, profiles(first_name)), answers(kind, time_version)")
+    .eq("invitee_user_id", userId)
+    .order("created_at", { ascending: false })
+    .overrideTypes<HomeInviteRow[], { merge: false }>();
+  if (error) throw new Error(`listInvitesForUser failed: ${error.code}`);
+  return (data ?? []).flatMap((r): HomeInvite[] => {
+    const p = r.playdates;
+    if (!p || p.status === "cancelled" || new Date(p.links_expire_at) <= now) return [];
+    const confirmed = p.status === "confirmed";
+    return [
+      {
+        inviteId: r.id,
+        organizerFirstName: p.profiles?.first_name ?? "",
+        title: p.title,
+        mode: p.mode,
+        confirmed,
+        zone: p.timezone,
+        start: date(confirmed ? p.final_start_at : p.start_at),
+        end: date(confirmed ? p.final_end_at : p.end_at),
+        placeName: p.place_name,
+        myAnswer: r.answers && r.answers.time_version === p.time_version ? r.answers.kind : null,
+      },
+    ];
+  });
+}
