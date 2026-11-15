@@ -16,6 +16,9 @@ export const SLOT_ORDER: readonly DaySlot[] = ["morning", "afternoon", "evening"
 /** KD-14: a link stays open this long after the playdate's end. */
 export const LINK_GRACE_HOURS = 12;
 
+/** T23 (DESIGN.md "Privacy"): this long after a playdate's end, its links are removed and friends' notes deleted. */
+export const CLEANUP_AFTER_DAYS = 30;
+
 /** KD-04: picks move in 30-minute steps and last at least 30 minutes. */
 export const PICK_STEP_MINUTES = 30;
 export const MIN_PICK_MINUTES = 30;

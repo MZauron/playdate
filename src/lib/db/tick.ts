@@ -55,3 +55,12 @@ export const tickStore: TickStore = {
     return data?.length ?? 0;
   },
 };
+
+export const cleanupStore: import("@/lib/domain/cleanup").CleanupStore = {
+  async cleanUp(cutoff) {
+    const { data, error } = await adminClient().rpc("clean_up_old_playdates", { p_cutoff: cutoff.toISOString() });
+    if (error) throw new Error(`cleanUp failed: ${error.code}`);
+    const row = Array.isArray(data) ? data[0] : data;
+    return { linksRemoved: row?.links_removed ?? 0, notesRemoved: row?.notes_removed ?? 0 };
+  },
+};
