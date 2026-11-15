@@ -15,6 +15,13 @@ function realtimeClient(url: string, anonKey: string) {
 
 /** Access tokens last an hour; ask the server for a fresh one well before. */
 const TOKEN_REFRESH_MS = 45 * 60 * 1000;
+/**
+ * Realtime can report the channel as joined a few seconds before it really delivers changes (seen locally right after Realtime
+ * starts, and a quiet hosted project can start it cold too), so the page reads itself again shortly after joining, and once a minute
+ * while it is on screen, in case an event was missed.
+ */
+const CATCH_UP_AFTER_JOIN_MS = [5_000, 15_000];
+const SAFETY_REFRESH_MS = 60_000;
 
 /**
  * Live answers (T10): listens to this playdate's row, its invites, and the parent's answers through Supabase Realtime with the
@@ -45,16 +52,23 @@ export function LiveAnswers({ playdateId, supabaseUrl, anonKey }: { playdateId: 
         .on("postgres_changes", { event: "*", schema: "public", table: "answers" }, refresh)
         .on("postgres_changes", { event: "*", schema: "public", table: "invites", filter: `playdate_id=eq.${playdateId}` }, refresh)
         .on("postgres_changes", { event: "*", schema: "public", table: "playdates", filter: `id=eq.${playdateId}` }, refresh)
-        .subscribe((status) => setLive(status === "SUBSCRIBED"));
+        .subscribe((status) => {
+          setLive(status === "SUBSCRIBED");
+          if (status === "SUBSCRIBED") for (const ms of CATCH_UP_AFTER_JOIN_MS) catchUps.push(setTimeout(() => router.refresh(), ms));
+        });
     });
+    const catchUps: ReturnType<typeof setTimeout>[] = [];
     const renew = setInterval(() => void authorize(), TOKEN_REFRESH_MS);
+    const safety = setInterval(() => document.visibilityState === "visible" && router.refresh(), SAFETY_REFRESH_MS);
     // Coming back to the tab (a phone wakes up): read the page again in case events were missed.
     const onVisible = () => document.visibilityState === "visible" && router.refresh();
     document.addEventListener("visibilitychange", onVisible);
     return () => {
       cancelled = true;
       clearTimeout(timer);
+      catchUps.forEach(clearTimeout);
       clearInterval(renew);
+      clearInterval(safety);
       document.removeEventListener("visibilitychange", onVisible);
       if (channel) void client.removeChannel(channel);
     };

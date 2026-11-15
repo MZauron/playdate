@@ -1,9 +1,9 @@
 import { expect, test } from "@playwright/test";
 
-test("health answers", async ({ request }) => {
+test("health answers, with the database reachable", async ({ request }) => {
   const res = await request.get("/api/health");
   expect(res.ok()).toBe(true);
-  expect(await res.json()).toEqual({ ok: true });
+  expect(await res.json()).toEqual({ ok: true, database: "reachable" });
 });
 
 test("a signed-out visitor lands on sign-in at phone width", async ({ page }) => {
