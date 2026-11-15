@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # Runs the Playwright smoke tests (tests/smoke) against a production build of the app and the LOCAL Supabase: `npm run db:start` first.
-# The full-loop test signs up the test number (416) 555-0109 on every attempt; tests/smoke/reset.ts deletes that one account first,
-# and only on a local database.
+# The full-loop test signs up the test number (416) 555-0109 (0108 on a retry) on every attempt; tests/smoke/reset.ts deletes that
+# one account first, and only on a local database.
 set -euo pipefail
 cd "$(dirname "$0")/.."
 
