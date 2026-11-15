@@ -7,9 +7,9 @@ Read CLAUDE.md + only the docs a task names.
 **[desk]** = done in the Claude desktop app on the laptop: the local app, the browser pane, a phone in hand.
 Estimates are session time (1–2 h each).
 
-## Where we are (2026-11-14)
+## Where we are (2026-11-15)
 - **Built:** the T01 scaffold (Next.js app, tooling, CI, `/api/health`, placeholder home); the T02 rules in `src/lib/rules` (86 cases in `docs/rules.test-cases.md`); the T03 database (`supabase/migrations/0001_init.sql`, 55 DB tests in CI); the T06 components and Home (`src/components`, tab placeholders); the T05 sign-in and Setup (verified locally with Supabase test numbers; staging waits for T04); the T07 friends (`/friends`: list, add, rename, remove); the T08 Plan screen (`/plan`: set time, typed place, message ideas, Send, Text buttons; Home lists the parent's playdates); the T09 invite page (`/r/[token]`: We're in! / Can't make it, Change my answer, over and cancelled states). Also in the repo, the starter kit: `CLAUDE.md`, `docs/DESIGN.md` (from the Kindred design doc, on the owner's Next.js + Supabase stack), `docs/schema.sql` + `docs/schema.test.sql` (46 checks passing on Postgres 16), `docs/QUESTIONS.md`.
-- **Next:** T10 Organizer's playdate page, live answers, confirm (local); T04 (the owner's accounts) for staging.
+- **Next:** T10 Organizer's playdate page, live answers, confirm (local). **Staging is on hold (owner's decision, 2026-11-15):** T04's accounts are finished when T11 or the parent tests need a shared URL (see T04).
 - **Alongside the code:** test the clickable prototype with 5–8 parents (the doc's next step 2). Note what they stumble on in `docs/QUESTIONS.md`.
 
 ## Plan
@@ -42,6 +42,7 @@ Estimates are session time (1–2 h each).
   Staging Supabase project; phone sign-in turned on with **test phone numbers and fixed codes** (no SMS provider until Q10); migration pushed.
   Railway service from this repo (Node 22), env vars from `.env.example`, `PHONE_HASH_KEY` (32 random bytes), `CRON_SECRET`, `SITE_PASSWORD` on staging, staging URL as `PUBLIC_LINK_BASE` (Q16). PR environments on.
   Done when: staging `/api/health` reports the database reachable, and a test number can sign in on staging.
+  **On hold until T11 (2026-11-15).** Done so far: the code (`SITE_PASSWORD` curtain at `/gate`, `/api/health` reports the database); a **Kindred** organization on Supabase (free, no project yet); a **kindred** project on Railway with an empty **staging** environment. Left: (1) a free Supabase project needs a free slot: the owner's 2 free projects are `lash-staging` and `aquatix-staging`, so pause one (or pay ~US$10/month for a project in the paid KidzSpark org); (2) give Railway's GitHub app access to `MZauron/playdate` and add the service; then Claude sets the auth test numbers, pushes the migrations, sets the variables and the domain, and checks the "done when".
 
 ### Phase 1 · The core loop with text friends
 - [x] **T05 Sign in and Setup** [laptop]
