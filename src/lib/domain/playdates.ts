@@ -5,9 +5,9 @@ import { z } from "zod";
 import { createRateLimiter, type RateLimiter } from "@/platform/rate-limit";
 import { DEFAULT_ZONE } from "@/lib/rules/config";
 import { linkExpiresAt } from "@/lib/rules/links";
-import { checkPlan, playdateTitle } from "@/lib/rules/plan";
+import { checkPlan, playdateTitle, type PlanTime } from "@/lib/rules/plan";
 import { at } from "@/lib/rules/time";
-import type { ErrorCode, InviteChannel, Zone } from "@/lib/rules/types";
+import type { DaySlot, ErrorCode, FreeSlot, InviteChannel, Zone } from "@/lib/rules/types";
 import { inviteLink, newInviteToken } from "./invite-token";
 import { smsHref } from "./text-message";
 
@@ -24,6 +24,8 @@ export type PlanFormInput = {
   day: string;
   startTime: string;
   endTime: string;
+  /** Share availability (T12): "2026-11-16|morning", one per free slot ticked on the grid. */
+  slots: string[];
   zone: string;
   placeName: string;
   placeAddress: string;
@@ -41,6 +43,7 @@ export function parsePlanForm(form: FormData): PlanFormInput {
     day: text("day"),
     startTime: text("startTime"),
     endTime: text("endTime"),
+    slots: form.getAll("slot").map(String),
     zone: text("zone"),
     placeName: text("placeName"),
     placeAddress: text("placeAddress"),
@@ -73,6 +76,16 @@ export function wallTime(day: string, time: string, zone: Zone): Date | null {
   return Number.isNaN(instant.getTime()) ? null : instant;
 }
 
+const DAY_SLOTS: readonly DaySlot[] = ["morning", "afternoon", "evening"];
+
+/** "2026-11-16|morning" → a free slot; anything malformed is dropped (the rules then see fewer slots, or none: NO_FREE_SLOTS). */
+export function parseSlots(values: readonly string[]): FreeSlot[] {
+  return values.flatMap((v) => {
+    const [day, slot] = v.split("|");
+    return day && DAY.test(day) && DAY_SLOTS.includes(slot as DaySlot) ? [{ day, slot: slot as DaySlot }] : [];
+  }).slice(0, 7 * 3 * 8); // eight weeks of slots at most
+}
+
 // --- The store the service talks to (src/lib/db/playdates.ts is the real one) ----------------------------------------------------
 /** One of the organizer's friends, as Send needs it. The number stays on the server except inside the organizer's own Text link. */
 export type InviteeFriend = {
@@ -89,10 +102,13 @@ export type NewInvite = { friendId: string; inviteeUserId: string | null; channe
 export type NewPlaydate = {
   organizerId: string;
   title: string;
-  mode: "set_time";
+  mode: "set_time" | "availability";
   timezone: Zone;
-  startAt: Date;
-  endAt: Date;
+  /** Set time only (KD-02). */
+  startAt: Date | null;
+  endAt: Date | null;
+  /** Share availability only (KD-02, KD-04). */
+  slots: FreeSlot[];
   placeName: string | null;
   placeAddress: string | null;
   message: string;
@@ -140,7 +156,7 @@ export function firstWord(name: string): string {
 }
 
 export type CheckedPlanForm =
-  | { ok: true; plan: { time: { start: Date; end: Date }; message: string }; yourName: string; placeName: string | null; placeAddress: string | null }
+  | { ok: true; plan: { time: PlanTime; message: string }; yourName: string; placeName: string | null; placeAddress: string | null }
   | { ok: false; errors: PlanError[] };
 
 /**
@@ -151,9 +167,10 @@ export function checkPlanForm(input: PlanFormInput, inviteeCount: number, zone: 
   const errors: PlanError[] = [];
   const plan = checkPlan(
     {
-      mode: input.mode === "set_time" ? "set_time" : null, // Share availability arrives with T12
+      mode: input.mode === "set_time" || input.mode === "availability" ? input.mode : null,
       start: wallTime(input.day, input.startTime, zone),
       end: wallTime(input.day, input.endTime, zone),
+      slots: parseSlots(input.slots),
       message: input.message,
       inviteeCount,
       zone,
@@ -171,8 +188,7 @@ export function checkPlanForm(input: PlanFormInput, inviteeCount: number, zone: 
   if (input.savePlace && placeName && !placeAddress) errors.push({ code: "ADDRESS_REQUIRED", field: "placeAddress" });
 
   if (!plan.ok || errors.length) return { ok: false, errors };
-  if (plan.value.time.mode !== "set_time") return { ok: false, errors: [{ code: "NO_TIME", field: "time" }] };
-  return { ok: true, plan: { time: { start: plan.value.time.start, end: plan.value.time.end }, message: plan.value.message }, yourName, placeName, placeAddress };
+  return { ok: true, plan: { time: plan.value.time, message: plan.value.message }, yourName, placeName, placeAddress };
 }
 
 /**
@@ -192,7 +208,7 @@ export async function sendInvite(deps: SendDeps, organizer: Organizer, input: Pl
   const attempt = deps.limiter.hit(organizer.id);
   if (!attempt.ok) return { ok: false, errors: [{ code: "TOO_MANY_PLAYDATES" }], retryAfterSeconds: attempt.retryAfterSeconds };
 
-  const { start, end } = plan.time;
+  const time = plan.time; // KD-02: exactly one mode; the other one's fields are empty
   const newToken = deps.newToken ?? newInviteToken;
   const links = friends.map((friend) => ({ friend, ...newToken() }));
 
@@ -200,14 +216,15 @@ export async function sendInvite(deps: SendDeps, organizer: Organizer, input: Pl
     organizerId: organizer.id,
     // KD-06: one child per family, the first (Q4 default); every friend added since T07 has a child's name.
     title: playdateTitle(organizer.childFirstName, friends.map((f) => f.childFirstName).filter((n): n is string => !!n)),
-    mode: "set_time",
+    mode: time.mode,
     timezone: zone,
-    startAt: start,
-    endAt: end,
+    startAt: time.start,
+    endAt: time.end,
+    slots: time.slots,
     placeName,
     placeAddress,
     message: plan.message,
-    linksExpireAt: linkExpiresAt({ finalEnd: null, setEnd: end, slots: [], zone }),
+    linksExpireAt: linkExpiresAt({ finalEnd: null, setEnd: time.end, slots: time.slots, zone }), // KD-14: set end, else the last slot
     invites: links.map(({ friend, tokenHash }) => ({
       friendId: friend.id,
       inviteeUserId: friend.kindredUserId,

@@ -3,7 +3,7 @@
 import { formatDuration, formatShortDay, formatTimeRange } from "@/lib/i18n/en-CA";
 import { checkTime, durationMinutes, moveStart } from "@/lib/rules/plan";
 import { at } from "@/lib/rules/time";
-import type { Decision, Zone } from "@/lib/rules/types";
+import type { DaySlot, Decision, FreeSlot, Zone } from "@/lib/rules/types";
 
 export const FIRST_TIME = "06:00";
 export const LAST_TIME = "22:00";
@@ -65,4 +65,52 @@ export function whenSummary(range: { start: Date; end: Date }, zone: Zone): stri
 /** The browser's zone: the playdate's zone when it is created (KD-16). */
 export function browserZone(): Zone {
   return Intl.DateTimeFormat().resolvedOptions().timeZone;
+}
+
+// --- Share availability (T12): the week grid -------------------------------------------------------------------------------------
+// Days are calendar days in the playdate's zone ("2026-11-16"); arithmetic on them uses UTC so no zone can shift a day.
+
+const dayToUtc = (day: string) => new Date(`${day}T00:00:00Z`);
+const utcToDay = (d: Date) => d.toISOString().slice(0, 10);
+
+export function addDays(day: string, n: number): string {
+  const d = dayToUtc(day);
+  d.setUTCDate(d.getUTCDate() + n);
+  return utcToDay(d);
+}
+
+/** The 7 days shown on one page of the grid, starting at `first`. */
+export function weekFrom(first: string): string[] {
+  return Array.from({ length: 7 }, (_, i) => addDays(first, i));
+}
+
+/** Column heading: { weekday: "Mon", date: "16", month: "Nov" }. */
+export function dayHeading(day: string): { weekday: string; date: string; month: string } {
+  const p = new Intl.DateTimeFormat("en-CA", { timeZone: "UTC", weekday: "short", day: "numeric", month: "short" }).formatToParts(dayToUtc(day));
+  const part = (t: string) => p.find((x) => x.type === t)?.value ?? "";
+  return { weekday: part("weekday"), date: part("day"), month: part("month") };
+}
+
+/** "Mon, Nov 16" for a calendar day. */
+export function dayLabel(day: string): string {
+  const h = dayHeading(day);
+  return `${h.weekday}, ${h.month} ${h.date}`;
+}
+
+/** "2026-11-16|morning" values, as the form posts them, to free slots; sorted by day then slot. */
+export function slotValues(values: readonly string[]): FreeSlot[] {
+  const order: DaySlot[] = ["morning", "afternoon", "evening"];
+  return values
+    .map((v) => {
+      const [day, slot] = v.split("|") as [string, DaySlot];
+      return { day, slot };
+    })
+    .sort((a, b) => a.day.localeCompare(b.day) || order.indexOf(a.slot) - order.indexOf(b.slot));
+}
+
+/** KD-02/KD-04 through the rule, for the grid's Done button: at least one slot, none before today. */
+export function checkSlots(values: readonly string[], zone: Zone, now: Date): Decision<FreeSlot[]> {
+  const decision = checkTime({ mode: "availability", slots: slotValues(values) }, zone, now);
+  if (!decision.ok) return decision;
+  return { ok: true, errors: [], value: decision.value.slots };
 }

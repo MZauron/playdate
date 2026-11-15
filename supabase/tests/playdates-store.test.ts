@@ -88,6 +88,7 @@ describe.skipIf(!apiEnabled)("playdates repository", () => {
         day: "2030-11-18",
         startTime: "10:00",
         endTime: "12:00",
+        slots: [],
         zone: "America/Toronto",
         placeName: "",
         placeAddress: "",

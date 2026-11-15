@@ -4,7 +4,7 @@ import { describe, expect, it } from "vitest";
 import { at } from "@/lib/rules/time";
 import { hashToken } from "./invite-token";
 import { createFakePlaydateStore } from "./playdates.fake-store";
-import { parsePlanForm, sendInvite, wallTime, zoneOrDefault, type PlanFormInput, type SendDeps } from "./playdates";
+import { parsePlanForm, parseSlots, sendInvite, wallTime, zoneOrDefault, type PlanFormInput, type SendDeps } from "./playdates";
 
 const ZONE = "America/Toronto";
 const NOW = at("2026-11-14", 10, 0, ZONE);
@@ -45,6 +45,7 @@ const plan = (patch: Partial<PlanFormInput> = {}): PlanFormInput => ({
   day: "2026-11-16",
   startTime: "10:00",
   endTime: "12:00",
+  slots: [],
   zone: ZONE,
   placeName: "",
   placeAddress: "",
@@ -63,9 +64,10 @@ async function refused(patch: Partial<PlanFormInput>) {
 }
 
 describe("sendInvite refusals (KD-02…06)", () => {
-  it("KD-02: no time mode, or Share availability before T12, is NO_TIME", async () => {
+  it("KD-02: no time mode is NO_TIME; Share availability without slots is NO_FREE_SLOTS", async () => {
     expect(await refused({ mode: "" })).toEqual(["NO_TIME"]);
-    expect(await refused({ mode: "availability" })).toEqual(["NO_TIME"]);
+    expect(await refused({ mode: "picnic" })).toEqual(["NO_TIME"]);
+    expect(await refused({ mode: "availability" })).toEqual(["NO_FREE_SLOTS"]);
   });
   it("KD-02: a set time without a day or with a malformed time is NO_TIME", async () => {
     expect(await refused({ day: "" })).toEqual(["NO_TIME"]);
@@ -206,5 +208,39 @@ describe("wallTime", () => {
     expect(wallTime("2026-11-16", "10:00", ZONE)).toEqual(new Date("2026-11-16T15:00:00Z"));
     expect(wallTime("2026-11-16", "9:00", ZONE)).toBeNull();
     expect(wallTime("16/11/2026", "10:00", ZONE)).toBeNull();
+  });
+});
+
+describe("Share availability (T12: KD-02, KD-04, KD-14)", () => {
+  const free = (patch: Partial<PlanFormInput> = {}) => plan({ mode: "availability", slots: ["2026-11-16|morning", "2026-11-18|evening"], ...patch });
+
+  it("sends like a set time: the free slots, no start or end (KD-02b), links until the last slot ends + 12 h", async () => {
+    const { fake, deps } = world();
+    const result = await sendInvite(deps, organizer, free(), NOW);
+    expect(result.ok).toBe(true);
+    expect(fake.playdates[0]).toMatchObject({
+      mode: "availability",
+      startAt: null,
+      endAt: null,
+      slots: [{ day: "2026-11-16", slot: "morning" }, { day: "2026-11-18", slot: "evening" }],
+      linksExpireAt: at("2026-11-19", 7, 0, ZONE), // Wed 19:00 + 12 h
+    });
+  });
+  it("KD-02e: no free slot is NO_FREE_SLOTS, and malformed slots count as none", async () => {
+    expect(await refused({ mode: "availability", slots: [] })).toEqual(["NO_FREE_SLOTS"]);
+    expect(await refused({ mode: "availability", slots: ["2026-11-16|night", "monday|morning", "2026-11-16"] })).toEqual(["NO_FREE_SLOTS"]);
+  });
+  it("KD-04j: a slot on a day before today is IN_PAST; today is fine (KD-04i)", async () => {
+    expect(await refused({ mode: "availability", slots: ["2026-11-13|morning"] })).toEqual(["IN_PAST"]);
+    const { deps } = world();
+    expect((await sendInvite(deps, organizer, free({ slots: ["2026-11-14|evening"] }), NOW)).ok).toBe(true);
+  });
+  it("KD-02a: a set time ignores leftover slots", async () => {
+    const { fake, deps } = world();
+    await sendInvite(deps, organizer, plan({ slots: ["2026-11-16|morning"] }), NOW);
+    expect(fake.playdates[0]).toMatchObject({ mode: "set_time", slots: [] });
+  });
+  it("parseSlots keeps only well-formed day|slot values", () => {
+    expect(parseSlots(["2026-11-16|afternoon", "2026-02-30x|morning", "2026-11-16|lunch"])).toEqual([{ day: "2026-11-16", slot: "afternoon" }]);
   });
 });

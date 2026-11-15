@@ -101,7 +101,14 @@ export const enCA = {
     modeLabel: "How to choose the time",
     pickTime: "Pick date and time",
     shareAvailability: "Share availability",
-    availabilitySoon: "Coming soon. For now, pick a date and time.",
+    availabilityHint: "Tap the times you're free. Friends will pick one.",
+    previousWeek: "Previous week",
+    nextWeek: "Next week",
+    slotNames: { morning: "Morning", afternoon: "Afternoon", evening: "Evening" },
+    /** Q8 default hours, written the doc's way: "9–12", "1–4", "4–7". */
+    slotHours: (start: number, end: number) => `${start % 12 || 12}–${end % 12 || 12}`,
+    slotCell: (day: string, slot: string) => `${day}, ${slot}`,
+    freeTimes: (n: number) => (n === 1 ? "1 time you're free" : `${n} times you're free`),
     dateLabel: "Date",
     startLabel: "Start",
     endLabel: "End",
@@ -146,7 +153,7 @@ export const enCA = {
     // KD-02…06 (the rule codes) and the Details checks of the planning screen.
     errors: {
       NO_TIME: "Choose a date, a start and an end, then tap Done.",
-      NO_FREE_SLOTS: "Choose at least one time you're free.",
+      NO_FREE_SLOTS: "Tap at least one time you're free, then Done.",
       END_BEFORE_START: "The end has to be after the start.",
       IN_PAST: "That time has already passed. Choose a later one.",
       MESSAGE_REQUIRED: "Please write a short message to the parents.",
@@ -185,6 +192,7 @@ export const enCA = {
     answered: (answered: number, total: number) => `${answered} of ${total} answered`,
     live: "Live",
     whenTitle: "When",
+    yourAvailability: "Your availability (sent)",
     whereTitle: "Where",
     detailsTitle: "Details",
     messageLabel: "Your message",
@@ -215,6 +223,9 @@ export const enCA = {
       `New time for our playdate: ${day}, ${time}${place ? ` at ${place}` : ""}. Please answer again with the link above.`,
     updated: (day: string, time: string, place: string | null) =>
       `Our playdate has an update: ${day}, ${time}${place ? ` at ${place}` : ""}. The link above has the details.`,
+    /** Share availability, before a time is confirmed: no single time to name. */
+    newTimes: (place: string | null) => `New times to pick from for our playdate${place ? ` at ${place}` : ""}. Please answer again with the link above.`,
+    updatedNoTime: (place: string | null) => `Our playdate${place ? ` at ${place}` : ""} has an update. The link above has the details.`,
   },
   /** KD-15 (Q1 default): the cancellation text, from the organizer's phone. */
   cancelledText: (day: string | null) => (day ? `Sorry, our playdate on ${day} is cancelled.` : "Sorry, our playdate is cancelled."),

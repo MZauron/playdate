@@ -6,7 +6,7 @@ import { enCA, formatShortDay, formatTimeRange } from "@/lib/i18n/en-CA";
 import { planEdit, type EditState } from "@/lib/rules/edit";
 import { linkExpiresAt } from "@/lib/rules/links";
 import { playdateTitle } from "@/lib/rules/plan";
-import type { InviteChannel, InviteLabel, PlaydateStatus } from "@/lib/rules/types";
+import type { FreeSlot, InviteChannel, InviteLabel, PlaydateStatus, TimeMode } from "@/lib/rules/types";
 import { inviteLink, newInviteToken } from "./invite-token";
 import { isPlaydateId, type OrganizerPlaydate, type PlaydatePageStore } from "./playdate-page";
 import { checkPlanForm, firstWord, MAX_INVITEES, type NewInvite, type PlanError, type PlanFormInput, type PlaydateStore, type TextToSend } from "./playdates";
@@ -14,9 +14,11 @@ import { smsBodyHref, smsHref } from "./text-message";
 
 export type PlaydateUpdate = {
   title: string;
-  mode: "set_time";
-  startAt: Date;
-  endAt: Date;
+  mode: "set_time" | "availability";
+  startAt: Date | null;
+  endAt: Date | null;
+  /** The free slots, rewritten each time (none for a set time, KD-02). */
+  slots: FreeSlot[];
   placeName: string | null;
   placeAddress: string | null;
   message: string;
@@ -55,6 +57,8 @@ export function editFormValues(p: OrganizerPlaydate, zone = p.timezone) {
   const day = (d: Date) => new Intl.DateTimeFormat("en-CA", { timeZone: zone, year: "numeric", month: "2-digit", day: "2-digit" }).format(d);
   return {
     friendIds: p.invites.map((i) => i.friendId),
+    mode: p.mode as TimeMode,
+    slots: p.slots.map((s) => `${s.day}|${s.slot}`),
     day: p.startAt ? day(p.startAt) : "",
     start: p.startAt ? clock(p.startAt) : "",
     end: p.endAt ? clock(p.endAt) : "",
@@ -68,7 +72,9 @@ export function editFormValues(p: OrganizerPlaydate, zone = p.timezone) {
  * Q19 default: the update text is Kindred's short sentence with the new day, time and place, and no link. Links never change (only
  * their hashes are stored), and the first text with the link is right above it in the same Messages thread.
  */
-export function updateSentence(kind: "new_time" | "updated", start: Date, end: Date, zone: string, place: string | null): string {
+export function updateSentence(kind: "new_time" | "updated", start: Date | null, end: Date | null, zone: string, place: string | null): string {
+  // Share availability before confirmation: there is no one time to name, only free times to pick from (T12).
+  if (!start || !end) return kind === "new_time" ? enCA.updateTexts.newTimes(place) : enCA.updateTexts.updatedNoTime(place);
   const words = kind === "new_time" ? enCA.updateTexts.newTime : enCA.updateTexts.updated;
   return words(formatShortDay(start, zone), formatTimeRange(start, end, zone), place);
 }
@@ -94,7 +100,7 @@ export async function sendUpdate(deps: UpdateDeps, organizer: { id: string; firs
     friendIds: p.invites.map((i) => i.friendId),
   };
   const after: EditState = {
-    time: { mode: "set_time", start: plan.time.start, end: plan.time.end, slots: [] },
+    time: { mode: plan.time.mode, start: plan.time.start, end: plan.time.end, slots: plan.time.slots },
     place: placeName ? { name: placeName, address: placeAddress, providerPlaceId: null } : null,
     message: plan.message,
     friendIds: friends.map((f) => f.id),
@@ -116,13 +122,14 @@ export async function sendUpdate(deps: UpdateDeps, organizer: { id: string; firs
   await deps.apply(organizer.id, playdateId, {
     // KD-06: the title follows the families now invited (first child each, Q4 default).
     title: playdateTitle(organizer.childFirstName, friends.map((f) => f.childFirstName).filter((n): n is string => !!n)),
-    mode: "set_time",
+    mode: plan.time.mode,
     startAt: plan.time.start,
     endAt: plan.time.end,
+    slots: plan.time.slots,
     placeName,
     placeAddress,
     message: plan.message,
-    linksExpireAt: linkExpiresAt({ finalEnd, setEnd: plan.time.end, slots: [], zone }),
+    linksExpireAt: linkExpiresAt({ finalEnd, setEnd: plan.time.end, slots: plan.time.slots, zone }),
     timeVersion: edit.timeVersion,
     status: edit.status,
     clearFinal: edit.clearFinalTime,

@@ -7,7 +7,9 @@ import { TextButtons, type TextButton } from "@/components/TextButtons";
 import { directionsHref } from "@/components/invite/InvitePage";
 import type { OrganizerPlaydate, PlaydatePageView } from "@/lib/domain/playdate-page";
 import { enCA, formatDuration, formatShortDay, formatTimeRange } from "@/lib/i18n/en-CA";
+import { SLOT_HOURS } from "@/lib/rules/config";
 import { durationMinutes } from "@/lib/rules/plan";
+import { dayLabel, slotValues } from "@/components/plan/plan-time";
 import { CancelButton } from "./CancelButton";
 import { ConfirmButton } from "./ConfirmButton";
 
@@ -71,6 +73,18 @@ export function PlaydatePage({ playdate: p, view, live, texts }: { playdate: Org
 
       <NumberedStep number={2} done={view.confirmed} title={t.whenTitle}>
         <div className="mt-2 flex flex-col gap-3">
+          {p.mode === "availability" && !view.confirmed && (
+            <div className="flex flex-col gap-1">
+              <p className="text-label font-semibold uppercase tracking-wider text-muted">{t.yourAvailability}</p>
+              <ul className="flex flex-col gap-1">
+                {slotValues(p.slots.map((x) => `${x.day}|${x.slot}`)).map((x) => (
+                  <li key={`${x.day}|${x.slot}`} className="text-[15px] font-semibold">
+                    {dayLabel(x.day)} · {enCA.plan.slotNames[x.slot]} {enCA.plan.slotHours(SLOT_HOURS[x.slot].start, SLOT_HOURS[x.slot].end)}
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
           {view.start && view.end && (
             <p className="font-semibold">
               {formatShortDay(view.start, zone)} · {formatTimeRange(view.start, view.end, zone)} · {formatDuration(durationMinutes({ start: view.start, end: view.end }))}
@@ -78,7 +92,7 @@ export function PlaydatePage({ playdate: p, view, live, texts }: { playdate: Org
           )}
           {view.confirmed ? (
             <StatusLine tone="success">{t.confirmed}</StatusLine>
-          ) : view.cancelled ? null : (
+          ) : view.cancelled || p.mode === "availability" ? null : (
             <>
               <p className="text-[15px]">{view.comingNames.length ? t.canCome(view.comingNames) : t.nobodyYet}</p>
               <ConfirmButton playdateId={p.id} enabled={view.canConfirm} />

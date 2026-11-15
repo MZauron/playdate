@@ -11,6 +11,7 @@ import { Field } from "@/components/Field";
 import { NumberedStep } from "@/components/NumberedStep";
 import { AddFriendForm } from "@/components/friends/AddFriendForm";
 import type { Friend } from "@/lib/domain/friends";
+import type { TimeMode } from "@/lib/rules/types";
 import { enCA } from "@/lib/i18n/en-CA";
 import { LeaveDialog } from "./LeaveDialog";
 import { MessageField } from "./MessageField";
@@ -26,7 +27,7 @@ export type SavedPlace = { name: string; address: string };
 export type EditPlaydate = {
   playdateId: string;
   zone: string;
-  initial: { friendIds: string[]; day: string; start: string; end: string; placeName: string; placeAddress: string; message: string };
+  initial: { friendIds: string[]; mode: TimeMode; slots: string[]; day: string; start: string; end: string; placeName: string; placeAddress: string; message: string };
 };
 
 /** The planning screen (T08): 1 Who's invited, 2 When, Details, Send. The server decides on Send; nothing here is trusted. */
@@ -40,7 +41,9 @@ export function PlanForm({ friends, savedPlaces, firstName, edit }: { friends: F
   const [selected, setSelected] = useState<string[]>(initial?.friendIds ?? []);
   const [addingFriend, setAddingFriend] = useState(false);
   const [when, setWhen] = useState<WhenState>(
-    initial ? { mode: "set_time", day: initial.day, start: initial.start, end: initial.end, done: true } : { mode: "set_time", day: "", start: DEFAULT_START, end: DEFAULT_END, done: false },
+    initial
+      ? { mode: initial.mode, day: initial.day, start: initial.start || DEFAULT_START, end: initial.end || DEFAULT_END, slots: initial.slots, done: true }
+      : { mode: "set_time", day: "", start: DEFAULT_START, end: DEFAULT_END, slots: [], done: false },
   );
   const [placeName, setPlaceName] = useState(initial?.placeName ?? "");
   const [placeAddress, setPlaceAddress] = useState(initial?.placeAddress ?? "");
@@ -53,11 +56,13 @@ export function PlanForm({ friends, savedPlaces, firstName, edit }: { friends: F
   const touch = (field: string) => setEdited((e) => ({ after: state, fields: e.after === state ? [...e.fields, field] : [field] }));
 
   const invited = friends.filter((f) => selected.includes(f.id));
-  const start = initial ?? { friendIds: [], day: "", start: when.start, end: when.end, placeName: "", placeAddress: "", message: "" };
+  const start = initial ?? { friendIds: [], mode: "set_time" as TimeMode, slots: [], day: "", start: when.start, end: when.end, placeName: "", placeAddress: "", message: "" };
   const dirty =
     !state.sent &&
     ([...selected].sort().join() !== [...start.friendIds].sort().join() ||
       when.day !== start.day ||
+      when.mode !== start.mode ||
+      [...when.slots].sort().join() !== [...start.slots].sort().join() ||
       (initial !== undefined && (when.start !== start.start || when.end !== start.end)) ||
       placeName !== start.placeName ||
       placeAddress !== start.placeAddress ||
@@ -86,11 +91,12 @@ export function PlanForm({ friends, savedPlaces, firstName, edit }: { friends: F
     const form = new FormData();
     for (const id of selected) form.append("friendId", id);
     form.set("mode", when.mode);
-    if (when.done) {
+    if (when.done && when.mode === "set_time") {
       form.set("day", when.day);
       form.set("startTime", when.start);
       form.set("endTime", when.end);
     }
+    if (when.done && when.mode === "availability") for (const slot of when.slots) form.append("slot", slot);
     form.set("zone", zone());
     if (edit) form.set("playdateId", edit.playdateId);
     form.set("placeName", placeName);
@@ -161,7 +167,7 @@ export function PlanForm({ friends, savedPlaces, firstName, edit }: { friends: F
         </div>
       </NumberedStep>
 
-      <NumberedStep number={2} done={when.done && when.mode === "set_time"} title={t.whenTitle}>
+      <NumberedStep number={2} done={when.done} title={t.whenTitle}>
         <WhenStep
           value={when}
           onChange={(value) => {
@@ -270,7 +276,7 @@ export function PlanForm({ friends, savedPlaces, firstName, edit }: { friends: F
         {invited.length > 0 && <p className="text-[15px] text-muted">{t.sendLine(appCount, invited.length - appCount)}</p>}
         {errors.form ? <ErrorLine>{errors.form}</ErrorLine> : Object.keys(errors).length > 0 && <ErrorLine>{t.fixAbove}</ErrorLine>}
         <Button variant="main" fullWidth disabled={pending} onClick={send}>
-          {edit ? t.sendUpdate : t.send}
+          {edit ? t.sendUpdate : when.mode === "availability" ? t.shareAvailability : t.send}
         </Button>
       </div>
 

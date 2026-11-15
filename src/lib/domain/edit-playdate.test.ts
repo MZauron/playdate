@@ -93,6 +93,7 @@ const form = (patch: Partial<PlanFormInput> = {}): PlanFormInput => ({
   day: "2026-11-16",
   startTime: "10:00",
   endTime: "12:00",
+  slots: [],
   zone: "Asia/Tokyo", // the browser's zone is ignored: an edit keeps the playdate's (KD-16)
   placeName: "High Park",
   placeAddress: "",
@@ -175,11 +176,44 @@ describe("sendUpdate (KD-10)", () => {
 
 describe("editFormValues", () => {
   it("fills the form in the playdate's zone", () => {
-    expect(editFormValues(playdate())).toEqual({ friendIds: [F1, F2], day: "2026-11-16", start: "10:00", end: "12:00", placeName: "High Park", placeAddress: "", message: "Park?" });
+    expect(editFormValues(playdate())).toEqual({ friendIds: [F1, F2], mode: "set_time", slots: [], day: "2026-11-16", start: "10:00", end: "12:00", placeName: "High Park", placeAddress: "", message: "Park?" });
     expect(editFormValues(playdate({ timezone: "Asia/Kolkata", startAt: at("2026-11-16", 23, 30, "Asia/Kolkata"), endAt: at("2026-11-17", 0, 30, "Asia/Kolkata") }))).toMatchObject({
       day: "2026-11-16",
       start: "23:30",
       end: "00:30",
     });
+  });
+});
+
+describe("sendUpdate with Share availability (KD-10b, c, i)", () => {
+  const avail = () =>
+    playdate({
+      mode: "availability",
+      status: "collecting",
+      startAt: null,
+      endAt: null,
+      finalStartAt: null,
+      finalEndAt: null,
+      confirmedAt: null,
+      slots: [{ day: "2026-11-16", slot: "morning" }, { day: "2026-11-17", slot: "evening" }],
+    });
+  const availForm = (slots: string[], patch: Partial<PlanFormInput> = {}) => form({ mode: "availability", day: "", startTime: "", endTime: "", slots, ...patch });
+
+  it("KD-10b: switching from a set time to availability is a time change", async () => {
+    const { deps, applied } = world();
+    await sendUpdate(deps, organizer, ID, availForm(["2026-11-16|morning"]), NOW);
+    expect(applied[0]).toMatchObject({ mode: "availability", startAt: null, endAt: null, slots: [{ day: "2026-11-16", slot: "morning" }], timeVersion: 2, label: "new_time" });
+  });
+  it("KD-10c: a slot added is a time change, and the text says there are new times to pick", async () => {
+    const { deps, applied } = world(avail());
+    const result = await sendUpdate(deps, organizer, ID, availForm(["2026-11-16|morning", "2026-11-17|evening", "2026-11-18|afternoon"]), NOW);
+    expect(applied[0]).toMatchObject({ timeVersion: 2, deleteAnswers: true, label: "new_time" });
+    if (!result.ok || !result.changed) throw new Error("expected a change");
+    expect(decodeURIComponent(result.texts[0]!.href)).toBe("sms:+14165550111?&body=New times to pick from for our playdate at High Park. Please answer again with the link above.");
+  });
+  it("KD-10i: the same slots in another order are not a time change", async () => {
+    const { deps, applied } = world(avail());
+    expect(await sendUpdate(deps, organizer, ID, availForm(["2026-11-17|evening", "2026-11-16|morning"]), NOW)).toEqual({ ok: true, changed: false });
+    expect(applied).toEqual([]);
   });
 });

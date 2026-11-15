@@ -51,7 +51,7 @@ describe.skipIf(!apiEnabled)("invites repository", () => {
     const result = await sendInvite(
       { store: playdates.playdateStore, limiter: { hit: () => ({ ok: true }) }, linkBase: "https://kindred.test" },
       { id: alex, firstName: "Alex", childFirstName: "Mia" },
-      { friendIds: [dev, maya], mode: "set_time", day: "2030-11-18", startTime: "10:00", endTime: "12:00", zone: "America/Toronto", placeName: "Riverdale Park", placeAddress: "373 Broadview Ave", savePlace: false, yourName: "Alex", message: "Park?" },
+      { friendIds: [dev, maya], mode: "set_time", day: "2030-11-18", startTime: "10:00", endTime: "12:00", slots: [], zone: "America/Toronto", placeName: "Riverdale Park", placeAddress: "373 Broadview Ave", savePlace: false, yourName: "Alex", message: "Park?" },
       NOW,
     );
     if (!result.ok) throw new Error(JSON.stringify(result.errors));
