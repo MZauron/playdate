@@ -7,23 +7,29 @@ import { Chip } from "@/components/Chip";
 import { StatusLine } from "@/components/StatusLine";
 import { enCA } from "@/lib/i18n/en-CA";
 import { DECLINE_REASONS, NOTE_MAX_LENGTH } from "@/lib/rules/config";
-import type { AnswerKind, DeclineReason } from "@/lib/rules/types";
+import type { InviteView } from "@/lib/domain/invite-page";
+import type { DeclineReason, FreeSlot } from "@/lib/rules/types";
+import { EveryonesPicks, PickChooser, rangeWords } from "./PickAnswer";
 
 const t = enCA.invite;
 
-type CurrentAnswer = { kind: AnswerKind; reason: DeclineReason | null; note: string | null } | null;
+type CurrentAnswer = InviteView["answer"];
+
+/** Availability (T13): the organizer's free slots and Everyone's picks. */
+type Availability = { organizerFirstName: string; zone: string; slots: FreeSlot[]; picks: InviteView["picks"] };
 
 /** "We're in!" or "Can't make it · We're busy then". */
-export function answerWords(answer: NonNullable<CurrentAnswer>): string {
-  if (answer.kind === "no" && answer.reason) return `${t.no} · ${enCA.reasons[answer.reason]}`;
-  return t.yes;
+export function answerWords(answer: NonNullable<CurrentAnswer>, zone: string): string {
+  if (answer.kind === "no" && answer.reason) return t.yourAnswer(`${t.no} · ${enCA.reasons[answer.reason]}`);
+  if (answer.kind === "pick" && answer.pick) return t.yourPick(rangeWords(answer.pick, zone));
+  return t.yourAnswer(t.yes);
 }
 
 /**
  * KD-07 for a set time: We're in!, or Can't make it with a reason chip and an optional note. After answering: Thanks + Change my
  * answer. The server decides (rules/answers.ts); the page then shows the answer it saved.
  */
-export function AnswerPanel({ token, timeVersion, answer }: { token: string; timeVersion: number; answer: CurrentAnswer }) {
+export function AnswerPanel({ token, timeVersion, answer, zone, availability }: { token: string; timeVersion: number; answer: CurrentAnswer; zone: string; availability?: Availability }) {
   const [state, action, pending] = useActionState<AnswerState, FormData>(answerAction, {});
   const [changing, setChanging] = useState(false);
   const [declining, setDeclining] = useState(false);
@@ -56,7 +62,8 @@ export function AnswerPanel({ token, timeVersion, answer }: { token: string; tim
         <StatusLine tone="success" className="text-lg font-semibold">
           {t.thanks}
         </StatusLine>
-        <p className={answer.kind === "no" ? "font-medium text-danger" : "font-medium text-success"}>{t.yourAnswer(answerWords(answer))}</p>
+        <p className={answer.kind === "no" ? "font-medium text-danger" : "font-medium text-success"}>{answerWords(answer, zone)}</p>
+        {availability && <EveryonesPicks picks={availability.picks} zone={availability.zone} hidden={hidden} action={action} pending={pending} />}
         {error}
         <Button fullWidth onClick={() => setChanging(true)}>
           {t.change}
@@ -103,6 +110,15 @@ export function AnswerPanel({ token, timeVersion, answer }: { token: string; tim
           {t.back}
         </Button>
       </form>
+    );
+  }
+
+  if (availability) {
+    return (
+      <div className="flex flex-col gap-3">
+        {error}
+        <PickChooser {...availability} hidden={hidden} action={action} pending={pending} onDecline={() => setDeclining(true)} />
+      </div>
     );
   }
 

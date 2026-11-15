@@ -76,7 +76,7 @@ describe.skipIf(!apiEnabled)("invites repository", () => {
   it("saves an answer for that invite only, and a change replaces it", async () => {
     const { devToken, mayaToken } = await playdateWithTwoFriends();
     expect((await page.answerInvite(deps(), devToken, "1.2.3.4", { kind: "yes", reason: null, note: null, timeVersion: 1 }, NOW)).ok).toBe(true);
-    expect((await page.loadInvite(invites.inviteStore, devToken, NOW))?.answer).toEqual({ kind: "yes", reason: null, note: null });
+    expect((await page.loadInvite(invites.inviteStore, devToken, NOW))?.answer).toEqual({ kind: "yes", reason: null, note: null, pick: null });
     expect((await page.loadInvite(invites.inviteStore, mayaToken, NOW))?.answer).toBeNull();
 
     await page.answerInvite(deps(), devToken, "1.2.3.4", { kind: "no", reason: "busy", note: "Sorry!", timeVersion: 1 }, NOW);
