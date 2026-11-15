@@ -181,8 +181,9 @@ describe("sendInvite", () => {
 
   it("KD-16: uses the organizer's browser zone, or the default when the zone is unknown", async () => {
     const { fake, deps } = world();
-    await sendInvite(deps, organizer, plan({ zone: "America/Vancouver" }), NOW);
-    expect(fake.playdates[0]).toMatchObject({ timezone: "America/Vancouver", startAt: new Date("2026-11-16T18:00:00Z") });
+    // A zone without daylight saving, so the expected instant does not depend on this machine's time-zone data.
+    await sendInvite(deps, organizer, plan({ zone: "Asia/Kolkata" }), NOW);
+    expect(fake.playdates[0]).toMatchObject({ timezone: "Asia/Kolkata", startAt: new Date("2026-11-16T04:30:00Z") });
     expect(zoneOrDefault("Mars/Olympus")).toBe("America/Toronto");
     expect(zoneOrDefault("")).toBe("America/Toronto");
   });
