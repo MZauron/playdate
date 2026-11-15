@@ -13,3 +13,8 @@ export function textBody(message: string, link: string): string {
 export function smsHref(phoneE164: string, message: string, link: string): string {
   return `sms:${phoneE164}?&body=${encodeURIComponent(textBody(message, link))}`;
 }
+
+/** An `sms:` link with a body Kindred wrote itself (the confirmation, KD-09), not the parent's message. */
+export function smsBodyHref(phoneE164: string, body: string): string {
+  return `sms:${phoneE164}?&body=${encodeURIComponent(body)}`;
+}
