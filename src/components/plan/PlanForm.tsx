@@ -6,6 +6,7 @@ import { sendInviteAction, type SendInviteState } from "@/app/(app)/plan/actions
 import { sendUpdateAction } from "@/app/(app)/playdates/[id]/edit/actions";
 import { Button } from "@/components/Button";
 import { Card } from "@/components/Card";
+import { Chip } from "@/components/Chip";
 import { cx } from "@/components/cx";
 import { Field } from "@/components/Field";
 import { NumberedStep } from "@/components/NumberedStep";
@@ -31,22 +32,39 @@ export type EditPlaydate = {
 };
 
 /** The planning screen (T08): 1 Who's invited, 2 When, Details, Send. The server decides on Send; nothing here is trusted. */
-export function PlanForm({ friends, savedPlaces, firstName, edit }: { friends: Friend[]; savedPlaces: SavedPlace[]; firstName: string; edit?: EditPlaydate }) {
+/** T19: a new plan started from a group (its families) or from Plan again (also the same place, next week). */
+export type PlanPrefill = { friendIds: string[]; day?: string; start?: string; end?: string; placeName?: string; placeAddress?: string };
+
+export function PlanForm({
+  friends,
+  savedPlaces,
+  firstName,
+  edit,
+  groups = [],
+  prefill,
+}: {
+  friends: Friend[];
+  savedPlaces: SavedPlace[];
+  firstName: string;
+  edit?: EditPlaydate;
+  groups?: { id: string; name: string; friendIds: string[] }[];
+  prefill?: PlanPrefill;
+}) {
   const router = useRouter();
   const [state, action, pending] = useActionState<SendInviteState, FormData>(edit ? sendUpdateAction : sendInviteAction, { errors: {} });
   const initial = edit?.initial;
   const zone = () => edit?.zone ?? browserZone();
   const leaveTo = edit ? `/playdates/${edit.playdateId}` : "/";
 
-  const [selected, setSelected] = useState<string[]>(initial?.friendIds ?? []);
+  const [selected, setSelected] = useState<string[]>(initial?.friendIds ?? prefill?.friendIds ?? []);
   const [addingFriend, setAddingFriend] = useState(false);
   const [when, setWhen] = useState<WhenState>(
     initial
       ? { mode: initial.mode, day: initial.day, start: initial.start || DEFAULT_START, end: initial.end || DEFAULT_END, slots: initial.slots, done: true }
-      : { mode: "set_time", day: "", start: DEFAULT_START, end: DEFAULT_END, slots: [], done: false },
+      : { mode: "set_time", day: prefill?.day ?? "", start: prefill?.start || DEFAULT_START, end: prefill?.end || DEFAULT_END, slots: [], done: !!prefill?.day },
   );
-  const [placeName, setPlaceName] = useState(initial?.placeName ?? "");
-  const [placeAddress, setPlaceAddress] = useState(initial?.placeAddress ?? "");
+  const [placeName, setPlaceName] = useState(initial?.placeName ?? prefill?.placeName ?? "");
+  const [placeAddress, setPlaceAddress] = useState(initial?.placeAddress ?? prefill?.placeAddress ?? "");
   const [savePlace, setSavePlace] = useState(false);
   const [yourName, setYourName] = useState(firstName);
   const [message, setMessage] = useState(initial?.message ?? "");
@@ -124,6 +142,26 @@ export function PlanForm({ friends, savedPlaces, firstName, edit }: { friends: F
 
       <NumberedStep number={1} done={selected.length > 0} title={t.whoTitle}>
         <div className="mt-2 flex flex-col gap-3">
+          {groups.length > 0 && (
+            <div className="flex flex-col gap-1.5">
+              <p className="text-label font-semibold uppercase tracking-wider text-muted">{t.groupsLabel}</p>
+              <div className="flex flex-wrap gap-2">
+                {groups.map((g) => (
+                  <Chip
+                    key={g.id}
+                    selected={g.friendIds.length > 0 && g.friendIds.every((id) => selected.includes(id))}
+                    onClick={() => {
+                      touch("invitees");
+                      // A group pre-selects its families (DESIGN.md "Screens"); tapping it again leaves the selection as it is.
+                      setSelected((list) => [...new Set([...list, ...g.friendIds])]);
+                    }}
+                  >
+                    {g.name}
+                  </Chip>
+                ))}
+              </div>
+            </div>
+          )}
           {friends.length === 0 ? (
             <p className="text-muted">{t.noFriends}</p>
           ) : (
