@@ -8,8 +8,8 @@ Read CLAUDE.md + only the docs a task names.
 Estimates are session time (1–2 h each).
 
 ## Where we are (2026-11-14)
-- **Built:** the T01 scaffold (Next.js app, tooling, CI, `/api/health`, placeholder home); the T02 rules in `src/lib/rules` (86 cases in `docs/rules.test-cases.md`); the T03 database (`supabase/migrations/0001_init.sql`, 55 DB tests in CI); the T06 components and Home (`src/components`, tab placeholders); the T05 sign-in and Setup (verified locally with Supabase test numbers; staging waits for T04); the T07 friends (`/friends`: list, add, rename, remove). Also in the repo, the starter kit: `CLAUDE.md`, `docs/DESIGN.md` (from the Kindred design doc, on the owner's Next.js + Supabase stack), `docs/schema.sql` + `docs/schema.test.sql` (46 checks passing on Postgres 16), `docs/QUESTIONS.md`.
-- **Next:** T08 Plan a playdate (builds on T05–T07, tested locally); T04 (the owner's accounts) for staging.
+- **Built:** the T01 scaffold (Next.js app, tooling, CI, `/api/health`, placeholder home); the T02 rules in `src/lib/rules` (86 cases in `docs/rules.test-cases.md`); the T03 database (`supabase/migrations/0001_init.sql`, 55 DB tests in CI); the T06 components and Home (`src/components`, tab placeholders); the T05 sign-in and Setup (verified locally with Supabase test numbers; staging waits for T04); the T07 friends (`/friends`: list, add, rename, remove); the T08 Plan screen (`/plan`: set time, typed place, message ideas, Send, Text buttons; Home lists the parent's playdates), waiting on its real-phone check. Also in the repo, the starter kit: `CLAUDE.md`, `docs/DESIGN.md` (from the Kindred design doc, on the owner's Next.js + Supabase stack), `docs/schema.sql` + `docs/schema.test.sql` (46 checks passing on Postgres 16), `docs/QUESTIONS.md`.
+- **Next:** the owner taps a Text button on a real phone to finish T08 (see its note); then T09 Invite page; T04 (the owner's accounts) for staging.
 - **Alongside the code:** test the clickable prototype with 5–8 parents (the doc's next step 2). Note what they stumble on in `docs/QUESTIONS.md`.
 
 ## Plan
@@ -127,6 +127,8 @@ Estimates are session time (1–2 h each).
 ## Later
 (Ideas that come up during a task go here instead of being built.)
 - A native shell (Capacitor or Expo) around the web app, only if parents need the iPhone contact picker or richer notifications (Q15).
+- Text buttons after a reload (from T08): the link tokens exist only in Send's answer, so reloading the sent screen loses the buttons. T10's playdate page needs "Text Aisha" again; it can issue a fresh token for that invite (replace its `token_hash`, which also retires the old link) when the organizer taps it.
+- Select a friend added from the Plan screen's Add a friend form automatically (T08 adds them to the list, unticked).
 
 ## Done
 (Move each task here when it is ticked, with its note.)

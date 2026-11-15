@@ -6,6 +6,7 @@ const valid = {
   NEXT_PUBLIC_SUPABASE_ANON_KEY: "anon",
   SUPABASE_SERVICE_ROLE_KEY: "service",
   PHONE_HASH_KEY: "k".repeat(32),
+  PUBLIC_LINK_BASE: "https://kindred.test",
 };
 
 describe("parseEnv", () => {
@@ -19,12 +20,19 @@ describe("parseEnv", () => {
   });
 
   it("names every missing variable", () => {
-    expect(() => parseEnv({})).toThrow(/NEXT_PUBLIC_SUPABASE_URL.*NEXT_PUBLIC_SUPABASE_ANON_KEY.*SUPABASE_SERVICE_ROLE_KEY.*PHONE_HASH_KEY/);
+    expect(() => parseEnv({})).toThrow(/NEXT_PUBLIC_SUPABASE_URL.*NEXT_PUBLIC_SUPABASE_ANON_KEY.*SUPABASE_SERVICE_ROLE_KEY.*PHONE_HASH_KEY.*PUBLIC_LINK_BASE/);
   });
 
   it("refuses a phone hash key shorter than 32 characters, without printing it", () => {
     const short = "short-key-value";
     expect(() => parseEnv({ ...valid, PHONE_HASH_KEY: short })).toThrow(/PHONE_HASH_KEY/);
     expect(() => parseEnv({ ...valid, PHONE_HASH_KEY: short })).not.toThrow(new RegExp(short));
+  });
+
+  it("drops a trailing slash from the link base and defaults the AI to the built-in suggestions", () => {
+    const env = parseEnv({ ...valid, PUBLIC_LINK_BASE: "https://kindred.test/" });
+    expect(env.PUBLIC_LINK_BASE).toBe("https://kindred.test");
+    expect(env.AI_MODE).toBe("fake");
+    expect(env.ANTHROPIC_API_KEY).toBeUndefined();
   });
 });

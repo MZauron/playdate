@@ -22,6 +22,7 @@ export async function addFriendAction(previous: AddFriendState, form: FormData):
   const result = await addFriend({ store: friendStore, phoneHashKey: env.PHONE_HASH_KEY, limiter: friendsLimiter }, user.id, parseAddFriendForm(form));
   if (!result.ok) return { version: previous.version, errors: { [result.field ?? "form"]: message(result) } };
   revalidatePath("/friends");
+  revalidatePath("/plan");
   return { version: previous.version + 1, errors: {}, added: enCA.friends.added(result.friend.label) };
 }
 
@@ -32,6 +33,7 @@ export async function renameFriendAction(_previous: FriendRowState, form: FormDa
   const result = await renameFriend(friendStore, user.id, { friendId: String(form.get("friendId") ?? ""), label: String(form.get("label") ?? "") });
   if (!result.ok) return { error: message(result) };
   revalidatePath("/friends");
+  revalidatePath("/plan");
   return { done: true };
 }
 
@@ -40,5 +42,6 @@ export async function removeFriendAction(_previous: FriendRowState, form: FormDa
   const result = await removeFriend(friendStore, user.id, String(form.get("friendId") ?? ""));
   if (!result.ok) return { error: message(result) };
   revalidatePath("/friends");
+  revalidatePath("/plan");
   return { done: true };
 }

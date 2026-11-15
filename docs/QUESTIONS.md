@@ -13,6 +13,8 @@ Q1, Q4, Q5, Q7, Q8, Q9 and Q14 come from the design doc's own "Open questions"; 
 
 - [ ] **Q17 What a friend is called in your list.** The doc shows "Arjun's dad", but nobody tells Kindred whether the parent is a dad, a mom or someone else, and guessing from a name would be wrong. Default (T07): the label is "Arjun's parent" (from the child's first name), the parent can rename it, and the child's first name is required when adding a friend (the playdate title, KD-06, is built from it). Is that right, or should Add a friend also ask "Mom / Dad / Other"?
 
+- [ ] **Q18 What "Your name" on the Plan screen changes.** The doc lists "Your name" under Details, and the invite page shows "Alex · Mia's parent", but a playdate has no name of its own. Default (T08): the box starts with the parent's first name from Setup; changing it changes `profiles.first_name`, so every invite (old and new) shows the new name. Should it instead be a name for this one playdate only (a new column)?
+
 ## Needed before Phase 2
 - [ ] **Q2 Who sends the "most families picked" text (KD-12)?** It is triggered by other parents' answers, not by the organizer, so it cannot come from the organizer's phone by itself. Default: it shows on the organizer's Home under Needs you ("Text Aisha: most families picked Mon 9–12") with a Text button; still once per invite.
 - [ ] **Q4 Families with more than one child** (doc). Choose which child a playdate is for, and let friends tick which of their kids are coming? Default: not in v1; the title uses each family's first child; Setup still stores all children.

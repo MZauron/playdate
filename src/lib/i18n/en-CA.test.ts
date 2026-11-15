@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { at } from "@/lib/rules/time";
-import { dayPartOf, enCA, formatDateTile, formatLongDay, formatShortDay, formatTime, formatTimeRange, friendStatusLabel } from "./en-CA";
+import { dayPartOf, enCA, formatDateTile, formatDuration, formatLongDay, formatShortDay, formatTime, formatTimeRange, friendStatusLabel, joinNames } from "./en-CA";
 
 const ZONE = "America/Toronto";
 const day = "2026-11-16";
@@ -43,5 +43,18 @@ describe("friend status words (KD-08)", () => {
   });
   it("has the five reason chips of the doc", () => {
     expect(Object.values(enCA.reasons)).toEqual(["Maybe another time", "We're busy then", "Not feeling well", "Too far for us", "Other plans this week"]);
+  });
+});
+
+describe("Plan screen words", () => {
+  it("KD-03: the length of a set time", () => {
+    expect([120, 90, 45, 60].map(formatDuration)).toEqual(["2 hr", "1 hr 30 min", "45 min", "1 hr"]);
+  });
+  it("joins names for message ideas", () => {
+    expect([[], ["Arjun"], ["Arjun", "Lily"], ["Mia", "Arjun", "Lily"]].map(joinNames)).toEqual(["", "Arjun", "Arjun and Lily", "Mia, Arjun and Lily"]);
+  });
+  it("says how the invite goes out", () => {
+    expect(enCA.plan.sendLine(0, 1)).toBe("Goes to 1 family: 1 by text.");
+    expect(enCA.plan.sendLine(1, 2)).toBe("Goes to 3 families: 1 in Kindred and 2 by text.");
   });
 });

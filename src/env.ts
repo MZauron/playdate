@@ -9,6 +9,11 @@ const schema = z.object({
   SUPABASE_SERVICE_ROLE_KEY: z.string().min(1),
   /** Key for the HMAC of phone numbers (profiles.phone_hash, friends.phone_hash): 32 random bytes, e.g. `openssl rand -hex 32`. */
   PHONE_HASH_KEY: z.string().min(32),
+  /** Where invite links point: `${PUBLIC_LINK_BASE}/r/<token>` (Q16 default: the Railway domain). No trailing slash. */
+  PUBLIC_LINK_BASE: z.url().transform((url) => url.replace(/\/+$/, "")),
+  /** `fake` (tests, phone sessions, no key) or `live` (Anthropic). Live without a key falls back to the built-in suggestions. */
+  AI_MODE: z.enum(["fake", "live"]).default("fake"),
+  ANTHROPIC_API_KEY: z.string().min(1).optional(),
 });
 
 export type Env = z.infer<typeof schema>;

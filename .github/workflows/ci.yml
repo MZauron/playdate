@@ -23,6 +23,7 @@ jobs:
           NEXT_PUBLIC_SUPABASE_ANON_KEY: ci-placeholder
           SUPABASE_SERVICE_ROLE_KEY: ci-placeholder
           PHONE_HASH_KEY: ci-placeholder-phone-hash-key-0123456789
+          PUBLIC_LINK_BASE: https://kindred.test
 
   # The database tests (supabase/tests: constraints, privileges and who can read what) against a real local Supabase.
   # Realtime stays on: the migration adds tables to its publication.

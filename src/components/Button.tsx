@@ -17,7 +17,7 @@ type Common = { variant?: ButtonVariant; fullWidth?: boolean; /** 44 px instead 
 
 const height = (compact?: boolean) => (compact ? "h-11" : "h-[50px]");
 
-export function Button({ variant = "secondary", fullWidth, compact, className, type = "button", ...rest }: Common & React.ComponentPropsWithoutRef<"button">) {
+export function Button({ variant = "secondary", fullWidth, compact, className, type = "button", ...rest }: Common & React.ComponentProps<"button">) {
   return <button type={type} className={cx(base, height(compact), variants[variant], fullWidth && "w-full", className)} {...rest} />;
 }
 
