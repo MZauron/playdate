@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { checkLink, linkExpiresAt } from "./links";
+import { checkLink, cleanupCutoff, linkExpiresAt } from "./links";
 import { MON, WED, ZONE, t } from "./test-fixtures";
 
 describe("KD-14 links", () => {
@@ -17,5 +17,15 @@ describe("KD-14 links", () => {
     const expiry = t("2026-11-17", 0);
     expect(checkLink(expiry, expiry).errors).toEqual([{ code: "LINK_EXPIRED" }]);
     expect(checkLink(expiry, new Date(expiry.getTime() - 60_000)).ok).toBe(true);
+  });
+});
+
+describe("T23 clean-up", () => {
+  it("KD-14e: on Sat 14 Nov 10:00 the cut-off is Thu 15 Oct 23:00 daylight time (30 × 24 h back, playdates over for 30 days)", () => {
+    const now = t("2026-11-14", 10, 0);
+    expect(cleanupCutoff(now)).toEqual(t("2026-10-15", 23, 0));
+    expect(now.getTime() - cleanupCutoff(now).getTime()).toBe((30 * 24 - 12) * 3_600_000);
+    // A set-time playdate that ended Oct 15 11:00 has links until 23:00 that day: exactly 30 days over now.
+    expect(linkExpiresAt({ finalEnd: null, setEnd: t("2026-10-15", 11, 0), slots: [], zone: ZONE })).toEqual(cleanupCutoff(now));
   });
 });

@@ -151,13 +151,13 @@ isOneToOne: false
                   ]
                 },"invites": {
                   Row: {
-                    "channel": Database["public"]['Enums']["invite_channel"],"created_at": string,"friend_id": string,"id": string,"invitee_user_id": string | null,"label": Database["public"]['Enums']["invite_label"],"majority_notice_at": string | null,"organizer_id": string,"playdate_id": string,"token_hash": string
+                    "channel": Database["public"]['Enums']["invite_channel"],"created_at": string,"friend_id": string,"id": string,"invitee_user_id": string | null,"label": Database["public"]['Enums']["invite_label"],"majority_notice_at": string | null,"organizer_id": string,"playdate_id": string,"token_hash": string | null
                   }
                   Insert: {
-                    "channel": Database["public"]['Enums']["invite_channel"],"created_at"?: string,"friend_id": string,"id"?: string,"invitee_user_id"?: string | null,"label"?: Database["public"]['Enums']["invite_label"],"majority_notice_at"?: string | null,"organizer_id": string,"playdate_id": string,"token_hash": string
+                    "channel": Database["public"]['Enums']["invite_channel"],"created_at"?: string,"friend_id": string,"id"?: string,"invitee_user_id"?: string | null,"label"?: Database["public"]['Enums']["invite_label"],"majority_notice_at"?: string | null,"organizer_id": string,"playdate_id": string,"token_hash"?: string | null
                   }
                   Update: {
-                    "channel"?: Database["public"]['Enums']["invite_channel"],"created_at"?: string,"friend_id"?: string,"id"?: string,"invitee_user_id"?: string | null,"label"?: Database["public"]['Enums']["invite_label"],"majority_notice_at"?: string | null,"organizer_id"?: string,"playdate_id"?: string,"token_hash"?: string
+                    "channel"?: Database["public"]['Enums']["invite_channel"],"created_at"?: string,"friend_id"?: string,"id"?: string,"invitee_user_id"?: string | null,"label"?: Database["public"]['Enums']["invite_label"],"majority_notice_at"?: string | null,"organizer_id"?: string,"playdate_id"?: string,"token_hash"?: string | null
                   }
                   Relationships: [
                     {
@@ -237,7 +237,12 @@ isOneToOne: false
             [_ in never]: never
           }
           Functions: {
-            "create_playdate_with_invites":
+            "clean_up_old_playdates":
+{ Args: { "p_cutoff": string }; Returns: {
+              "links_removed": number,"notes_removed": number
+            }[]
+                           },
+"create_playdate_with_invites":
 { Args: { "p_invites": Json,"p_playdate": Json }; Returns: string
                            },
 "create_profile_with_children":
