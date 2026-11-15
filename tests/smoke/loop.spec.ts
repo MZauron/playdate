@@ -2,9 +2,11 @@
 // in a separate browser with no account; the organizer sees it live and confirms; the friend sees it's on. Nothing is texted: the
 // test reads the friend's link from the organizer's Text button, as a phone would open it.
 import { devices, expect, test } from "@playwright/test";
+import { resetSmokeAccount } from "./reset";
 
 const ZONE = "America/Toronto";
 test.use({ timezoneId: ZONE, locale: "en-CA" });
+test.beforeEach(resetSmokeAccount); // every attempt, retries included, signs up from nothing
 
 /** A day a few days ahead, as the date picker takes it. */
 function dayAhead(days: number): string {

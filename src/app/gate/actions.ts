@@ -3,6 +3,7 @@
 import { cookies, headers } from "next/headers";
 import { redirect } from "next/navigation";
 import { env } from "@/env";
+import { secureSite } from "@/lib/auth/session-cookie-options";
 import { GATE_COOKIE, GATE_DAYS, gateToken, passwordMatches, safeNext } from "@/lib/gate/gate";
 import { enCA } from "@/lib/i18n/en-CA";
 import { clientAddress, createRateLimiter } from "@/platform/rate-limit";
@@ -21,7 +22,7 @@ export async function openGateAction(_previous: GateState, form: FormData): Prom
   (await cookies()).set(GATE_COOKIE, gateToken(password), {
     httpOnly: true,
     sameSite: "lax",
-    secure: env.NODE_ENV === "production",
+    secure: secureSite(env.PUBLIC_LINK_BASE),
     path: "/",
     maxAge: GATE_DAYS * 24 * 60 * 60,
   });

@@ -6,7 +6,6 @@ const port = 3100;
 
 export default defineConfig({
   testDir: "tests/smoke",
-  globalSetup: "./tests/smoke/global-setup.ts",
   // One organizer account for the whole run: the tests run one at a time.
   workers: 1,
   retries: process.env.CI ? 1 : 0,
