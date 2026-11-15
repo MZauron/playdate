@@ -4,7 +4,7 @@
 import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
 import { env } from "@/env";
-import { sessionCookieOptions } from "@/lib/auth/session-cookie-options";
+import { secureSite, sessionCookieOptions } from "@/lib/auth/session-cookie-options";
 import { GATE_COOKIE, gateOpen } from "@/lib/gate/gate";
 
 export async function proxy(request: NextRequest) {
@@ -24,7 +24,7 @@ export async function proxy(request: NextRequest) {
       setAll(list) {
         for (const { name, value } of list) request.cookies.set(name, value);
         response = NextResponse.next({ request });
-        for (const { name, value, options } of list) response.cookies.set(name, value, sessionCookieOptions(options, env.NODE_ENV === "production"));
+        for (const { name, value, options } of list) response.cookies.set(name, value, sessionCookieOptions(options, secureSite(env.PUBLIC_LINK_BASE)));
       },
     },
   });

@@ -5,7 +5,7 @@ import { cache } from "react";
 import { cookies } from "next/headers";
 import { env } from "@/env";
 import type { Database } from "@/lib/db/types";
-import { sessionCookieOptions } from "./session-cookie-options";
+import { secureSite, sessionCookieOptions } from "./session-cookie-options";
 
 /** A Supabase client acting as the signed-in parent (anon key + their session). It reads and renews nothing the parent does not own. */
 export async function sessionClient() {
@@ -16,7 +16,7 @@ export async function sessionClient() {
       setAll(list) {
         // Server Components cannot set cookies; the proxy renews the session before they run, so this only matters in actions.
         try {
-          for (const { name, value, options } of list) store.set(name, value, sessionCookieOptions(options, env.NODE_ENV === "production"));
+          for (const { name, value, options } of list) store.set(name, value, sessionCookieOptions(options, secureSite(env.PUBLIC_LINK_BASE)));
         } catch {}
       },
     },
