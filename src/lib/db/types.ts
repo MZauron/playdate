@@ -257,6 +257,9 @@ isOneToOne: false
 "organizes_for_me":
 { Args: { "p_profile": string }; Returns: boolean
                            },
+"save_group":
+{ Args: { "p_friend_ids": (string)[],"p_group_id": string,"p_name": string,"p_owner_id": string }; Returns: string
+                           },
 "update_playdate":
 { Args: { "p_add": Json,"p_delete_answers": boolean,"p_label": Database["public"]['Enums']["invite_label"],"p_organizer_id": string,"p_playdate": Json,"p_playdate_id": string,"p_remove": (string)[] }; Returns: undefined
                            }
