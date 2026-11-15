@@ -95,4 +95,16 @@ export const playdatePageStore: PlaydatePageStore = {
     if (error) throw new Error(`confirm failed: ${error.code}`);
     return (data?.length ?? 0) > 0;
   },
+
+  async cancel(organizerId, playdateId, cancelledAt) {
+    const { data, error } = await adminClient()
+      .from("playdates")
+      .update({ status: "cancelled", cancelled_at: cancelledAt.toISOString() })
+      .eq("id", playdateId)
+      .eq("organizer_id", organizerId)
+      .neq("status", "cancelled")
+      .select("id");
+    if (error) throw new Error(`cancel failed: ${error.code}`);
+    return (data?.length ?? 0) > 0;
+  },
 };

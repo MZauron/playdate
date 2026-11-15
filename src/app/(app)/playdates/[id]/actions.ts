@@ -4,7 +4,7 @@ import { revalidatePath } from "next/cache";
 import { requireParent } from "@/lib/auth/require-parent";
 import { getCurrentUser, sessionClient } from "@/lib/auth/supabase-server";
 import { playdatePageStore } from "@/lib/db/playdate-page";
-import { confirmPlaydate, isPlaydateId } from "@/lib/domain/playdate-page";
+import { cancelPlaydate, confirmPlaydate, isPlaydateId } from "@/lib/domain/playdate-page";
 import { enCA } from "@/lib/i18n/en-CA";
 
 export type ConfirmState = { error?: string };
@@ -18,6 +18,18 @@ export async function confirmAction(_previous: ConfirmState, form: FormData): Pr
   revalidatePath("/");
   if (!result.ok) return { error: enCA.playdate.errors[result.code as keyof typeof enCA.playdate.errors] ?? enCA.somethingWentWrong };
   console.info(`playdate confirmed id=${playdateId}`);
+  return {};
+}
+
+/** KD-15: Cancel playdate, organizer only, after the page asked "Cancel this playdate?". */
+export async function cancelAction(_previous: ConfirmState, form: FormData): Promise<ConfirmState> {
+  const { user } = await requireParent();
+  const playdateId = String(form.get("playdateId") ?? "");
+  const result = await cancelPlaydate(playdatePageStore, user.id, playdateId, new Date());
+  if (isPlaydateId(playdateId)) revalidatePath(`/playdates/${playdateId}`);
+  revalidatePath("/");
+  if (!result.ok) return { error: enCA.playdate.errors.NOT_FOUND };
+  console.info(`playdate cancelled id=${playdateId}`);
   return {};
 }
 

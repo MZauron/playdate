@@ -44,6 +44,8 @@ export type PlaydatePageStore = {
   getForOrganizer(organizerId: string, playdateId: string): Promise<OrganizerPlaydate | null>;
   /** Sets the final time on THIS organizer's collecting playdate; false when there was none to change. */
   confirm(organizerId: string, playdateId: string, final: { start: Date; end: Date; confirmedAt: Date; linksExpireAt: Date }): Promise<boolean>;
+  /** Cancels THIS organizer's playdate unless it already is; false when there was none to change. */
+  cancel(organizerId: string, playdateId: string, cancelledAt: Date): Promise<boolean>;
 };
 
 export const isPlaydateId = (id: string) => z.uuid().safeParse(id).success;
@@ -114,4 +116,16 @@ export async function confirmPlaydate(store: PlaydatePageStore, organizerId: str
   const linksExpire = linkExpiresAt({ finalEnd: final.end, setEnd: p.endAt, slots: p.slots, zone: p.timezone });
   const changed = await store.confirm(organizerId, playdateId, { start: final.start, end: final.end, confirmedAt: now, linksExpireAt: linksExpire });
   return changed ? { ok: true } : { ok: false, code: "NOT_FOUND" };
+}
+
+// --- Cancel playdate (KD-15, Q1 default) -------------------------------------------------------------------------------------------
+export type CancelResult = { ok: true } | { ok: false; code: "NOT_FOUND" };
+
+/** Organizer only. Cancelling twice changes nothing; the links then say the playdate was cancelled and take no answer (KD-07). */
+export async function cancelPlaydate(store: PlaydatePageStore, organizerId: string, playdateId: string, now: Date): Promise<CancelResult> {
+  if (!isPlaydateId(playdateId)) return { ok: false, code: "NOT_FOUND" };
+  const p = await store.getForOrganizer(organizerId, playdateId);
+  if (!p) return { ok: false, code: "NOT_FOUND" };
+  if (p.status === "cancelled") return { ok: true };
+  return (await store.cancel(organizerId, playdateId, now)) ? { ok: true } : { ok: false, code: "NOT_FOUND" };
 }

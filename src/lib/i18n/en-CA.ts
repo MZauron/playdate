@@ -193,6 +193,11 @@ export const enCA = {
     nobodyYet: "Nobody can come yet. You can confirm once a family says yes.",
     confirm: "Confirm and send update",
     edit: "Edit playdate",
+    cancel: "Cancel playdate",
+    cancelAsk: "Cancel this playdate?",
+    cancelNote: "Everyone you invited will see it's cancelled, and their links won't take answers any more.",
+    keepPlaydate: "Keep playdate",
+    cancelledNote: "Let each family know from your phone:",
     confirmed: "Confirmed",
     updateSent: "✓ Update sent",
     updateNote: "Families who open their link now see it's on. Text each one the news from your phone:",
@@ -211,6 +216,8 @@ export const enCA = {
     updated: (day: string, time: string, place: string | null) =>
       `Our playdate has an update: ${day}, ${time}${place ? ` at ${place}` : ""}. The link above has the details.`,
   },
+  /** KD-15 (Q1 default): the cancellation text, from the organizer's phone. */
+  cancelledText: (day: string | null) => (day ? `Sorry, our playdate on ${day} is cancelled.` : "Sorry, our playdate is cancelled."),
   /** KD-09: the confirmation, on the invite page's bubble and in the organizer's Text. "Sat, Nov 21", "10:00 AM to 12:00 PM". */
   itsOn: (day: string, time: string, place: string | null) => `It's on! 🎉 See you ${day}, ${time}${place ? ` at ${place}` : ""}.`,
   gate: {

@@ -2,8 +2,8 @@
 // Confirm and send update (KD-09), never another parent's playdate, and the confirmation texts.
 import { describe, expect, it } from "vitest";
 import { at } from "@/lib/rules/time";
-import { confirmationSentence, confirmationTexts } from "./confirmation";
-import { confirmPlaydate, pageView, type OrganizerInvite, type OrganizerPlaydate, type PlaydatePageStore } from "./playdate-page";
+import { cancellationTexts, confirmationSentence, confirmationTexts } from "./confirmation";
+import { cancelPlaydate, confirmPlaydate, pageView, type OrganizerInvite, type OrganizerPlaydate, type PlaydatePageStore } from "./playdate-page";
 
 const ZONE = "America/Toronto";
 const NOW = at("2026-11-14", 10, 0, ZONE);
@@ -47,6 +47,7 @@ function playdate(invites: OrganizerInvite[], patch: Partial<OrganizerPlaydate> 
 
 function store(p: OrganizerPlaydate, owner = ALEX) {
   const confirms: unknown[] = [];
+  const cancels: Date[] = [];
   const s: PlaydatePageStore = {
     async getForOrganizer(organizerId, playdateId) {
       return organizerId === owner && playdateId === p.id ? p : null;
@@ -56,8 +57,13 @@ function store(p: OrganizerPlaydate, owner = ALEX) {
       confirms.push(final);
       return true;
     },
+    async cancel(organizerId, playdateId, at) {
+      if (organizerId !== owner || playdateId !== p.id || p.status === "cancelled") return false;
+      cancels.push(at);
+      return true;
+    },
   };
-  return { s, confirms };
+  return { s, confirms, cancels };
 }
 
 describe("pageView (KD-08, KD-09)", () => {
@@ -129,5 +135,30 @@ describe("the confirmation texts (Q3)", () => {
       { name: "Maya", channel: "app", href: "sms:+14165550002?&body=It's on! 🎉 See you Mon, Nov 16, 10:00 AM to 12:00 PM at High Park." },
     ]);
     expect(confirmationTexts(playdate([invite("1", "Dev", "Arjun's dad", yes)]))).toEqual([]);
+  });
+});
+
+describe("cancelPlaydate (KD-15, Q1 default)", () => {
+  it("cancels the organizer's own playdate, confirmed or not", async () => {
+    for (const status of ["collecting", "confirmed"] as const) {
+      const { s, cancels } = store(playdate([invite("1", "Dev", "Arjun's dad", yes)], { status }));
+      expect(await cancelPlaydate(s, ALEX, ID, NOW)).toEqual({ ok: true });
+      expect(cancels).toEqual([NOW]);
+    }
+  });
+  it("another parent's playdate or a malformed id is not found; cancelling twice changes nothing", async () => {
+    const { s, cancels } = store(playdate([]));
+    expect(await cancelPlaydate(s, SAM, ID, NOW)).toEqual({ ok: false, code: "NOT_FOUND" });
+    expect(await cancelPlaydate(s, ALEX, "x", NOW)).toEqual({ ok: false, code: "NOT_FOUND" });
+    const done = store(playdate([], { status: "cancelled" }));
+    expect(await cancelPlaydate(done.s, ALEX, ID, NOW)).toEqual({ ok: true });
+    expect([...cancels, ...done.cancels]).toEqual([]);
+  });
+  it("gives every family a Text button saying it's off, with the day", () => {
+    const texts = cancellationTexts(playdate([invite("1", "Dev Patel", "Arjun's dad", yes), invite("2", "Maya Chen", "Lily's parent", null, "app")], { status: "cancelled" }));
+    expect(texts.map((t) => [t.name, decodeURIComponent(t.href)])).toEqual([
+      ["Dev", "sms:+14165550001?&body=Sorry, our playdate on Mon, Nov 16 is cancelled."],
+      ["Maya", "sms:+14165550002?&body=Sorry, our playdate on Mon, Nov 16 is cancelled."],
+    ]);
   });
 });

@@ -17,3 +17,10 @@ export function confirmationTexts(p: OrganizerPlaydate) {
   if (!sentence) return [];
   return p.invites.map((i) => ({ key: i.id, name: firstWord(i.parentName), label: i.label, channel: i.channel, href: smsBodyHref(i.phoneE164, sentence) }));
 }
+
+/** KD-15: the short text that tells each family the playdate is off, with its day (the final one once confirmed). */
+export function cancellationTexts(p: OrganizerPlaydate) {
+  const start = p.finalStartAt ?? p.startAt;
+  const sentence = enCA.cancelledText(start ? formatShortDay(start, p.timezone) : null);
+  return p.invites.map((i) => ({ key: i.id, name: firstWord(i.parentName), label: i.label, channel: i.channel, href: smsBodyHref(i.phoneE164, sentence) }));
+}
