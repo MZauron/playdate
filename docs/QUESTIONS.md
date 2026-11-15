@@ -19,6 +19,7 @@ Q1, Q4, Q5, Q7, Q8, Q9 and Q14 come from the design doc's own "Open questions"; 
 
 - [ ] **Q20 Texting an invite again from another phone, or after a day.** Links are stored only as hashes, so the Text buttons exist only on the phone that sent the invite: that phone keeps them for a day (C2), and the playdate page shows the ones not sent yet. Default: nothing more. Alternative: a "Text a new link" button per friend on the playdate page, which makes a new link for that friend and retires the old one (the first text's link would then say "This link doesn't work"). Wanted?
 - [ ] **Q21 The quick chips under Find a place.** The doc shows "search + chips" without naming the chips. Default: Parks, Playgrounds, Indoor play, Libraries, Splash pads (one list in `en-CA.ts` as `places.quickSearches`; each one simply searches those words). Other chips wanted?
+- [ ] **Q22 When a place counts as liked or popular.** "Parents who like it" and Popular with parents show counts only. Default: a count shows only once at least two parents hearted the place (`MIN_PARENTS_SHOWN` in `src/lib/domain/favourites.ts`), so one parent's choice is never visible on its own; Popular lists the top 10. A different minimum?
 
 ## Needed before Phase 2
 - [ ] **Q2 Who sends the "most families picked" text (KD-12)?** It is triggered by other parents' answers, not by the organizer, so it cannot come from the organizer's phone by itself. Default: it shows on the organizer's Home under Needs you ("Text Aisha: most families picked Mon 9–12") with a Text button; still once per invite.

@@ -1,11 +1,54 @@
+import { ButtonLink } from "@/components/Button";
+import { PlaceCard } from "@/components/places/PlaceCard";
+import { SearchPlaces } from "@/components/places/AskPlaces";
+import { requireParent } from "@/lib/auth/require-parent";
+import { listFavouritePlaces, listPopularPlaces } from "@/lib/db/favourites";
+import type { PlaceForParent } from "@/lib/domain/favourites";
 import { enCA } from "@/lib/i18n/en-CA";
 
-// A placeholder until its task builds it (Groups T19, Ask and Explore T18).
-export default function Page() {
+export const dynamic = "force-dynamic";
+
+const t = enCA.explore;
+
+// Explore (T18): Your favourites (only this parent's), Popular with parents (counts only, Q22), and search.
+export default async function ExplorePage() {
+  const { user } = await requireParent();
+  const [favourites, popular] = await Promise.all([listFavouritePlaces(user.id), listPopularPlaces(user.id)]);
   return (
-    <section className="flex flex-col gap-2 pt-6">
-      <h1 className="text-title font-bold">{enCA.tabs.explore}</h1>
-      <p className="text-muted">{enCA.app.comingSoon}</p>
+    <section className="flex flex-col gap-6 pt-6 pb-6">
+      <h1 className="text-title font-bold leading-tight">{t.title}</h1>
+      <Places title={t.favourites} places={favourites} empty={t.noFavourites} />
+      <Places title={t.popular} places={popular} empty={t.noPopular} />
+      <section aria-labelledby="explore-search" className="flex flex-col gap-3">
+        <h2 id="explore-search" className="text-lg font-semibold">
+          {t.search}
+        </h2>
+        <SearchPlaces />
+      </section>
+    </section>
+  );
+}
+
+function Places({ title, places, empty }: { title: string; places: PlaceForParent[]; empty: string }) {
+  const id = `explore-${title.toLowerCase().replace(/\W+/g, "-")}`;
+  return (
+    <section aria-labelledby={id} className="flex flex-col gap-3">
+      <h2 id={id} className="text-lg font-semibold">
+        {title}
+      </h2>
+      {places.length === 0 ? (
+        <p className="text-[15px] text-muted">{empty}</p>
+      ) : (
+        <ul className="flex flex-col gap-3">
+          {places.map((place) => (
+            <PlaceCard key={place.id} place={place} as="li">
+              <ButtonLink compact href={`/plan?place=${encodeURIComponent(place.id)}`}>
+                {enCA.places.planHere}
+              </ButtonLink>
+            </PlaceCard>
+          ))}
+        </ul>
+      )}
     </section>
   );
 }

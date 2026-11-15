@@ -214,13 +214,13 @@ isOneToOne: false
                   ]
                 },"saved_places": {
                   Row: {
-                    "address": string | null,"created_at": string,"id": string,"is_favourite": boolean,"name": string,"owner_id": string,"provider_place_id": string | null,"source": Database["public"]['Enums']["place_source"]
+                    "address": string | null,"created_at": string,"id": string,"is_favourite": boolean,"name": string | null,"owner_id": string,"provider_place_id": string | null,"source": Database["public"]['Enums']["place_source"]
                   }
                   Insert: {
-                    "address"?: string | null,"created_at"?: string,"id"?: string,"is_favourite"?: boolean,"name": string,"owner_id": string,"provider_place_id"?: string | null,"source": Database["public"]['Enums']["place_source"]
+                    "address"?: string | null,"created_at"?: string,"id"?: string,"is_favourite"?: boolean,"name"?: string | null,"owner_id": string,"provider_place_id"?: string | null,"source": Database["public"]['Enums']["place_source"]
                   }
                   Update: {
-                    "address"?: string | null,"created_at"?: string,"id"?: string,"is_favourite"?: boolean,"name"?: string,"owner_id"?: string,"provider_place_id"?: string | null,"source"?: Database["public"]['Enums']["place_source"]
+                    "address"?: string | null,"created_at"?: string,"id"?: string,"is_favourite"?: boolean,"name"?: string | null,"owner_id"?: string,"provider_place_id"?: string | null,"source"?: Database["public"]['Enums']["place_source"]
                   }
                   Relationships: [
                     {
@@ -256,6 +256,16 @@ isOneToOne: false
                            },
 "organizes_for_me":
 { Args: { "p_profile": string }; Returns: boolean
+                           },
+"place_like_counts":
+{ Args: { "p_ids": (string)[],"p_min": number }; Returns: {
+              "parents": number,"provider_place_id": string
+            }[]
+                           },
+"popular_places":
+{ Args: { "p_limit": number,"p_min": number }; Returns: {
+              "parents": number,"provider_place_id": string
+            }[]
                            },
 "save_group":
 { Args: { "p_friend_ids": (string)[],"p_group_id": string,"p_name": string,"p_owner_id": string }; Returns: string

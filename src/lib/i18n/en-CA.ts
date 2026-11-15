@@ -208,6 +208,37 @@ export const enCA = {
     rating: (r: number) => `★ ${r.toFixed(1)}`,
     /** Shown when the provider can't say what a stored place id is right now. */
     unavailable: "The place on the map",
+    // T18: the heart, likes, Plan a playdate here, and the Where step's other ways in.
+    favourite: (name: string) => `Favourite: ${name}`,
+    heartFailed: "Couldn't change that favourite. Please try again.",
+    likes: (n: number) => `♥ ${n} parents like it`,
+    planHere: "Plan a playdate here",
+    orAsk: "or ask Kindred",
+    favouritesLabel: "Your favourites",
+  },
+  // Ask Kindred (T18).
+  ask: {
+    title: "Ask Kindred",
+    intro: "Say what you're looking for, and Kindred suggests up to four places.",
+    label: "What are you looking for?",
+    placeholder: "Somewhere indoor for a rainy Saturday with a 4-year-old",
+    submit: "Ask Kindred",
+    asking: "Looking for places…",
+    nothing: "Kindred didn't find places for that. Try other words.",
+    failed: "Couldn't ask right now. Please try again.",
+    tooMany: "That's a lot of questions at once. Please try again in a few minutes.",
+    /** The keyword fallback's reason: which search found the place. */
+    foundFor: (search: string) => `Found when searching "${search}".`,
+    results: "Places for you",
+  },
+  // Explore (T18).
+  explore: {
+    title: "Explore",
+    favourites: "Your favourites",
+    noFavourites: "Tap ♡ on a place to keep it here.",
+    popular: "Popular with parents",
+    noPopular: "Places other parents love will show up here.",
+    search: "Search",
   },
   suggestionWords: {
     noKids: "your kids",
