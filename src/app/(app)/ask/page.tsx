@@ -1,11 +1,17 @@
+import { AskPlaces } from "@/components/places/AskPlaces";
+import { requireParent } from "@/lib/auth/require-parent";
 import { enCA } from "@/lib/i18n/en-CA";
 
-// A placeholder until its task builds it (Groups T19, Ask and Explore T18).
-export default function Page() {
+export const dynamic = "force-dynamic";
+
+// Ask Kindred (T18): the parent's words → up to four places with a reason each, and Plan a playdate here.
+export default async function AskPage() {
+  await requireParent();
   return (
-    <section className="flex flex-col gap-2 pt-6">
-      <h1 className="text-title font-bold">{enCA.tabs.ask}</h1>
-      <p className="text-muted">{enCA.app.comingSoon}</p>
+    <section className="flex flex-col gap-4 pt-6 pb-6">
+      <h1 className="text-title font-bold leading-tight">{enCA.ask.title}</h1>
+      <p className="text-muted">{enCA.ask.intro}</p>
+      <AskPlaces />
     </section>
   );
 }

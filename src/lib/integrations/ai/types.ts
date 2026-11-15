@@ -19,3 +19,19 @@ export type MessageIdeas = {
   /** Exactly three short messages, or an error the caller answers with the built-in ideas. */
   messageIdeas(request: MessageIdeasRequest): Promise<string[]>;
 };
+
+/**
+ * Ask Kindred (T18): the parent's own words, their children's ages (DESIGN.md "Privacy": ages are used only to suggest places) and
+ * candidate places the provider found. No names. The AI only chooses among the candidates; it never adds a place.
+ */
+export type PlaceIdeasRequest = {
+  words: string;
+  /** "Baby", "3", "5": the age labels from Setup. */
+  childAges: readonly string[];
+  candidates: readonly { id: string; name: string; setting: string | null; ages: string | null; price: string | null; rating: number | null }[];
+};
+
+export type PlaceIdeas = {
+  /** Up to four candidate ids, best first, each with a one-line reason; or an error the caller answers with the keyword fallback. */
+  placeIdeas(request: PlaceIdeasRequest): Promise<{ id: string; reason: string }[]>;
+};

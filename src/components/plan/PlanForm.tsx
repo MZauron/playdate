@@ -11,6 +11,7 @@ import { cx } from "@/components/cx";
 import { Field } from "@/components/Field";
 import { NumberedStep } from "@/components/NumberedStep";
 import { AddFriendForm } from "@/components/friends/AddFriendForm";
+import { AskKindred } from "@/components/places/AskKindred";
 import { FindPlace } from "@/components/places/FindPlace";
 import { PlaceCard } from "@/components/places/PlaceCard";
 import type { Place } from "@/lib/integrations/places/types";
@@ -41,6 +42,7 @@ export type PlanPrefill = { friendIds: string[]; day?: string; start?: string; e
 export function PlanForm({
   friends,
   savedPlaces,
+  favourites = [],
   firstName,
   edit,
   groups = [],
@@ -48,6 +50,8 @@ export function PlanForm({
 }: {
   friends: Friend[];
   savedPlaces: SavedPlace[];
+  /** T18: the parent's hearted places, as chips under Where. */
+  favourites?: Place[];
   firstName: string;
   edit?: EditPlaydate;
   groups?: { id: string; name: string; friendIds: string[] }[];
@@ -68,7 +72,7 @@ export function PlanForm({
   );
   // 3 Where (T17): a place found by search. When there is one, the typed place under Details is not used.
   const [place, setPlace] = useState<Place | null>(initial?.place ?? prefill?.place ?? null);
-  const [finding, setFinding] = useState(false);
+  const [finding, setFinding] = useState<false | "search" | "ask">(false);
   const [placeName, setPlaceName] = useState(initial?.placeName ?? prefill?.placeName ?? "");
   const [placeAddress, setPlaceAddress] = useState(initial?.placeAddress ?? prefill?.placeAddress ?? "");
   const [savePlace, setSavePlace] = useState(false);
@@ -113,6 +117,21 @@ export function PlanForm({
     setSelected((list) => (list.includes(id) ? list.filter((x) => x !== id) : [...list, id]));
   };
   const suggestions = savedPlaces.filter((p) => p.name !== placeName && p.name.toLowerCase().startsWith(placeName.trim().toLowerCase())).slice(0, 4);
+
+  // Select on a search or Ask Kindred result: that place goes on the plan.
+  const selectButton = (found: Place) => (
+    <Button
+      compact
+      aria-label={enCA.places.selectPlace(found.name)}
+      onClick={() => {
+        touch("place");
+        setPlace(found);
+        setFinding(false);
+      }}
+    >
+      {enCA.places.select}
+    </Button>
+  );
 
   function send() {
     const form = new FormData();
@@ -242,7 +261,7 @@ export function PlanForm({
         <div className="mt-2 flex flex-col gap-3">
           {place && !finding ? (
             <PlaceCard place={place}>
-              <Button compact onClick={() => setFinding(true)}>
+              <Button compact onClick={() => setFinding("search")}>
                 {enCA.places.change}
               </Button>
               <Button
@@ -256,19 +275,38 @@ export function PlanForm({
                 {enCA.places.remove}
               </Button>
             </PlaceCard>
-          ) : finding ? (
-            <FindPlace
-              onSelect={(found) => {
-                touch("place");
-                setPlace(found);
-                setFinding(false);
-              }}
-              onClose={() => setFinding(false)}
-            />
+          ) : finding === "search" ? (
+            <FindPlace action={selectButton} onClose={() => setFinding(false)} />
+          ) : finding === "ask" ? (
+            <AskKindred action={selectButton} onClose={() => setFinding(false)} />
           ) : (
-            <Button compact className="w-fit" onClick={() => setFinding(true)}>
-              {enCA.places.findPlace}
-            </Button>
+            <div className="flex flex-wrap items-center gap-x-4 gap-y-2">
+              <Button compact onClick={() => setFinding("search")}>
+                {enCA.places.findPlace}
+              </Button>
+              <button type="button" onClick={() => setFinding("ask")} className="inline-flex min-h-11 items-center text-[15px] font-semibold text-purple">
+                {enCA.places.orAsk}
+              </button>
+            </div>
+          )}
+          {!finding && favourites.length > 0 && (
+            <div className="flex flex-col gap-1.5">
+              <p className="text-label font-semibold uppercase tracking-wider text-muted">{enCA.places.favouritesLabel}</p>
+              <div className="flex flex-wrap gap-2">
+                {favourites.map((f) => (
+                  <Chip
+                    key={f.id}
+                    selected={place?.id === f.id}
+                    onClick={() => {
+                      touch("place");
+                      setPlace(f);
+                    }}
+                  >
+                    {f.name}
+                  </Chip>
+                ))}
+              </div>
+            </div>
           )}
           {errors.place && <ErrorLine>{errors.place}</ErrorLine>}
         </div>

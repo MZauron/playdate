@@ -1,7 +1,9 @@
 // POST /api/places/search: Find a place (T17). Signed-in parents only. The words travel in the body, not the URL, since a parent
-// may type an address. The response holds the provider's places; nothing is stored (Q6).
+// may type an address. The response holds the provider's places with the parent's own hearts and like counts; nothing is stored (Q6).
 import { NextResponse } from "next/server";
 import { getCurrentUser } from "@/lib/auth/supabase-server";
+import { favouriteStore } from "@/lib/db/favourites";
+import { forParent } from "@/lib/domain/favourites";
 import { PlaceSearchRequest, placeSearchLimiter, searchPlaces } from "@/lib/domain/places";
 import { places } from "@/lib/integrations/places";
 
@@ -24,5 +26,6 @@ export async function POST(request: Request) {
     const headers = result.code === "TOO_MANY_SEARCHES" ? { "Retry-After": String(result.retryAfterSeconds) } : undefined;
     return NextResponse.json({ error: result.code }, { status, headers });
   }
-  return NextResponse.json({ places: result.places });
+  // T18: each place with this parent's heart and how many parents like it (counts only).
+  return NextResponse.json({ places: await forParent(favouriteStore, user.id, result.places) });
 }

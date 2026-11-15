@@ -76,7 +76,7 @@ export async function listTypedPlaces(ownerId: string): Promise<TypedPlace[]> {
     .order("created_at", { ascending: false })
     .limit(20);
   if (error) throw new Error(`listTypedPlaces failed: ${error.code}`);
-  return (data ?? []).map((p) => ({ name: p.name, address: p.address ?? "" }));
+  return (data ?? []).flatMap((p) => (p.name ? [{ name: p.name, address: p.address ?? "" }] : [])); // typed rows always have a name
 }
 
 type HomeRow = {
