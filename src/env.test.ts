@@ -41,4 +41,10 @@ describe("parseEnv", () => {
     expect(parseEnv({ ...valid, SITE_PASSWORD: "long-enough" }).SITE_PASSWORD).toBe("long-enough");
     expect(() => parseEnv({ ...valid, SITE_PASSWORD: "short" })).toThrow(/SITE_PASSWORD/);
   });
+
+  it("takes an optional CRON_SECRET of 32+ characters", () => {
+    expect(parseEnv({ ...valid, CRON_SECRET: "" }).CRON_SECRET).toBeUndefined();
+    expect(parseEnv({ ...valid, CRON_SECRET: "c".repeat(32) }).CRON_SECRET).toBe("c".repeat(32));
+    expect(() => parseEnv({ ...valid, CRON_SECRET: "short" })).toThrow(/CRON_SECRET/);
+  });
 });

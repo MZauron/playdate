@@ -5,7 +5,8 @@ import { z } from "zod";
 import { answeredCount, friendStatus, type FriendStatus } from "@/lib/rules/answers";
 import { checkConfirm } from "@/lib/rules/confirm";
 import { linkExpiresAt } from "@/lib/rules/links";
-import type { AnswerKind, DeclineReason, ErrorCode, FreeSlot, InviteChannel, PlaydateStatus, TimeMode, Zone } from "@/lib/rules/types";
+import { groupPicks } from "@/lib/rules/picks";
+import type { AnswerKind, DeclineReason, ErrorCode, FreeSlot, InviteChannel, PlaydateStatus, Range, TimeMode, Zone } from "@/lib/rules/types";
 import { firstWord } from "./playdates";
 
 export type OrganizerInvite = {
@@ -17,7 +18,9 @@ export type OrganizerInvite = {
   /** The organizer's own friend's number: used only for the organizer's Text buttons. */
   phoneE164: string;
   /** This time version's answer, if any. */
-  answer: { kind: AnswerKind; reason: DeclineReason | null; note: string | null; answeredAt: Date } | null;
+  answer: { kind: AnswerKind; reason: DeclineReason | null; note: string | null; answeredAt: Date; pick?: Range | null } | null;
+  /** KD-12: when this text friend was flagged for the "most families picked" text, once ever. */
+  majorityNoticeAt?: Date | null;
 };
 
 export type OrganizerPlaydate = {
@@ -66,6 +69,8 @@ export type PlaydatePageView = {
   /** The final time once confirmed, else the set time. */
   start: Date | null;
   end: Date | null;
+  /** Availability (T14, KD-11): Times friends suggested, Most picked first, with the first name of each family who picked it. */
+  suggestions: { range: Range; names: string[]; families: number; mostPicked: boolean }[];
 };
 
 export function pageView(p: OrganizerPlaydate): PlaydatePageView {
@@ -85,18 +90,25 @@ export function pageView(p: OrganizerPlaydate): PlaydatePageView {
     answered,
     total,
     comingNames: p.invites.filter((i) => i.answer?.kind === "yes").map((i) => firstWord(i.parentName)),
-    canConfirm: p.status === "collecting" && decision.ok,
+    // KD-09: a set time at the first yes; availability once a family suggested a time (the organizer then taps one).
+    canConfirm: p.status === "collecting" && (p.mode === "availability" ? familyPicks(p).length > 0 : decision.ok),
     confirmed,
     cancelled: p.status === "cancelled",
     start: confirmed ? p.finalStartAt : p.startAt,
     end: confirmed ? p.finalEndAt : p.endAt,
+    suggestions: p.mode === "availability" ? groupPicks(familyPicks(p)).map((g) => ({ range: g.range, names: g.firstNames, families: g.families, mostPicked: g.mostPicked })) : [],
   };
+}
+
+/** The current picks, one per family, with the parent's first name (the organizer's own friends). */
+export function familyPicks(p: OrganizerPlaydate) {
+  return p.invites.flatMap((i) => (i.answer?.kind === "pick" && i.answer.pick ? [{ inviteId: i.id, firstName: firstWord(i.parentName), range: i.answer.pick }] : []));
 }
 
 // --- Confirm and send update (KD-01: only this tap confirms) -----------------------------------------------------------------------
 export type ConfirmResult = { ok: true } | { ok: false; code: ErrorCode | "NOT_FOUND" };
 
-export async function confirmPlaydate(store: PlaydatePageStore, organizerId: string, playdateId: string, now: Date): Promise<ConfirmResult> {
+export async function confirmPlaydate(store: PlaydatePageStore, organizerId: string, playdateId: string, now: Date, chosen: Range | null = null): Promise<ConfirmResult> {
   if (!isPlaydateId(playdateId)) return { ok: false, code: "NOT_FOUND" };
   const p = await store.getForOrganizer(organizerId, playdateId);
   if (!p) return { ok: false, code: "NOT_FOUND" };
@@ -106,9 +118,10 @@ export async function confirmPlaydate(store: PlaydatePageStore, organizerId: str
     status: p.status,
     mode: p.mode,
     setTime: p.startAt && p.endAt ? { start: p.startAt, end: p.endAt } : null,
-    answers: p.invites.flatMap((i) => (i.answer ? [{ kind: i.answer.kind, pick: null }] : [])),
+    answers: p.invites.flatMap((i) => (i.answer ? [{ kind: i.answer.kind, pick: i.answer.pick ?? null }] : [])),
     slots: p.slots,
     zone: p.timezone,
+    chosen, // availability: the suggested pick the organizer tapped (or their own range inside a free slot)
   });
   if (!decision.ok) return { ok: false, code: decision.errors[0]!.code };
 

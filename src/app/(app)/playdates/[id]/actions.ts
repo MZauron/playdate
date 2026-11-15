@@ -13,7 +13,14 @@ export type ConfirmState = { error?: string };
 export async function confirmAction(_previous: ConfirmState, form: FormData): Promise<ConfirmState> {
   const { user } = await requireParent();
   const playdateId = String(form.get("playdateId") ?? "");
-  const result = await confirmPlaydate(playdatePageStore, user.id, playdateId, new Date());
+  // Availability (T14): the suggested time the organizer tapped, as instants. Anything malformed counts as none (CONFIRM_NEEDS_TIME).
+  const instant = (name: string) => {
+    const d = new Date(String(form.get(name) ?? ""));
+    return Number.isNaN(d.getTime()) ? null : d;
+  };
+  const start = instant("chosenStart");
+  const end = instant("chosenEnd");
+  const result = await confirmPlaydate(playdatePageStore, user.id, playdateId, new Date(), start && end ? { start, end } : null);
   if (isPlaydateId(playdateId)) revalidatePath(`/playdates/${playdateId}`);
   revalidatePath("/");
   if (!result.ok) return { error: enCA.playdate.errors[result.code as keyof typeof enCA.playdate.errors] ?? enCA.somethingWentWrong };

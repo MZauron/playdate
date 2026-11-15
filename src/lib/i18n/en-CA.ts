@@ -193,6 +193,8 @@ export const enCA = {
     live: "Live",
     whenTitle: "When",
     yourAvailability: "Your availability (sent)",
+    suggestedTitle: "Times friends suggested",
+    noSuggestions: "No times suggested yet. You can confirm once a family picks one.",
     whereTitle: "Where",
     detailsTitle: "Details",
     messageLabel: "Your message",
@@ -227,6 +229,8 @@ export const enCA = {
     newTimes: (place: string | null) => `New times to pick from for our playdate${place ? ` at ${place}` : ""}. Please answer again with the link above.`,
     updatedNoTime: (place: string | null) => `Our playdate${place ? ` at ${place}` : ""} has an update. The link above has the details.`,
   },
+  /** KD-12: the doc's "most families picked" text (sent by the organizer from Home, Q2 default). */
+  majorityText: (range: string) => `Most families picked ${range}. Does that work for you?`,
   /** KD-15 (Q1 default): the cancellation text, from the organizer's phone. */
   cancelledText: (day: string | null) => (day ? `Sorry, our playdate on ${day} is cancelled.` : "Sorry, our playdate is cancelled."),
   /** KD-09: the confirmation, on the invite page's bubble and in the organizer's Text. "Sat, Nov 21", "10:00 AM to 12:00 PM". */
@@ -317,6 +321,7 @@ export const enCA = {
     },
     answered: (answered: number, total: number) => `${answered} of ${total} ${total === 1 ? "family" : "families"} answered`,
     noPlace: "Place to be decided",
+    majorityNotice: (name: string, range: string) => `Text ${name}: most families picked ${range}`,
   },
   status: {
     coming: "Coming",

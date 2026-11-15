@@ -106,4 +106,41 @@ describe.skipIf(!apiEnabled)("Share availability against the database", () => {
     expect(after?.picks.map((p) => ({ others: p.others, families: p.families, mostPicked: p.mostPicked, yours: p.yours }))).toEqual([{ others: ["Dev"], families: 2, mostPicked: true, yours: true }]);
     expect(await q("select count(*)::int as n from answers a join invites i on i.id = a.invite_id where i.playdate_id = $1", [sent.playdateId])).toEqual([{ n: 2 }]);
   });
+
+  it("the tick stamps a text friend once (KD-12), and confirming a suggested pick sets the final time everywhere (KD-09)", async () => {
+    const { inviteStore } = await import("@/lib/db/invites");
+    const { tickStore } = await import("@/lib/db/tick");
+    const { runMajorityNotices, homeNotices } = await import("@/lib/domain/majority");
+    const { confirmPlaydate } = await import("@/lib/domain/playdate-page");
+    const page = await import("@/lib/domain/invite-page");
+    const alex = await parent();
+    const ids = [await friend(alex), await friend(alex), await friend(alex)];
+    const sent = await sendInvite({ store: playdates.playdateStore, limiter: open, linkBase: "https://kindred.test" }, { id: alex, firstName: "Alex", childFirstName: "Mia" }, { ...base, friendIds: ids, slots: ["2030-11-18|morning", "2030-11-18|afternoon"] }, NOW);
+    if (!sent.ok) throw new Error("expected ok");
+    const tokens = sent.texts.map((t) => decodeURIComponent(t.href).split("/r/")[1]!);
+    const deps = { store: inviteStore, limiters: { token: open, address: open } };
+    const pick = (from: string, until: string) => ({ kind: "pick" as const, reason: null, note: null, timeVersion: 1, pickDay: "2030-11-18", pickFrom: from, pickUntil: until });
+    await page.answerInvite(deps, tokens[0]!, "1.2.3.4", pick("09:30", "11:00"), NOW);
+    await page.answerInvite(deps, tokens[1]!, "1.2.3.4", pick("09:30", "11:00"), NOW);
+    await page.answerInvite(deps, tokens[2]!, "1.2.3.4", pick("13:00", "14:00"), NOW);
+
+    const stampedNow = await q<{ n: number }>("select count(*)::int as n from invites where playdate_id = $1 and majority_notice_at is not null", [sent.playdateId]);
+    expect(stampedNow).toEqual([{ n: 0 }]);
+    await runMajorityNotices(tickStore, NOW);
+    await runMajorityNotices(tickStore, new Date(NOW.getTime() + 60_000));
+    const stamps = await q<{ majority_notice_at: Date }>("select majority_notice_at from invites where playdate_id = $1 and majority_notice_at is not null", [sent.playdateId]);
+    expect(stamps).toEqual([{ majority_notice_at: NOW }]); // one invite, stamped by the first run only
+
+    const organizerView = await pages.playdatePageStore.getForOrganizer(alex, sent.playdateId);
+    expect(homeNotices(organizerView!)).toHaveLength(1);
+
+    const chosen = { start: new Date("2030-11-18T14:30:00Z"), end: new Date("2030-11-18T16:00:00Z") }; // 9:30–11:00 Toronto
+    expect(await confirmPlaydate(pages.playdatePageStore, alex, sent.playdateId, NOW, chosen)).toEqual({ ok: true });
+    expect(await q("select status, final_start_at, final_end_at, links_expire_at from playdates where id = $1", [sent.playdateId])).toEqual([
+      { status: "confirmed", final_start_at: chosen.start, final_end_at: chosen.end, links_expire_at: new Date("2030-11-19T04:00:00Z") },
+    ]);
+    const friendView = await page.loadInvite(inviteStore, tokens[2]!, NOW);
+    expect(friendView).toMatchObject({ confirmed: true, start: chosen.start, end: chosen.end });
+    expect(homeNotices((await pages.playdatePageStore.getForOrganizer(alex, sent.playdateId))!)).toEqual([]);
+  });
 });

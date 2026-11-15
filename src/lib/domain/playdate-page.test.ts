@@ -162,3 +162,42 @@ describe("cancelPlaydate (KD-15, Q1 default)", () => {
     ]);
   });
 });
+
+describe("confirming availability (T14, KD-09, KD-11)", () => {
+  const MON = "2026-11-16";
+  const r = (h1: number, m1: number, h2: number, m2: number) => ({ start: at(MON, h1, m1, ZONE), end: at(MON, h2, m2, ZONE) });
+  const pickOf = (range: ReturnType<typeof r>) => ({ kind: "pick" as const, reason: null, note: null, answeredAt: NOW, pick: range });
+  const avail = (invites: OrganizerInvite[]) =>
+    playdate(invites, { mode: "availability", startAt: null, endAt: null, slots: [{ day: MON, slot: "morning" }, { day: MON, slot: "afternoon" }] });
+  const a = r(9, 30, 11, 0);
+  const b = r(13, 0, 14, 0);
+  const three = () => avail([invite("1", "Dev Patel", "Arjun's dad", pickOf(a)), invite("2", "Maya Chen", "Lily's parent", pickOf(a)), invite("3", "Sam Lee", "Zoe's mom", pickOf(b))]);
+
+  it("lists Times friends suggested, Most picked first, with each family's first name, and Confirm once there is a pick", () => {
+    const view = pageView(three());
+    expect(view.suggestions).toEqual([
+      { range: a, names: ["Dev", "Maya"], families: 2, mostPicked: true },
+      { range: b, names: ["Sam"], families: 1, mostPicked: false },
+    ]);
+    expect(view.canConfirm).toBe(true);
+    expect(pageView(avail([invite("1", "Dev", "Arjun's dad")])).canConfirm).toBe(false);
+  });
+
+  it("confirms the tapped suggestion as the final time, with the links until it ends + 12 h", async () => {
+    const { s, confirms } = store(three());
+    expect(await confirmPlaydate(s, ALEX, ID, NOW, a)).toEqual({ ok: true });
+    expect(confirms).toEqual([{ start: a.start, end: a.end, confirmedAt: NOW, linksExpireAt: at(MON, 23, 0, ZONE) }]);
+  });
+
+  it("refuses with nothing chosen (CONFIRM_NEEDS_TIME), and an own range outside the free slots", async () => {
+    const { s, confirms } = store(three());
+    expect(await confirmPlaydate(s, ALEX, ID, NOW, null)).toEqual({ ok: false, code: "CONFIRM_NEEDS_TIME" });
+    expect(await confirmPlaydate(s, ALEX, ID, NOW, r(12, 0, 13, 0))).toEqual({ ok: false, code: "PICK_OUTSIDE_FREE_SLOT" });
+    expect(confirms).toEqual([]);
+  });
+
+  it("accepts the organizer's own range inside a free slot (KD-09e)", async () => {
+    const { s } = store(three());
+    expect(await confirmPlaydate(s, ALEX, ID, NOW, r(14, 0, 15, 30))).toEqual({ ok: true });
+  });
+});

@@ -25,8 +25,9 @@ type Row = {
     friend_id: string;
     channel: InviteChannel;
     created_at: string;
+    majority_notice_at: string | null;
     friends: { parent_name: string; label: string; phone_e164: string } | null;
-    answers: { kind: AnswerKind; reason: DeclineReason | null; note: string | null; answered_at: string; time_version: number } | null;
+    answers: { kind: AnswerKind; reason: DeclineReason | null; note: string | null; answered_at: string; pick_start_at: string | null; pick_end_at: string | null; time_version: number } | null;
   }[];
 };
 
@@ -37,7 +38,7 @@ export const playdatePageStore: PlaydatePageStore = {
     const { data, error } = await adminClient()
       .from("playdates")
       .select(
-        "id, title, mode, status, timezone, start_at, end_at, final_start_at, final_end_at, confirmed_at, place_name, place_address, message, time_version, availability_slots(day, slot), invites(id, friend_id, channel, created_at, friends(parent_name, label, phone_e164), answers(kind, reason, note, answered_at, time_version))",
+        "id, title, mode, status, timezone, start_at, end_at, final_start_at, final_end_at, confirmed_at, place_name, place_address, message, time_version, availability_slots(day, slot), invites(id, friend_id, channel, created_at, majority_notice_at, friends(parent_name, label, phone_e164), answers(kind, reason, note, answered_at, pick_start_at, pick_end_at, time_version))",
       )
       .eq("id", playdateId)
       .eq("organizer_id", organizerId)
@@ -71,7 +72,14 @@ export const playdatePageStore: PlaydatePageStore = {
           parentName: i.friends?.parent_name ?? "",
           channel: i.channel,
           phoneE164: i.friends?.phone_e164 ?? "",
-          answer: a && { kind: a.kind, reason: a.reason, note: a.note, answeredAt: new Date(a.answered_at) },
+          answer: a && {
+            kind: a.kind,
+            reason: a.reason,
+            note: a.note,
+            answeredAt: new Date(a.answered_at),
+            pick: a.pick_start_at && a.pick_end_at ? { start: new Date(a.pick_start_at), end: new Date(a.pick_end_at) } : null,
+          },
+          majorityNoticeAt: date(i.majority_notice_at),
         };
       }),
     };
@@ -108,3 +116,17 @@ export const playdatePageStore: PlaydatePageStore = {
     return (data?.length ?? 0) > 0;
   },
 };
+
+/** This organizer's collecting availability playdates whose links are still open, for Home's KD-12 notices. */
+export async function listOpenAvailability(organizerId: string, now: Date) {
+  const { data, error } = await adminClient()
+    .from("playdates")
+    .select("id")
+    .eq("organizer_id", organizerId)
+    .eq("mode", "availability")
+    .eq("status", "collecting")
+    .gt("links_expire_at", now.toISOString());
+  if (error) throw new Error(`listOpenAvailability failed: ${error.code}`);
+  const found = await Promise.all((data ?? []).map((p) => playdatePageStore.getForOrganizer(organizerId, p.id)));
+  return found.filter((p): p is NonNullable<typeof p> => p !== null);
+}
