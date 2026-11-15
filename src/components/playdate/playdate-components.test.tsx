@@ -90,6 +90,8 @@ describe("InvitePage once confirmed", () => {
     placeAddress: null,
     timeVersion: 1,
     answer: null,
+    slots: [],
+    picks: [],
   };
   it("shows the It's on! bubble and the CONFIRMED band, and still takes answers (KD-07m)", () => {
     const html = renderToStaticMarkup(<InvitePage view={view} token="AAAAAAAAAAAAAAAAAAAAAA" />);

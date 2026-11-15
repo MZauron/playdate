@@ -34,6 +34,7 @@ function stored(patch: Partial<StoredInvite["playdate"]> = {}, rest: Partial<Sto
     },
     organizer: { firstName: "Alex", childFirstName: "Mia" },
     answer: null,
+    picks: [],
     ...rest,
   };
 }
@@ -48,7 +49,7 @@ function world(byToken: Record<string, StoredInvite>) {
     },
     async saveAnswer(inviteId, answer, timeVersion) {
       saved.push({ inviteId, answer, timeVersion });
-      for (const s of invites.values()) if (s.inviteId === inviteId) s.answer = { kind: answer.kind, reason: answer.reason, note: answer.note };
+      for (const s of invites.values()) if (s.inviteId === inviteId) s.answer = { kind: answer.kind, reason: answer.reason, note: answer.note, pick: answer.pick };
     },
   };
   const open = { hit: () => ({ ok: true as const }) };
@@ -69,9 +70,9 @@ describe("answerInvite (KD-07)", () => {
   it("Change my answer: a second answer replaces the first, and the page shows the new one", async () => {
     const { deps, store } = world({ [TOKEN]: stored() });
     await answerInvite(deps, TOKEN, "1.2.3.4", yes, NOW);
-    expect((await loadInvite(store, TOKEN, NOW))?.answer).toEqual({ kind: "yes", reason: null, note: null });
+    expect((await loadInvite(store, TOKEN, NOW))?.answer).toEqual({ kind: "yes", reason: null, note: null, pick: null });
     await answerInvite(deps, TOKEN, "1.2.3.4", noBusy, NOW);
-    expect((await loadInvite(store, TOKEN, NOW))?.answer).toEqual({ kind: "no", reason: "busy", note: "Sorry!" });
+    expect((await loadInvite(store, TOKEN, NOW))?.answer).toEqual({ kind: "no", reason: "busy", note: "Sorry!", pick: null });
   });
 
   it("refuses an answer after the link expired (KD-14), and saves nothing", async () => {
@@ -126,7 +127,7 @@ describe("loadInvite and the view (KD-14, KD-17)", () => {
   it("holds only the listed fields: no phone number, invite id, other invite or token", () => {
     const view = toView(stored(), NOW);
     expect(Object.keys(view).sort()).toEqual(
-      ["answer", "confirmed", "end", "label", "message", "mode", "organizerChild", "organizerFirstName", "placeAddress", "placeName", "start", "state", "timeVersion", "title", "zone"].sort(),
+      ["answer", "confirmed", "end", "label", "message", "mode", "organizerChild", "organizerFirstName", "picks", "placeAddress", "placeName", "slots", "start", "state", "timeVersion", "title", "zone"].sort(),
     );
     expect(JSON.stringify(view)).not.toMatch(/\+1\d{10}|invite-1/);
   });
@@ -158,12 +159,72 @@ describe("parseAnswerForm", () => {
     return f;
   };
   it("reads the kind, reason, note and time version; a blank reason or note is none", () => {
-    expect(parseAnswerForm(form({ kind: "yes", reason: "", note: "", timeVersion: "1" })).data).toEqual({ kind: "yes", reason: null, note: null, timeVersion: 1 });
-    expect(parseAnswerForm(form({ kind: "no", reason: "busy", note: "Sorry!", timeVersion: "2" })).data).toEqual({ kind: "no", reason: "busy", note: "Sorry!", timeVersion: 2 });
+    const none = { pickDay: null, pickFrom: null, pickUntil: null };
+    expect(parseAnswerForm(form({ kind: "yes", reason: "", note: "", timeVersion: "1" })).data).toEqual({ kind: "yes", reason: null, note: null, timeVersion: 1, ...none });
+    expect(parseAnswerForm(form({ kind: "no", reason: "busy", note: "Sorry!", timeVersion: "2" })).data).toEqual({ kind: "no", reason: "busy", note: "Sorry!", timeVersion: 2, ...none });
+    expect(parseAnswerForm(form({ kind: "pick", pickDay: "2026-11-16", pickFrom: "09:30", pickUntil: "11:00", timeVersion: "1" })).data).toMatchObject({ kind: "pick", pickDay: "2026-11-16", pickFrom: "09:30", pickUntil: "11:00" });
   });
   it("refuses anything else", () => {
-    expect(parseAnswerForm(form({ kind: "pick", timeVersion: "1" })).success).toBe(false);
+    expect(parseAnswerForm(form({ kind: "maybe", timeVersion: "1" })).success).toBe(false);
     expect(parseAnswerForm(form({ kind: "no", reason: "bored", timeVersion: "1" })).success).toBe(false);
     expect(parseAnswerForm(form({ kind: "yes" })).success).toBe(false);
+  });
+});
+
+describe("answering availability (T13: KD-04, KD-07, KD-11, KD-17)", () => {
+  const MON = "2026-11-16";
+  const avail = (patch: Partial<StoredInvite["playdate"]> = {}, rest: Partial<StoredInvite> = {}) =>
+    stored({ mode: "availability", startAt: null, endAt: null, slots: [{ day: MON, slot: "morning" }, { day: MON, slot: "afternoon" }], ...patch }, rest);
+  const pick = (from: string, until: string, day = MON) => ({ kind: "pick" as const, reason: null, note: null, timeVersion: 1, pickDay: day, pickFrom: from, pickUntil: until });
+
+  it("saves a pick inside one free slot, on the playdate's own clock", async () => {
+    const { deps, saved } = world({ [TOKEN]: avail() });
+    expect((await answerInvite(deps, TOKEN, "1.2.3.4", pick("09:30", "11:00"), NOW)).ok).toBe(true);
+    expect(saved[0]?.answer).toEqual({ kind: "pick", reason: null, note: null, pick: { start: at(MON, 9, 30, ZONE), end: at(MON, 11, 0, ZONE) } });
+  });
+
+  it("refuses a pick outside a free slot, across two slots, off the half hour, or too short", async () => {
+    const { deps, saved } = world({ [TOKEN]: avail() });
+    expect(await answerInvite(deps, TOKEN, "1.2.3.4", pick("09:00", "10:00", "2026-11-18"), NOW)).toMatchObject({ ok: false, code: "PICK_OUTSIDE_FREE_SLOT" });
+    expect(await answerInvite(deps, TOKEN, "1.2.3.4", pick("11:00", "13:30"), NOW)).toMatchObject({ ok: false, code: "PICK_OUTSIDE_FREE_SLOT" });
+    expect(await answerInvite(deps, TOKEN, "1.2.3.4", pick("09:15", "10:15"), NOW)).toMatchObject({ ok: false, code: "PICK_NOT_HALF_HOUR" });
+    expect(await answerInvite(deps, TOKEN, "1.2.3.4", pick("09:00", "09:00"), NOW)).toMatchObject({ ok: false, code: "PICK_TOO_SHORT" });
+    expect(saved).toEqual([]);
+  });
+
+  it("a pick with no time, or a yes on an availability playdate, is INVALID_ANSWER", async () => {
+    const { deps } = world({ [TOKEN]: avail() });
+    expect(await answerInvite(deps, TOKEN, "1.2.3.4", { kind: "pick", reason: null, note: null, timeVersion: 1 }, NOW)).toEqual({ ok: false, code: "INVALID_ANSWER", field: "pick" });
+    expect(await answerInvite(deps, TOKEN, "1.2.3.4", yes, NOW)).toEqual({ ok: false, code: "INVALID_ANSWER", field: "kind" });
+  });
+
+  it("Switch to this: picking another family's range replaces this family's pick", async () => {
+    const theirs = { start: at(MON, 9, 30, ZONE), end: at(MON, 11, 0, ZONE) };
+    const { deps, store } = world({
+      [TOKEN]: avail({}, { picks: [{ inviteId: "invite-2", firstName: "Dev", range: theirs }] }),
+    });
+    await answerInvite(deps, TOKEN, "1.2.3.4", pick("13:00", "14:00"), NOW);
+    await answerInvite(deps, TOKEN, "1.2.3.4", pick("09:30", "11:00"), NOW);
+    expect((await loadInvite(store, TOKEN, NOW))?.answer?.pick).toEqual(theirs);
+  });
+
+  it("Everyone's picks: grouped, Most picked first, other families by first name only, and Your pick marked", () => {
+    const a = { start: at(MON, 9, 0, ZONE), end: at(MON, 12, 0, ZONE) };
+    const b = { start: at(MON, 13, 0, ZONE), end: at(MON, 14, 0, ZONE) };
+    const view = toView(
+      avail({}, {
+        picks: [
+          { inviteId: "invite-1", firstName: "Sam", range: b },
+          { inviteId: "invite-2", firstName: "Dev", range: a },
+          { inviteId: "invite-3", firstName: "Maya", range: a },
+        ],
+      }),
+      NOW,
+    );
+    expect(view.picks).toEqual([
+      { range: a, others: ["Dev", "Maya"], families: 2, mostPicked: true, yours: false },
+      { range: b, others: [], families: 1, mostPicked: false, yours: true },
+    ]);
+    expect(JSON.stringify(view)).not.toMatch(/invite-2|invite-3|Patel|Chen/);
   });
 });

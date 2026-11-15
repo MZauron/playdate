@@ -23,6 +23,8 @@ const view = (patch: Partial<InviteView> = {}): InviteView => ({
   placeAddress: "373 Broadview Ave",
   timeVersion: 1,
   answer: null,
+  slots: [],
+  picks: [],
   ...patch,
 });
 const render = (v: InviteView) => renderToStaticMarkup(<InvitePage view={v} token={TOKEN} />);
@@ -47,7 +49,7 @@ describe("InvitePage", () => {
   });
 
   it("after answering: Thanks, the answer given, and Change my answer", () => {
-    const html = render(view({ answer: { kind: "no", reason: "busy", note: "Sorry!" } }));
+    const html = render(view({ answer: { kind: "no", reason: "busy", note: "Sorry!", pick: null } }));
     expect(html).toContain("Thanks! Your answer is in");
     expect(html).toContain("Your answer: Can&#x27;t make it · We&#x27;re busy then");
     expect(html).toContain("Change my answer");

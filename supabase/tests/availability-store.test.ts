@@ -73,4 +73,37 @@ describe.skipIf(!apiEnabled)("Share availability against the database", () => {
     expect(await slotsOf(sent.playdateId)).toEqual([]);
     expect(await q("select mode, start_at from playdates where id = $1", [sent.playdateId])).toEqual([{ mode: "set_time", start_at: new Date("2030-11-18T15:00:00Z") }]);
   });
+
+  it("picks are saved and read back for Everyone's picks with first names only, and Switch to this replaces a pick", async () => {
+    const { inviteStore } = await import("@/lib/db/invites");
+    const page = await import("@/lib/domain/invite-page");
+    const alex = await parent();
+    const dev = await friend(alex);
+    const maya = (await q<{ id: string }>(
+      `insert into friends (owner_id, parent_name, child_first_name, label, phone_e164, phone_hash) values ($1, 'Maya Chen', 'Lily', 'Lily''s parent', $2, $3) returning id`,
+      [alex, `+1416555${Math.floor(1000 + Math.random() * 8999)}`, `h-${randomUUID()}`],
+    ))[0]!.id;
+    const sent = await sendInvite({ store: playdates.playdateStore, limiter: open, linkBase: "https://kindred.test" }, { id: alex, firstName: "Alex", childFirstName: "Mia" }, { ...base, friendIds: [dev, maya], slots: ["2030-11-18|morning", "2030-11-18|afternoon"] }, NOW);
+    if (!sent.ok) throw new Error("expected ok");
+    const [devToken, mayaToken] = sent.texts.map((t) => decodeURIComponent(t.href).split("/r/")[1]!);
+    const deps = { store: inviteStore, limiters: { token: open, address: open } };
+    const pick = (from: string, until: string) => ({ kind: "pick" as const, reason: null, note: null, timeVersion: 1, pickDay: "2030-11-18", pickFrom: from, pickUntil: until });
+
+    expect((await page.answerInvite(deps, devToken!, "1.2.3.4", pick("09:30", "11:00"), NOW)).ok).toBe(true);
+    expect((await page.answerInvite(deps, mayaToken!, "1.2.3.4", pick("13:00", "14:00"), NOW)).ok).toBe(true);
+    expect(await page.answerInvite(deps, mayaToken!, "1.2.3.4", pick("12:00", "13:00"), NOW)).toMatchObject({ ok: false, code: "PICK_OUTSIDE_FREE_SLOT" });
+
+    const mayaView = await page.loadInvite(inviteStore, mayaToken!, NOW);
+    expect(mayaView?.picks.map((p) => ({ others: p.others, families: p.families, yours: p.yours }))).toEqual([
+      { others: ["Dev"], families: 1, yours: false },
+      { others: [], families: 1, yours: true },
+    ]);
+    expect(JSON.stringify(mayaView)).not.toMatch(/Patel|\+1416|invite/i);
+
+    // Switch to this: Maya takes Dev's range.
+    await page.answerInvite(deps, mayaToken!, "1.2.3.4", pick("09:30", "11:00"), NOW);
+    const after = await page.loadInvite(inviteStore, mayaToken!, NOW);
+    expect(after?.picks.map((p) => ({ others: p.others, families: p.families, mostPicked: p.mostPicked, yours: p.yours }))).toEqual([{ others: ["Dev"], families: 2, mostPicked: true, yours: true }]);
+    expect(await q("select count(*)::int as n from answers a join invites i on i.id = a.invite_id where i.playdate_id = $1", [sent.playdateId])).toEqual([{ n: 2 }]);
+  });
 });

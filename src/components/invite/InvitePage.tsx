@@ -96,10 +96,15 @@ export function InvitePage({ view, token }: { view: InviteView; token: string })
         <StatusLine tone="danger">{t.cancelled}</StatusLine>
       ) : view.state === "started" ? (
         <StatusLine tone="muted">{t.started}</StatusLine>
-      ) : view.mode === "set_time" ? (
-        <AnswerPanel token={token} timeVersion={view.timeVersion} answer={view.answer} />
       ) : (
-        <p className="text-muted">{t.availabilitySoon}</p>
+        <AnswerPanel
+          token={token}
+          timeVersion={view.timeVersion}
+          answer={view.answer}
+          zone={view.zone}
+          // Availability (T13): friends pick a time inside the organizer's free slots (still, once confirmed: KD-07n).
+          availability={view.mode === "availability" ? { organizerFirstName: view.organizerFirstName, zone: view.zone, slots: view.slots, picks: view.picks } : undefined}
+        />
       )}
     </InviteShell>
   );
