@@ -74,6 +74,8 @@ export function PlanForm({
   const touch = (field: string) => setEdited((e) => ({ after: state, fields: e.after === state ? [...e.fields, field] : [field] }));
 
   const invited = friends.filter((f) => selected.includes(f.id));
+  // Two friends with the same label ("Noor's parent") would look the same: show the parent's name under those.
+  const clashing = new Set(friends.map((f) => f.label).filter((label, i, all) => all.indexOf(label) !== i));
   const start = initial ?? { friendIds: [], mode: "set_time" as TimeMode, slots: [], day: "", start: when.start, end: when.end, placeName: "", placeAddress: "", message: "" };
   const dirty =
     !state.sent &&
@@ -95,7 +97,7 @@ export function PlanForm({
     return () => window.removeEventListener("beforeunload", warn);
   }, [dirty]);
 
-  if (state.sent) return <SentView texts={state.sent.texts} update={state.sent.update} backTo={leaveTo} />;
+  if (state.sent) return <SentView texts={state.sent.texts} playdateId={state.sent.playdateId} update={state.sent.update} backTo={leaveTo} />;
 
   const fixed = edited.after === state ? edited.fields : [];
   const errors = Object.fromEntries(Object.entries(state.errors).filter(([field]) => !fixed.includes(field)));
@@ -188,6 +190,7 @@ export function PlanForm({
                       <span className="min-w-0 flex-1">
                         <span className="block truncate font-semibold">{friend.label}</span>
                         <span className={cx("block text-[15px]", friend.hasKindred ? "text-primary" : "text-muted")}>
+                          {clashing.has(friend.label) ? `${friend.parentName} · ` : ""}
                           {friend.hasKindred ? enCA.friends.hasKindred : enCA.friends.getsText}
                         </span>
                       </span>
@@ -201,7 +204,15 @@ export function PlanForm({
           <Button type="button" compact className="w-fit" aria-expanded={addingFriend} onClick={() => setAddingFriend((open) => !open)}>
             {addingFriend ? t.closeAddFriend : t.addFriend}
           </Button>
-          {addingFriend && <AddFriendForm submitVariant="secondary" />}
+          {addingFriend && (
+            <AddFriendForm
+              submitVariant="secondary"
+              onAdded={(id) => {
+                touch("invitees");
+                setSelected((list) => (list.includes(id) ? list : [...list, id])); // a friend added here is someone to invite
+              }}
+            />
+          )}
         </div>
       </NumberedStep>
 

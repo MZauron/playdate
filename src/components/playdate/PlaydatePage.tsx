@@ -12,6 +12,7 @@ import { durationMinutes } from "@/lib/rules/plan";
 import { dayLabel, slotValues } from "@/components/plan/plan-time";
 import { CancelButton } from "./CancelButton";
 import { ConfirmButton } from "./ConfirmButton";
+import { SavedInviteTexts } from "./SavedInviteTexts";
 import { SuggestedTimes } from "./SuggestedTimes";
 
 const t = enCA.playdate;
@@ -55,6 +56,8 @@ export function PlaydatePage({ playdate: p, view, live, texts }: { playdate: Org
           </a>
         </section>
       )}
+
+      {!view.cancelled && !view.confirmed && <SavedInviteTexts playdateId={p.id} />}
 
       <NumberedStep number={1} done={view.total > 0 && view.answered === view.total} title={t.whoTitle}>
         <p className="text-[15px] text-muted">

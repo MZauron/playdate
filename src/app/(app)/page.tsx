@@ -1,4 +1,6 @@
+import { signOutAction } from "@/app/(app)/actions";
 import { HomeView } from "@/components/home/HomeView";
+import { enCA } from "@/lib/i18n/en-CA";
 import { requireParent } from "@/lib/auth/require-parent";
 import { listInvitesForUser } from "@/lib/db/invites";
 import { listOpenAvailability } from "@/lib/db/playdate-page";
@@ -16,6 +18,7 @@ export default async function HomePage({ searchParams }: { searchParams: Promise
   const { welcome } = await searchParams;
   const now = new Date();
   return (
+    <>
     <HomeView
       firstName={profile.firstName}
       welcome={welcome === "1"}
@@ -26,5 +29,11 @@ export default async function HomePage({ searchParams }: { searchParams: Promise
       now={now}
       zone={DEFAULT_ZONE}
     />
+      <form action={signOutAction} className="flex justify-center pb-6">
+        <button type="submit" className="min-h-11 px-4 text-[15px] font-medium text-muted underline-offset-4 hover:underline">
+          {enCA.app.signOut}
+        </button>
+      </form>
+    </>
   );
 }

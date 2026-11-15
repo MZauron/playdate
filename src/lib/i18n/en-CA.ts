@@ -10,6 +10,7 @@ export const enCA = {
     name: "Kindred",
     description: "Plan a playdate with families you already know.",
     comingSoon: "Coming soon.",
+    signOut: "Sign out",
   },
   signIn: {
     title: "Sign in",
@@ -194,6 +195,8 @@ export const enCA = {
     live: "Live",
     whenTitle: "When",
     yourAvailability: "Your availability (sent)",
+    savedTextsTitle: "Texts not sent yet",
+    savedTextsNote: "Kept on this phone for a day, in case you didn't send them all.",
     suggestedTitle: "Times friends suggested",
     noSuggestions: "No times suggested yet. You can confirm once a family picks one.",
     whereTitle: "Where",

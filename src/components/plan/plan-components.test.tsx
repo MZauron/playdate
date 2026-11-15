@@ -11,7 +11,7 @@ const texts = [
 
 describe("SentView (Q3)", () => {
   it("shows one Text button per family, linking to Messages; only the next one is coral", () => {
-    const html = renderToStaticMarkup(<SentView texts={texts} />);
+    const html = renderToStaticMarkup(<SentView texts={texts} playdateId="p1" />);
     expect(html).toContain("Your invite is ready");
     expect(html).toContain(`href="${texts[0]!.href.replace("&", "&amp;")}"`);
     expect(html).toContain("Text Dev");

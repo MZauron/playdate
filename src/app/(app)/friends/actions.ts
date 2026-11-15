@@ -15,7 +15,7 @@ function message(failure: FriendFailure): string {
 }
 
 /** Which field the message belongs under (the whole form for the rest). */
-export type AddFriendState = { version: number; errors: Record<string, string>; added?: string };
+export type AddFriendState = { version: number; errors: Record<string, string>; added?: string; addedId?: string };
 
 export async function addFriendAction(previous: AddFriendState, form: FormData): Promise<AddFriendState> {
   const { user } = await requireParent(); // the owner is the signed-in parent, whatever the form says
@@ -23,7 +23,7 @@ export async function addFriendAction(previous: AddFriendState, form: FormData):
   if (!result.ok) return { version: previous.version, errors: { [result.field ?? "form"]: message(result) } };
   revalidatePath("/friends");
   revalidatePath("/plan");
-  return { version: previous.version + 1, errors: {}, added: enCA.friends.added(result.friend.label) };
+  return { version: previous.version + 1, errors: {}, added: enCA.friends.added(result.friend.label), addedId: result.friend.id };
 }
 
 export type FriendRowState = { error?: string; done?: boolean };
