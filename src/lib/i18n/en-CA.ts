@@ -179,6 +179,42 @@ export const enCA = {
     wrong: "That password isn't right.",
     tooMany: "Too many tries. Please wait a few minutes and try again.",
   },
+  invite: {
+    from: (name: string, child: string | null) => (child ? `${name} · ${child}'s parent` : name),
+    labels: { updated: "Updated", new_time: "New time" },
+    whenLabel: "When",
+    whereLabel: "Where",
+    timeToDecide: "Time to be decided",
+    placeToDecide: "Place to be decided",
+    directions: "Directions",
+    yes: "We're in!",
+    no: "Can't make it",
+    reasonLabel: "What should we tell them?",
+    noteLabel: "Add a note (optional)",
+    sendNo: "Send my answer",
+    back: "Back",
+    thanks: "Thanks! Your answer is in",
+    yourAnswer: (answer: string) => `Your answer: ${answer}`,
+    change: "Change my answer",
+    availabilitySoon: "Picking a time from this page is coming soon. Please reply to the text for now.",
+    overTitle: "This playdate is over",
+    overNote: "This link only worked until the playdate ended.",
+    cancelled: "This playdate was cancelled.",
+    started: "This playdate has started, so answers are closed.",
+    notFoundTitle: "This link doesn't work",
+    notFoundNote: "Check that the whole link was copied, or ask the parent who sent it.",
+    tooManyTitle: "Too many tries",
+    tooManyNote: "Please wait a few minutes and open the link again.",
+    errors: {
+      STALE_TIME: "The time just changed. Here's the new time: please answer again.",
+      PLAYDATE_STARTED: "This playdate has started, so answers are closed.",
+      PLAYDATE_CANCELLED: "This playdate was cancelled.",
+      LINK_EXPIRED: "This playdate is over.",
+      INVALID_ANSWER: "Please choose a reason (and keep the note under 280 characters).",
+      NOT_FOUND: "This link doesn't work.",
+      TOO_MANY_TRIES: "Too many tries. Please wait a few minutes and try again.",
+    },
+  },
   somethingWentWrong: "Something went wrong. Please try again.",
   tabs: {
     label: "Main",
@@ -261,6 +297,11 @@ export function formatDuration(minutes: number): string {
 export function joinNames(names: readonly string[]): string {
   if (names.length <= 1) return names[0] ?? "";
   return `${names.slice(0, -1).join(", ")} and ${names[names.length - 1]}`;
+}
+
+/** KD-16: the short name of a zone at that moment, e.g. "EST", "PST", "GMT+5:30". */
+export function zoneName(date: Date, zone: string): string {
+  return part(parts(date, zone, { timeZoneName: "short" }), "timeZoneName");
 }
 
 /** "9:00 AM to 12:00 PM" */
