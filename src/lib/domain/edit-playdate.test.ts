@@ -63,7 +63,7 @@ function playdate(patch: Partial<OrganizerPlaydate> = {}): OrganizerPlaydate {
 function world(p: OrganizerPlaydate = playdate()) {
   const applied: PlaydateUpdate[] = [];
   const tokens: string[] = [];
-  const pages: PlaydatePageStore = { getForOrganizer: async (o, id) => (o === ALEX && id === p.id ? p : null), confirm: async () => false };
+  const pages: PlaydatePageStore = { getForOrganizer: async (o, id) => (o === ALEX && id === p.id ? p : null), confirm: async () => false, cancel: async () => false };
   const playdates: PlaydateStore = {
     friendsForInvite: async (o, ids) => FRIENDS.filter((f) => f.ownerId === o && ids.includes(f.id)),
     createPlaydate: async () => "unused",

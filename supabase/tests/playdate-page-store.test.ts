@@ -107,4 +107,15 @@ describe.skipIf(!apiEnabled)("playdate page repository", () => {
     expect(await domain.confirmPlaydate(page.playdatePageStore, sam, playdateId, NOW)).toEqual({ ok: false, code: "NOT_FOUND" });
     expect(await q("select status from playdates where id = $1", [playdateId])).toEqual([{ status: "collecting" }]);
   });
+
+  it("cancel: organizer only, the schema's check holds, Home drops it, and the link takes no answer", async () => {
+    const { alex, playdateId, token } = await sent();
+    const sam = await parent("Sam");
+    expect(await domain.cancelPlaydate(page.playdatePageStore, sam, playdateId, NOW)).toEqual({ ok: false, code: "NOT_FOUND" });
+    expect(await domain.cancelPlaydate(page.playdatePageStore, alex, playdateId, NOW)).toEqual({ ok: true });
+    expect(await q("select status, cancelled_at from playdates where id = $1", [playdateId])).toEqual([{ status: "cancelled", cancelled_at: NOW }]);
+    expect((await playdates.listHomePlaydates(alex, NOW)).map((h) => h.id)).not.toContain(playdateId);
+    expect((await invitePage.loadInvite(invites.inviteStore, token, NOW))?.state).toBe("cancelled");
+    expect(await answer(token, "yes")).toEqual({ ok: false, code: "PLAYDATE_CANCELLED" });
+  });
 });

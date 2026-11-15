@@ -8,6 +8,7 @@ import { directionsHref } from "@/components/invite/InvitePage";
 import type { OrganizerPlaydate, PlaydatePageView } from "@/lib/domain/playdate-page";
 import { enCA, formatDuration, formatShortDay, formatTimeRange } from "@/lib/i18n/en-CA";
 import { durationMinutes } from "@/lib/rules/plan";
+import { CancelButton } from "./CancelButton";
 import { ConfirmButton } from "./ConfirmButton";
 
 const t = enCA.playdate;
@@ -28,6 +29,13 @@ export function PlaydatePage({ playdate: p, view, live, texts }: { playdate: Org
         <h1 className="text-title font-bold leading-tight">{p.title}</h1>
         {view.cancelled && <StatusLine tone="danger">{t.cancelled}</StatusLine>}
       </header>
+
+      {view.cancelled && texts.length > 0 && (
+        <section aria-label={t.cancelledNote} className="flex flex-col gap-3">
+          <p className="text-[15px] text-muted">{t.cancelledNote}</p>
+          <TextButtons texts={texts} />
+        </section>
+      )}
 
       {view.confirmed && (
         <section aria-labelledby="update-sent" className="flex flex-col gap-3">
@@ -103,9 +111,12 @@ export function PlaydatePage({ playdate: p, view, live, texts }: { playdate: Org
       </section>
 
       {!view.cancelled && (
-        <ButtonLink href={`/playdates/${p.id}/edit`} fullWidth>
-          {t.edit}
-        </ButtonLink>
+        <div className="flex flex-col gap-3">
+          <ButtonLink href={`/playdates/${p.id}/edit`} fullWidth>
+            {t.edit}
+          </ButtonLink>
+          <CancelButton playdateId={p.id} />
+        </div>
       )}
     </div>
   );

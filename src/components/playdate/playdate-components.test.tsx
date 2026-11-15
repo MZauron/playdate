@@ -2,7 +2,7 @@
 import { renderToStaticMarkup } from "react-dom/server";
 import { describe, expect, it } from "vitest";
 import { InvitePage } from "@/components/invite/InvitePage";
-import { confirmationTexts } from "@/lib/domain/confirmation";
+import { cancellationTexts, confirmationTexts } from "@/lib/domain/confirmation";
 import type { InviteView } from "@/lib/domain/invite-page";
 import { pageView, type OrganizerPlaydate } from "@/lib/domain/playdate-page";
 import { at } from "@/lib/rules/time";
@@ -31,7 +31,8 @@ const p = (patch: Partial<OrganizerPlaydate> = {}): OrganizerPlaydate => ({
 });
 const render = (pd: OrganizerPlaydate) => {
   const view = pageView(pd);
-  return renderToStaticMarkup(<PlaydatePage playdate={pd} view={view} live={<span> · Live</span>} texts={view.confirmed ? confirmationTexts(pd) : []} />);
+  const texts = view.cancelled ? cancellationTexts(pd) : view.confirmed ? confirmationTexts(pd) : [];
+  return renderToStaticMarkup(<PlaydatePage playdate={pd} view={view} live={<span> · Live</span>} texts={texts} />);
 };
 
 describe("PlaydatePage", () => {
@@ -51,6 +52,23 @@ describe("PlaydatePage", () => {
     expect(html).toContain("Text Dev");
     expect(html).toContain("sms:+14165550111?&amp;body=");
     expect(html).not.toContain("Confirm and send update");
+  });
+});
+
+describe("PlaydatePage once cancelled (KD-15)", () => {
+  it("says so, offers a Text button per family, and no Confirm, Edit or Cancel", () => {
+    const html = render(p({ status: "cancelled" }));
+    expect(html).toContain("This playdate was cancelled.");
+    expect(html).toContain("Sorry, our playdate on Mon, Nov 16 is cancelled.".replace(/'/g, "&#x27;").split(" ").map(encodeURIComponent).join("%20"));
+    expect(html).toContain("Text Dev");
+    expect(html).not.toContain("Confirm and send update");
+    expect(html).not.toContain("Edit playdate");
+    expect(html).not.toContain(">Cancel playdate<");
+  });
+  it("a live playdate offers Edit playdate and Cancel playdate", () => {
+    const html = render(p());
+    expect(html).toContain("Edit playdate");
+    expect(html).toContain("Cancel playdate");
   });
 });
 
