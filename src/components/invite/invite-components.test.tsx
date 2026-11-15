@@ -27,7 +27,7 @@ const view = (patch: Partial<InviteView> = {}): InviteView => ({
   picks: [],
   ...patch,
 });
-const render = (v: InviteView) => renderToStaticMarkup(<InvitePage view={v} token={TOKEN} />);
+const render = (v: InviteView) => renderToStaticMarkup(<InvitePage view={v} inviteKey={{ token: TOKEN }} />);
 
 describe("InvitePage", () => {
   it("shows who invites, the message, the time in the playdate's zone, the place with Directions, and the two answers", () => {
@@ -76,5 +76,16 @@ describe("InvitePage", () => {
     const html = render(view());
     expect(html.match(new RegExp(TOKEN, "g"))?.length).toBe(1);
     expect(html).not.toMatch(/\+1\d{10}|tel:|sms:/);
+  });
+});
+
+describe("InvitePage for a signed-in Kindred friend (T15)", () => {
+  it("posts the invite id, never a token, sits inside the app's column, and links its own calendar file", () => {
+    const id = "11111111-2222-4333-8444-555555555555";
+    const html = renderToStaticMarkup(<InvitePage view={view({ confirmed: true })} inviteKey={{ inviteId: id }} embedded />);
+    expect(html).toContain(`name="inviteId" value="${id}"`);
+    expect(html).not.toContain('name="token"');
+    expect(html).not.toContain("<main");
+    expect(html).toContain(`href="/invites/${id}/calendar.ics"`);
   });
 });

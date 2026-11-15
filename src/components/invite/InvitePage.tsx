@@ -2,8 +2,8 @@ import { Card } from "@/components/Card";
 import { StatusLine } from "@/components/StatusLine";
 import type { InviteView } from "@/lib/domain/invite-page";
 import { enCA, formatDateTile, formatShortDay, formatTimeRange } from "@/lib/i18n/en-CA";
-import { AnswerPanel } from "./AnswerPanel";
-import { InviteShell } from "./InviteShell";
+import { AnswerPanel, type InviteKey } from "./AnswerPanel";
+import { InviteShell as LinkShell } from "./InviteShell";
 import { LocalTime } from "./LocalTime";
 
 const t = enCA.invite;
@@ -15,7 +15,10 @@ export function directionsHref(placeName: string, placeAddress: string | null): 
 }
 
 /** The invite page (DESIGN.md "Screens"): who invites, the message as a bubble, the details card, and the answer. */
-export function InvitePage({ view, token }: { view: InviteView; token: string }) {
+export function InvitePage({ view, inviteKey, embedded = false }: { view: InviteView; inviteKey: InviteKey; embedded?: boolean }) {
+  // Signed in (T15), the page sits inside the app's own column and tabs; through a link it has its own shell.
+  const InviteShell = embedded ? EmbeddedShell : LinkShell;
+  const calendarHref = "token" in inviteKey ? `/r/${inviteKey.token}/calendar.ics` : `/invites/${inviteKey.inviteId}/calendar.ics`;
   if (view.state === "over") {
     return (
       <InviteShell>
@@ -85,7 +88,7 @@ export function InvitePage({ view, token }: { view: InviteView; token: string })
 
       {view.confirmed && view.state !== "cancelled" && (
         <a
-          href={`/r/${token}/calendar.ics`}
+          href={calendarHref}
           className="inline-flex h-[50px] w-full items-center justify-center rounded-button bg-primary-tint px-5 text-base font-semibold text-primary"
         >
           {t.addToCalendar}
@@ -98,7 +101,7 @@ export function InvitePage({ view, token }: { view: InviteView; token: string })
         <StatusLine tone="muted">{t.started}</StatusLine>
       ) : (
         <AnswerPanel
-          token={token}
+          inviteKey={inviteKey}
           timeVersion={view.timeVersion}
           answer={view.answer}
           zone={view.zone}
@@ -108,4 +111,8 @@ export function InvitePage({ view, token }: { view: InviteView; token: string })
       )}
     </InviteShell>
   );
+}
+
+function EmbeddedShell({ children }: { children: React.ReactNode }) {
+  return <div className="flex flex-col gap-5 pb-6">{children}</div>;
 }

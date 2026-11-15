@@ -322,8 +322,19 @@ export const enCA = {
     answered: (answered: number, total: number) => `${answered} of ${total} ${total === 1 ? "family" : "families"} answered`,
     noPlace: "Place to be decided",
     majorityNotice: (name: string, range: string) => `Text ${name}: most families picked ${range}`,
+    /** T15: invites from other Kindred parents. */
+    invitesTitle: "Invites",
+    invitedBy: (organizer: string, child: string | null) => (child ? `${organizer} invited ${child}` : `${organizer} invited you`),
+    pickATime: "Pick a time that works",
+    myAnswer: {
+      waiting: "Waiting for your answer",
+      yes: "You're in",
+      pick: "Your time is in",
+      no: "You can't make it",
+    },
   },
   status: {
+    confirmed: "Confirmed",
     coming: "Coming",
     responded: "Responded",
     waiting: "Waiting",

@@ -19,5 +19,5 @@ export default async function InviteRoute({ params }: { params: Promise<{ token:
   if (!viewLimiter.hit(clientAddress(await headers())).ok) return <InviteMessage title={enCA.invite.tooManyTitle} note={enCA.invite.tooManyNote} />;
   const view = await loadInvite(inviteStore, token, new Date());
   if (!view) notFound();
-  return <InvitePage view={view} token={token} />;
+  return <InvitePage view={view} inviteKey={{ token }} />;
 }

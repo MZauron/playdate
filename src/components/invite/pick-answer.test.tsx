@@ -29,7 +29,7 @@ const view = (patch: Partial<InviteView> = {}): InviteView => ({
   picks: [{ range: a, others: ["Dev"], families: 1, mostPicked: true, yours: false }],
   ...patch,
 });
-const render = (v: InviteView) => renderToStaticMarkup(<InvitePage view={v} token="AAAAAAAAAAAAAAAAAAAAAA" />);
+const render = (v: InviteView) => renderToStaticMarkup(<InvitePage view={v} inviteKey={{ token: "AAAAAAAAAAAAAAAAAAAAAA" }} />);
 
 describe("the availability invite page", () => {
   it("before answering: Already suggested with Pick this, the organizer's free boxes, and Can't make it; no We're in!", () => {

@@ -1,9 +1,10 @@
 import { Card } from "@/components/Card";
 import { StatusLine } from "@/components/StatusLine";
 import { answeredCount } from "@/lib/rules/answers";
-import { dayPartOf, enCA, formatDateTile, formatLongDay, formatTimeRange } from "@/lib/i18n/en-CA";
+import { dayPartOf, enCA, formatDateTile, formatLongDay, formatShortDay, formatTimeRange } from "@/lib/i18n/en-CA";
 import Link from "next/link";
 import type { MajorityNotice } from "@/lib/domain/majority";
+import type { HomeInvite } from "@/lib/db/invites";
 import { groupForHome, type HomePlaydate } from "./home-data";
 import { Kite } from "./Kite";
 
@@ -16,12 +17,14 @@ export type HomeViewProps = {
   playdates: readonly HomePlaydate[];
   /** KD-12, Q2 default: text friends to tell that most families picked another time (under Needs you). */
   notices?: readonly MajorityNotice[];
+  /** T15: invites from other Kindred parents, opened at /invites/[id]. */
+  invites?: readonly HomeInvite[];
   now: Date;
   /** The zone for the banner's date and greeting. */
   zone: string;
 };
 
-export function HomeView({ firstName, welcome = false, childName, playdates, notices = [], now, zone }: HomeViewProps) {
+export function HomeView({ firstName, welcome = false, childName, playdates, notices = [], invites = [], now, zone }: HomeViewProps) {
   const sections = groupForHome(playdates, now);
   const greeting = welcome && firstName ? enCA.home.welcome(firstName) : enCA.home.greeting[dayPartOf(now, zone)];
 
@@ -43,6 +46,19 @@ export function HomeView({ firstName, welcome = false, childName, playdates, not
         </span>
         <span className="text-lg font-semibold">{enCA.home.planCard}</span>
       </Link>
+
+      {invites.length > 0 && (
+        <section aria-label={enCA.home.invitesTitle}>
+          <h2 className="mb-2 px-1 text-label font-semibold uppercase tracking-wider text-muted">{enCA.home.invitesTitle}</h2>
+          <ul className="flex flex-col gap-3">
+            {invites.map((i) => (
+              <li key={i.inviteId}>
+                <InviteItem invite={i} childName={childName ?? null} />
+              </li>
+            ))}
+          </ul>
+        </section>
+      )}
 
       <Section title={enCA.home.sections.needsYou} playdates={sections.needs_you} render={(p) => <ProgressItem playdate={p} />}>
         {notices.map((n) => (
@@ -138,6 +154,26 @@ function ProgressItem({ playdate: p }: { playdate: HomePlaydate }) {
         >
           <span className="block h-full rounded-full bg-success" style={{ width: total ? `${(answered / total) * 100}%` : "0%" }} />
         </span>
+      </Card>
+    </Link>
+  );
+}
+
+/** "Alex invited Mia": what, when, where, and this parent's own answer (T15). */
+function InviteItem({ invite: i, childName }: { invite: HomeInvite; childName: string | null }) {
+  const status = i.myAnswer ? enCA.home.myAnswer[i.myAnswer] : enCA.home.myAnswer.waiting;
+  return (
+    <Link href={`/invites/${i.inviteId}`} className={itemLink}>
+      <Card className="flex flex-col gap-1">
+        <span className="font-semibold">{enCA.home.invitedBy(i.organizerFirstName, childName)}</span>
+        <span className="text-[15px] text-muted">
+          {i.start && i.end ? `${formatShortDay(i.start, i.zone)} · ${formatTimeRange(i.start, i.end, i.zone)}` : enCA.home.pickATime}
+          {i.placeName ? ` · ${i.placeName}` : ""}
+        </span>
+        <StatusLine tone={i.myAnswer === "no" ? "danger" : i.myAnswer ? "success" : "muted"}>
+          {status}
+          {i.confirmed ? ` · ${enCA.status.confirmed}` : ""}
+        </StatusLine>
       </Card>
     </Link>
   );
