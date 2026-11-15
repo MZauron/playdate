@@ -2,15 +2,18 @@
 
 import { useActionState, useState, useSyncExternalStore } from "react";
 import { addFriendAction, type AddFriendState } from "@/app/(app)/friends/actions";
-import { Button } from "@/components/Button";
+import { Button, type ButtonVariant } from "@/components/Button";
 import { Card } from "@/components/Card";
 import { Field } from "@/components/Field";
 import { StatusLine } from "@/components/StatusLine";
 import { enCA } from "@/lib/i18n/en-CA";
 import { contactsManager, pickContact } from "./contact-picker";
 
-/** Add a friend: name, child's first name and number. Where the browser has a contact picker, "Choose from contacts" fills name and number. */
-export function AddFriendForm() {
+/**
+ * Add a friend: name, child's first name and number. Where the browser has a contact picker, "Choose from contacts" fills name and number.
+ * On the Plan screen Send invite is the coral action, so the form's own button is secondary there.
+ */
+export function AddFriendForm({ submitVariant = "main" }: { submitVariant?: ButtonVariant }) {
   const [state, action, pending] = useActionState<AddFriendState, FormData>(addFriendAction, { version: 0, errors: {} });
   // The boxes empty after each add: a new `key` remounts them.
   return (
@@ -24,7 +27,7 @@ export function AddFriendForm() {
           </p>
         )}
         {state.added && <StatusLine tone="success">{state.added}</StatusLine>}
-        <Button type="submit" variant="main" fullWidth disabled={pending}>
+        <Button type="submit" variant={submitVariant} fullWidth disabled={pending}>
           {enCA.friends.add}
         </Button>
       </form>

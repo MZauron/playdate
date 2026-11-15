@@ -23,7 +23,7 @@ Node 22 (`.nvmrc`), npm.
 | `npm run db:types` | Regenerate `src/lib/db/types.ts` from the local database (commit it; CI fails when it drifts) |
 | `npm run test:db` | Database tests in `supabase/tests` against the local Supabase (`db:start` first) |
 
-Local setup: `npm run db:start` (Docker), then copy `.env.example` to `.env.local` and fill it from `npx supabase status -o env` (`API_URL`, `ANON_KEY`, `SERVICE_ROLE_KEY`) plus `PHONE_HASH_KEY=$(openssl rand -hex 32)`. Sign in locally with the test numbers in `supabase/config.toml` (e.g. (416) 555-0101, code 123456); nothing is sent.
+Local setup: `npm run db:start` (Docker), then copy `.env.example` to `.env.local` and fill it from `npx supabase status -o env` (`API_URL`, `ANON_KEY`, `SERVICE_ROLE_KEY`) plus `PHONE_HASH_KEY=$(openssl rand -hex 32)` and `PUBLIC_LINK_BASE=http://localhost:3200` (where invite links point). `AI_MODE=fake` (the default) gives built-in message ideas; `AI_MODE=live` with `ANTHROPIC_API_KEY` asks Claude. Sign in locally with the test numbers in `supabase/config.toml` (e.g. (416) 555-0101, code 123456); nothing is sent.
 
 Before every commit: `npm run lint && npm run typecheck && npm test`. Copy `.env.example` to `.env.local` when a task needs variables.
 

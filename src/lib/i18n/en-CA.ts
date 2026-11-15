@@ -2,6 +2,9 @@
 import type { FriendStatus } from "@/lib/rules/answers";
 import type { DeclineReason } from "@/lib/rules/types";
 
+/** The pieces a built-in message idea is made of (see `suggestionTemplates`). */
+export type SuggestionWords = { child: string; kids: string; all: string; when: string; at: string };
+
 export const enCA = {
   app: {
     name: "Kindred",
@@ -86,6 +89,88 @@ export const enCA = {
       NOT_FOUND: "That friend isn't in your list any more.",
     },
   },
+  plan: {
+    title: "Plan a playdate",
+    back: "Back",
+    whoTitle: "Who's invited",
+    friendsLabel: "Your friends",
+    noFriends: "No friends yet. Add a family you'd like to invite.",
+    addFriend: "+ Add a friend",
+    closeAddFriend: "Close",
+    whenTitle: "When",
+    modeLabel: "How to choose the time",
+    pickTime: "Pick date and time",
+    shareAvailability: "Share availability",
+    availabilitySoon: "Coming soon. For now, pick a date and time.",
+    dateLabel: "Date",
+    startLabel: "Start",
+    endLabel: "End",
+    done: "Done",
+    edit: "Edit",
+    detailsTitle: "Details",
+    placeNameLabel: "Place",
+    placeNamePlaceholder: "e.g. Riverdale Park",
+    placeAddressLabel: "Address",
+    savedPlaces: "Your saved places",
+    savePlace: "Save this place",
+    yourNameLabel: "Your name",
+    yourNameHint: "Friends see it with your message.",
+    messageLabel: "Message to the parents",
+    messagePlaceholder: "Say hello and what you have in mind.",
+    suggestions: "✨ Suggestions",
+    newIdeas: "↻ New ideas",
+    suggestionsHint: "Tap one to put it in the box. You can change it.",
+    useSuggestion: (text: string) => `Use: ${text}`,
+    sendLine: (app: number, text: number) => {
+      const total = app + text;
+      const parts = [app ? `${app} in Kindred` : "", text ? `${text} by text` : ""].filter(Boolean);
+      return `Goes to ${total} ${total === 1 ? "family" : "families"}: ${parts.join(" and ")}.`;
+    },
+    send: "Send invite",
+    fixAbove: "Something above needs a look before this can go.",
+    sentTitle: "Your invite is ready",
+    sentNote: "Text each family from your phone. Your message and their own link are already filled in.",
+    textButton: (name: string) => `Text ${name}`,
+    texted: (name: string) => `✓ Texted ${name}`,
+    backHome: "Back to Home",
+    leaveTitle: "Leave this playdate?",
+    leaveNote: "What you've entered so far will be lost.",
+    keepPlanning: "Keep planning",
+    discard: "Discard",
+    // KD-02…06 (the rule codes) and the Details checks of the planning screen.
+    errors: {
+      NO_TIME: "Choose a date, a start and an end, then tap Done.",
+      NO_FREE_SLOTS: "Choose at least one time you're free.",
+      END_BEFORE_START: "The end has to be after the start.",
+      IN_PAST: "That time has already passed. Choose a later one.",
+      MESSAGE_REQUIRED: "Please write a short message to the parents.",
+      MESSAGE_TOO_LONG: "That message is a bit long. Please keep it under 1,000 characters.",
+      NO_INVITEES: "Choose at least one family to invite.",
+      NAME_REQUIRED: "Please add your first name.",
+      PLACE_NAME_REQUIRED: "Please add the name of the place.",
+      ADDRESS_REQUIRED: "Add the address to save this place.",
+      TOO_MANY_PLAYDATES: "That's a lot of playdates at once. Please try again in a little while.",
+      SUGGESTIONS_FAILED: "Couldn't get ideas right now. Please try again.",
+    },
+  },
+  // Built-in message ideas: what ✨ Suggestions shows without the AI (AI_MODE=fake, no key, or the AI failing).
+  // `child` = the organizer's child, `kids` = the friends' children ("Arjun and Lily"), `all` = both ("Mia, Arjun and Lily"), `when` = "Mon, Nov 16, 10:00 AM to 12:00 PM"
+  // or "sometime soon", `at` = " at Riverdale Park" or "". Short and warm; never more than one exclamation mark.
+  suggestionTemplates: [
+    (v: SuggestionWords) => `Hi! ${v.child} would love a playdate with ${v.kids}. Are you free ${v.when}${v.at}?`,
+    (v: SuggestionWords) => `${v.child} keeps asking to see ${v.kids}. Would ${v.when}${v.at} work for you?`,
+    (v: SuggestionWords) => `Want to get the kids together? We're thinking ${v.when}${v.at}. Let me know if that works.`,
+    (v: SuggestionWords) => `How about a playdate for ${v.all}? We could do ${v.when}${v.at}. No pressure if you're busy.`,
+    (v: SuggestionWords) => `We'd love for ${v.kids} to play with ${v.child}: ${v.when}${v.at}. Can you make it?`,
+    (v: SuggestionWords) => `Playdate time? ${v.all}, ${v.when}${v.at}. Tell me if another time is better.`,
+  ],
+  suggestionWords: {
+    noKids: "your kids",
+    allWithoutKids: (child: string) => `${child} and your kids`,
+    noTime: "sometime soon",
+    when: (day: string, time: string) => `${day}, ${time}`,
+    at: (place: string) => ` at ${place}`,
+  },
   somethingWentWrong: "Something went wrong. Please try again.",
   tabs: {
     label: "Main",
@@ -154,6 +239,20 @@ export function formatTime(date: Date, zone: string): string {
   const p = parts(date, zone, { hour: "numeric", minute: "2-digit", hour12: true });
   const period = part(p, "dayPeriod").replace(/\./g, "").toUpperCase();
   return `${part(p, "hour")}:${part(p, "minute")} ${period}`;
+}
+
+/** KD-03: the length shown next to a set time, "2 hr", "1 hr 30 min", "45 min". */
+export function formatDuration(minutes: number): string {
+  const hours = Math.floor(minutes / 60);
+  const rest = Math.round(minutes % 60);
+  if (!hours) return `${rest} min`;
+  return rest ? `${hours} hr ${rest} min` : `${hours} hr`;
+}
+
+/** "Arjun", "Arjun and Lily", "Arjun, Lily and Zoe" (message ideas; the title uses "&", KD-06). */
+export function joinNames(names: readonly string[]): string {
+  if (names.length <= 1) return names[0] ?? "";
+  return `${names.slice(0, -1).join(", ")} and ${names[names.length - 1]}`;
 }
 
 /** "9:00 AM to 12:00 PM" */

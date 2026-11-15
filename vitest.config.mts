@@ -22,6 +22,8 @@ export default defineConfig({
             SUPABASE_SERVICE_ROLE_KEY: "test-service-role-key",
           }),
       PHONE_HASH_KEY: "test-phone-hash-key-0123456789abcdef",
+      PUBLIC_LINK_BASE: "https://kindred.test",
+      AI_MODE: "fake",
     },
     include: ["src/**/*.test.ts", "src/**/*.test.tsx", "supabase/tests/**/*.test.ts"],
     // The database tests (supabase/tests) talk to a real Postgres; give them room.
