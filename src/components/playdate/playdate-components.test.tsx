@@ -26,7 +26,7 @@ const p = (patch: Partial<OrganizerPlaydate> = {}): OrganizerPlaydate => ({
   message: "Park?",
   timeVersion: 1,
   slots: [],
-  invites: [{ id: "i1", parentName: "Dev Patel", label: "Arjun's dad", channel: "text", phoneE164: "+14165550111", answer: { kind: "yes", reason: null, note: null, answeredAt: NOW } }],
+  invites: [{ id: "i1", friendId: "f1", parentName: "Dev Patel", label: "Arjun's dad", channel: "text", phoneE164: "+14165550111", answer: { kind: "yes", reason: null, note: null, answeredAt: NOW } }],
   ...patch,
 });
 const render = (pd: OrganizerPlaydate) => {

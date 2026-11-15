@@ -136,3 +136,30 @@ export async function friendsChildren(ownerId: string, friendIds: readonly strin
   const friends = await playdateStore.friendsForInvite(ownerId, friendIds);
   return friends.map((f) => f.childFirstName).filter((n): n is string => !!n);
 }
+
+/** Applies one Send update in a single transaction (migration 0004), on THIS organizer's playdate only. */
+export const applyPlaydateUpdate: import("@/lib/domain/edit-playdate").ApplyUpdate = async (organizerId, playdateId, u) => {
+  const { error } = await adminClient().rpc("update_playdate", {
+    p_playdate_id: playdateId,
+    p_organizer_id: organizerId,
+    p_playdate: {
+      title: u.title,
+      mode: u.mode,
+      start_at: u.startAt.toISOString(),
+      end_at: u.endAt.toISOString(),
+      place_name: u.placeName,
+      place_address: u.placeAddress,
+      message: u.message,
+      links_expire_at: u.linksExpireAt.toISOString(),
+      time_version: u.timeVersion,
+      status: u.status,
+      clear_final: u.clearFinal,
+    },
+    p_add: u.add.map((i) => ({ friend_id: i.friendId, invitee_user_id: i.inviteeUserId, channel: i.channel, token_hash: i.tokenHash })),
+    p_remove: u.removeFriendIds,
+    p_delete_answers: u.deleteAnswers,
+    // The generated type says string; null (leave the labels) is what the function expects when nothing but the time is the same.
+    p_label: u.label as "updated" | "new_time",
+  });
+  if (error) throw new Error(`applyPlaydateUpdate failed: ${error.code}`);
+};

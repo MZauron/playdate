@@ -127,6 +127,12 @@ export const enCA = {
       return `Goes to ${total} ${total === 1 ? "family" : "families"}: ${parts.join(" and ")}.`;
     },
     send: "Send invite",
+    editTitle: "Edit playdate",
+    sendUpdate: "Send update",
+    updateTitle: "Your update is ready",
+    updateNote: "Text each family from your phone. Families you just added get the invite with their own link.",
+    nothingChanged: "Nothing changed, so there's nothing to send.",
+    backToPlaydate: "Back to the playdate",
     fixAbove: "Something above needs a look before this can go.",
     sentTitle: "Your invite is ready",
     sentNote: "Text each family from your phone. Your message and their own link are already filled in.",
@@ -150,6 +156,8 @@ export const enCA = {
       PLACE_NAME_REQUIRED: "Please add the name of the place.",
       ADDRESS_REQUIRED: "Add the address to save this place.",
       TOO_MANY_PLAYDATES: "That's a lot of playdates at once. Please try again in a little while.",
+      NOT_FOUND: "That playdate isn't yours or doesn't exist any more.",
+      PLAYDATE_CANCELLED: "This playdate was cancelled, so it can't be changed.",
       SUGGESTIONS_FAILED: "Couldn't get ideas right now. Please try again.",
     },
   },
@@ -184,6 +192,7 @@ export const enCA = {
       `${names.length} ${names.length === 1 ? "family" : "families"} can come: ${names.join(", ")}`,
     nobodyYet: "Nobody can come yet. You can confirm once a family says yes.",
     confirm: "Confirm and send update",
+    edit: "Edit playdate",
     confirmed: "Confirmed",
     updateSent: "✓ Update sent",
     updateNote: "Families who open their link now see it's on. Text each one the news from your phone:",
@@ -194,6 +203,13 @@ export const enCA = {
       PLAYDATE_CANCELLED: "This playdate was cancelled.",
       NOT_FOUND: "That playdate isn't yours or doesn't exist any more.",
     },
+  },
+  /** KD-10, Q19 default: the update texts. The first text, with the link, is right above them in the same Messages thread. */
+  updateTexts: {
+    newTime: (day: string, time: string, place: string | null) =>
+      `New time for our playdate: ${day}, ${time}${place ? ` at ${place}` : ""}. Please answer again with the link above.`,
+    updated: (day: string, time: string, place: string | null) =>
+      `Our playdate has an update: ${day}, ${time}${place ? ` at ${place}` : ""}. The link above has the details.`,
   },
   /** KD-09: the confirmation, on the invite page's bubble and in the organizer's Text. "Sat, Nov 21", "10:00 AM to 12:00 PM". */
   itsOn: (day: string, time: string, place: string | null) => `It's on! 🎉 See you ${day}, ${time}${place ? ` at ${place}` : ""}.`,

@@ -88,7 +88,7 @@ export function InvitePage({ view, token }: { view: InviteView; token: string })
       ) : view.state === "started" ? (
         <StatusLine tone="muted">{t.started}</StatusLine>
       ) : view.mode === "set_time" ? (
-        <AnswerPanel key={view.timeVersion} token={token} timeVersion={view.timeVersion} answer={view.answer} />
+        <AnswerPanel token={token} timeVersion={view.timeVersion} answer={view.answer} />
       ) : (
         <p className="text-muted">{t.availabilitySoon}</p>
       )}

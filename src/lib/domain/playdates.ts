@@ -139,15 +139,15 @@ export function firstWord(name: string): string {
   return name.trim().split(/\s+/)[0] ?? name;
 }
 
-/**
- * `organizer` comes from the session (`requireParent`). Returns every refusal at once so the screen can show them together; nothing
- * is written unless all of them pass.
- */
-export async function sendInvite(deps: SendDeps, organizer: Organizer, input: PlanFormInput, now: Date): Promise<SendResult> {
-  const zone = zoneOrDefault(input.zone);
-  const ids = [...new Set(input.friendIds.filter(isId))].slice(0, MAX_INVITEES);
-  const friends = ids.length ? await deps.store.friendsForInvite(organizer.id, ids) : [];
+export type CheckedPlanForm =
+  | { ok: true; plan: { time: { start: Date; end: Date }; message: string }; yourName: string; placeName: string | null; placeAddress: string | null }
+  | { ok: false; errors: PlanError[] };
 
+/**
+ * KD-02…06 through rules/plan.ts, plus the Details checks (your name, place name with an address, an address to save a place).
+ * Every refusal at once. Used by Send invite and Send update, so the two can never disagree.
+ */
+export function checkPlanForm(input: PlanFormInput, inviteeCount: number, zone: Zone, now: Date): CheckedPlanForm {
   const errors: PlanError[] = [];
   const plan = checkPlan(
     {
@@ -155,7 +155,7 @@ export async function sendInvite(deps: SendDeps, organizer: Organizer, input: Pl
       start: wallTime(input.day, input.startTime, zone),
       end: wallTime(input.day, input.endTime, zone),
       message: input.message,
-      inviteeCount: friends.length,
+      inviteeCount,
       zone,
     },
     now,
@@ -172,12 +172,27 @@ export async function sendInvite(deps: SendDeps, organizer: Organizer, input: Pl
 
   if (!plan.ok || errors.length) return { ok: false, errors };
   if (plan.value.time.mode !== "set_time") return { ok: false, errors: [{ code: "NO_TIME", field: "time" }] };
+  return { ok: true, plan: { time: { start: plan.value.time.start, end: plan.value.time.end }, message: plan.value.message }, yourName, placeName, placeAddress };
+}
+
+/**
+ * `organizer` comes from the session (`requireParent`). Returns every refusal at once so the screen can show them together; nothing
+ * is written unless all of them pass.
+ */
+export async function sendInvite(deps: SendDeps, organizer: Organizer, input: PlanFormInput, now: Date): Promise<SendResult> {
+  const zone = zoneOrDefault(input.zone);
+  const ids = [...new Set(input.friendIds.filter(isId))].slice(0, MAX_INVITEES);
+  const friends = ids.length ? await deps.store.friendsForInvite(organizer.id, ids) : [];
+
+  const checked = checkPlanForm(input, friends.length, zone, now);
+  if (!checked.ok) return { ok: false, errors: checked.errors };
+  const { plan, yourName, placeName, placeAddress } = checked;
 
   // A try counts once the plan is complete: only a sendable plan makes links.
   const attempt = deps.limiter.hit(organizer.id);
   if (!attempt.ok) return { ok: false, errors: [{ code: "TOO_MANY_PLAYDATES" }], retryAfterSeconds: attempt.retryAfterSeconds };
 
-  const { start, end } = plan.value.time;
+  const { start, end } = plan.time;
   const newToken = deps.newToken ?? newInviteToken;
   const links = friends.map((friend) => ({ friend, ...newToken() }));
 
@@ -191,7 +206,7 @@ export async function sendInvite(deps: SendDeps, organizer: Organizer, input: Pl
     endAt: end,
     placeName,
     placeAddress,
-    message: plan.value.message,
+    message: plan.message,
     linksExpireAt: linkExpiresAt({ finalEnd: null, setEnd: end, slots: [], zone }),
     invites: links.map(({ friend, tokenHash }) => ({
       friendId: friend.id,
@@ -210,7 +225,7 @@ export async function sendInvite(deps: SendDeps, organizer: Organizer, input: Pl
     name: firstWord(friend.parentName),
     label: friend.label,
     channel: (friend.kindredUserId ? "app" : "text") as InviteChannel,
-    href: smsHref(friend.phoneE164, plan.value.message, inviteLink(deps.linkBase, token)),
+    href: smsHref(friend.phoneE164, plan.message, inviteLink(deps.linkBase, token)),
   }));
   return { ok: true, playdateId, texts };
 }
