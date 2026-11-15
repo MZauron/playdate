@@ -1,6 +1,7 @@
 // The organizer's playdate page repository (src/lib/db/playdate-page.ts) through the local Supabase API: only the organizer
 // finds their playdate, Confirm sets every column the schema's checks require, and Home then shows it under Upcoming.
 // Skipped unless scripts/test-db.sh could give it the local API.
+import { fakePlaces } from "@/lib/integrations/places/fake";
 import { randomUUID } from "node:crypto";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { apiEnabled, closeDb, q } from "./helpers";
@@ -50,9 +51,9 @@ describe.skipIf(!apiEnabled)("playdate page repository", () => {
     const alex = await parent("Alex");
     const arjun = await friend(alex, "Arjun");
     const result = await sendInvite(
-      { store: playdates.playdateStore, limiter: { hit: () => ({ ok: true }) }, linkBase: "https://kindred.test" },
+      { store: playdates.playdateStore, limiter: { hit: () => ({ ok: true }) }, linkBase: "https://kindred.test", places: fakePlaces },
       { id: alex, firstName: "Alex", childFirstName: "Mia" },
-      { friendIds: [arjun], mode: "set_time", day: "2030-11-18", startTime: "10:00", endTime: "12:00", slots: [], zone: "America/Toronto", placeName: "High Park", placeAddress: "", savePlace: false, yourName: "Alex", message: "Park?" },
+      { friendIds: [arjun], mode: "set_time", day: "2030-11-18", startTime: "10:00", endTime: "12:00", slots: [], zone: "America/Toronto", placeName: "High Park", placeAddress: "", savePlace: false, placeId: "", yourName: "Alex", message: "Park?" },
       NOW,
     );
     if (!result.ok) throw new Error(JSON.stringify(result.errors));

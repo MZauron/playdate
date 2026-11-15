@@ -19,5 +19,6 @@ export SUPABASE_SERVICE_ROLE_KEY="$(value SERVICE_ROLE_KEY)"
 export PHONE_HASH_KEY="${PHONE_HASH_KEY:-smoke-test-phone-hash-key-0123456789abcdef}"
 export PUBLIC_LINK_BASE="http://localhost:3100"
 export AI_MODE=fake
+export PLACES_MODE=fake
 
 npx playwright test "$@"

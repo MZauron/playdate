@@ -1,6 +1,7 @@
 // The invite page (T09): what a friend sees through their link, and their answer. A friend has no account: the link token is the
 // only key, looked up by its sha256 (KD-14). The view holds this one invite and its playdate only, with first names (KD-17): never a
 // phone number, another invite, another family's answer, a group, an age or a saved place.
+import type { Place } from "@/lib/integrations/places/types";
 import { z } from "zod";
 import { createRateLimiter, type RateLimiter } from "@/platform/rate-limit";
 import { checkAnswer, type Answer } from "@/lib/rules/answers";
@@ -29,6 +30,8 @@ export type StoredInvite = {
     finalEndAt: Date | null;
     placeName: string | null;
     placeAddress: string | null;
+    /** A searched place (T17), looked up when read; null for a typed place or none. */
+    searchedPlace: Place | null;
     message: string;
     timeVersion: number;
     linksExpireAt: Date;
@@ -73,6 +76,8 @@ export type InviteView = {
   confirmed: boolean;
   placeName: string | null;
   placeAddress: string | null;
+  /** A searched place: what the details card shows (indoor/outdoor, ages) and its map link. Nothing else of the provider's. */
+  placeFacts: Pick<Place, "setting" | "ages" | "mapsUrl"> | null;
   timeVersion: number;
   answer: StoredAnswer | null;
   /** The organizer's free slots (availability, KD-04). */
@@ -110,6 +115,7 @@ export function toView(stored: StoredInvite, now: Date): InviteView {
     confirmed,
     placeName: p.placeName,
     placeAddress: p.placeAddress,
+    placeFacts: p.searchedPlace && { setting: p.searchedPlace.setting, ages: p.searchedPlace.ages, mapsUrl: p.searchedPlace.mapsUrl },
     timeVersion: p.timeVersion,
     answer: stored.answer,
     slots: [...p.slots].sort((a, b) => a.day.localeCompare(b.day) || SLOT_ORDER.indexOf(a.slot) - SLOT_ORDER.indexOf(b.slot)),

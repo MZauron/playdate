@@ -1,5 +1,6 @@
 // Send invite through the service with an in-memory store: each KD-02…06 refusal, nothing written on a refusal, and only token
 // hashes stored (KD-14). Times: now = Sat 14 Nov 2026, 10:00 in Toronto (docs/rules.test-cases.md).
+import { fakePlaces } from "@/lib/integrations/places/fake";
 import { describe, expect, it } from "vitest";
 import { at } from "@/lib/rules/time";
 import { hashToken } from "./invite-token";
@@ -30,6 +31,7 @@ function world() {
     store: fake.store,
     limiter: { hit: () => (++hits > 100 ? { ok: false, retryAfterSeconds: 60 } : { ok: true }) },
     linkBase: "https://kindred.test",
+    places: fakePlaces,
     newToken: () => {
       const token = `token-${++n}-abcdefghijklmn`.slice(0, 22);
       tokens.push(token);
@@ -50,6 +52,7 @@ const plan = (patch: Partial<PlanFormInput> = {}): PlanFormInput => ({
   placeName: "",
   placeAddress: "",
   savePlace: false,
+  placeId: "",
   yourName: "Alex",
   message: "Park at 10?",
   ...patch,
@@ -242,5 +245,29 @@ describe("Share availability (T12: KD-02, KD-04, KD-14)", () => {
   });
   it("parseSlots keeps only well-formed day|slot values", () => {
     expect(parseSlots(["2026-11-16|afternoon", "2026-02-30x|morning", "2026-11-16|lunch"])).toEqual([{ day: "2026-11-16", slot: "afternoon" }]);
+  });
+});
+
+describe("a place found by search (T17, Q6 default)", () => {
+  it("stores only the provider's id: no name, no address, and the typed place and Save this place are ignored", async () => {
+    const { fake, deps } = world();
+    const result = await sendInvite(deps, organizer, plan({ placeId: "fake-high-park", placeName: "Typed", placeAddress: "1 Typed St", savePlace: true }), NOW);
+    expect(result.ok).toBe(true);
+    expect(fake.playdates[0]).toMatchObject({ placeProviderId: "fake-high-park", placeName: null, placeAddress: null });
+    expect(fake.places).toEqual([]);
+  });
+  it("refuses an id the provider doesn't know, a malformed one, or one it can't check right now; nothing is written", async () => {
+    const { fake, deps } = world();
+    for (const placeId of ["fake-nowhere", "not an id!"]) {
+      expect(await sendInvite(deps, organizer, plan({ placeId }), NOW)).toEqual({ ok: false, errors: [{ code: "PLACE_NOT_FOUND", field: "place" }] });
+    }
+    const down = { details: async () => Promise.reject(new Error("down")) };
+    expect(await sendInvite({ ...deps, places: down }, organizer, plan({ placeId: "fake-high-park" }), NOW)).toMatchObject({ ok: false, errors: [{ code: "PLACE_NOT_FOUND" }] });
+    expect(fake.playdates).toHaveLength(0);
+  });
+  it("parsePlanForm reads the selected place's id", () => {
+    const form = new FormData();
+    form.set("placeId", "fake-high-park");
+    expect(parsePlanForm(form).placeId).toBe("fake-high-park");
   });
 });

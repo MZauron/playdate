@@ -1,6 +1,7 @@
 // Edit playdate and Send update (T16, KD-10). The organizer is the signed-in parent the caller passes in; the playdate id names a
 // playdate, and only the organizer's own is found. rules/plan.ts checks the new plan, rules/edit.ts decides what changes, and the
 // store applies it in one step. Pure apart from the ports passed in.
+import type { Places } from "@/lib/integrations/places/types";
 import { createRateLimiter, type RateLimiter } from "@/platform/rate-limit";
 import { enCA, formatShortDay, formatTimeRange } from "@/lib/i18n/en-CA";
 import { planEdit, type EditState } from "@/lib/rules/edit";
@@ -9,7 +10,7 @@ import { playdateTitle } from "@/lib/rules/plan";
 import type { FreeSlot, InviteChannel, InviteLabel, PlaydateStatus, TimeMode } from "@/lib/rules/types";
 import { inviteLink, newInviteToken } from "./invite-token";
 import { isPlaydateId, type OrganizerPlaydate, type PlaydatePageStore } from "./playdate-page";
-import { checkPlanForm, firstWord, MAX_INVITEES, type NewInvite, type PlanError, type PlanFormInput, type PlaydateStore, type TextToSend } from "./playdates";
+import { checkPlanForm, checkSelectedPlace, firstWord, MAX_INVITEES, type NewInvite, type PlanError, type PlanFormInput, type PlaydateStore, type TextToSend } from "./playdates";
 import { smsBodyHref, smsHref } from "./text-message";
 
 export type PlaydateUpdate = {
@@ -21,6 +22,7 @@ export type PlaydateUpdate = {
   slots: FreeSlot[];
   placeName: string | null;
   placeAddress: string | null;
+  placeProviderId: string | null;
   message: string;
   linksExpireAt: Date;
   timeVersion: number;
@@ -36,6 +38,7 @@ export type ApplyUpdate = (organizerId: string, playdateId: string, update: Play
 
 export type UpdateDeps = {
   pages: PlaydatePageStore;
+  places: Pick<Places, "details">;
   playdates: PlaydateStore;
   apply: ApplyUpdate;
   limiter: RateLimiter;
@@ -62,8 +65,10 @@ export function editFormValues(p: OrganizerPlaydate, zone = p.timezone) {
     day: p.startAt ? day(p.startAt) : "",
     start: p.startAt ? clock(p.startAt) : "",
     end: p.endAt ? clock(p.endAt) : "",
-    placeName: p.placeName ?? "",
-    placeAddress: p.placeAddress ?? "",
+    // A searched place comes back as the selected place; only a typed one fills the Details fields.
+    place: p.searchedPlace,
+    placeName: p.searchedPlace ? "" : (p.placeName ?? ""),
+    placeAddress: p.searchedPlace ? "" : (p.placeAddress ?? ""),
     message: p.message,
   };
 }
@@ -79,6 +84,12 @@ export function updateSentence(kind: "new_time" | "updated", start: Date | null,
   return words(formatShortDay(start, zone), formatTimeRange(start, end, zone), place);
 }
 
+/** KD-10 compares places: a searched place by its provider id alone (its name is looked up, not stored); a typed one by name and address. */
+function editablePlace(providerId: string | null, name: string | null, address: string | null): EditState["place"] {
+  if (providerId) return { name: "", address: null, providerPlaceId: providerId };
+  return name ? { name, address, providerPlaceId: null } : null;
+}
+
 export async function sendUpdate(deps: UpdateDeps, organizer: { id: string; firstName: string; childFirstName: string }, playdateId: string, input: PlanFormInput, now: Date): Promise<UpdateResult> {
   if (!isPlaydateId(playdateId)) return { ok: false, errors: [{ code: "NOT_FOUND" }] };
   const p = await deps.pages.getForOrganizer(organizer.id, playdateId);
@@ -91,17 +102,19 @@ export async function sendUpdate(deps: UpdateDeps, organizer: { id: string; firs
 
   const checked = checkPlanForm(input, friends.length, zone, now);
   if (!checked.ok) return { ok: false, errors: checked.errors };
-  const { plan, yourName, placeName, placeAddress } = checked;
+  const { plan, yourName, placeName, placeAddress, placeProviderId } = checked;
+  const selected = await checkSelectedPlace(deps.places, placeProviderId);
+  if (!selected.ok) return { ok: false, errors: selected.errors };
 
   const before: EditState = {
     time: { mode: p.mode, start: p.startAt, end: p.endAt, slots: p.slots },
-    place: p.placeName ? { name: p.placeName, address: p.placeAddress, providerPlaceId: null } : null,
+    place: editablePlace(p.searchedPlace?.id ?? null, p.placeName, p.placeAddress),
     message: p.message,
     friendIds: p.invites.map((i) => i.friendId),
   };
   const after: EditState = {
     time: { mode: plan.time.mode, start: plan.time.start, end: plan.time.end, slots: plan.time.slots },
-    place: placeName ? { name: placeName, address: placeAddress, providerPlaceId: null } : null,
+    place: editablePlace(placeProviderId, placeName, placeAddress),
     message: plan.message,
     friendIds: friends.map((f) => f.id),
   };
@@ -128,6 +141,7 @@ export async function sendUpdate(deps: UpdateDeps, organizer: { id: string; firs
     slots: plan.time.slots,
     placeName,
     placeAddress,
+    placeProviderId,
     message: plan.message,
     linksExpireAt: linkExpiresAt({ finalEnd, setEnd: plan.time.end, slots: plan.time.slots, zone }),
     timeVersion: edit.timeVersion,
@@ -148,7 +162,7 @@ export async function sendUpdate(deps: UpdateDeps, organizer: { id: string; firs
   const kind = edit.timeChanged ? "new_time" : "updated";
   const shownStart = staysConfirmed && p.finalStartAt ? p.finalStartAt : plan.time.start;
   const shownEnd = staysConfirmed && p.finalEndAt ? p.finalEndAt : plan.time.end;
-  const sentence = updateSentence(kind, shownStart, shownEnd, zone, placeName);
+  const sentence = updateSentence(kind, shownStart, shownEnd, zone, selected.shownName ?? placeName);
   const staying = p.invites.filter((i) => !edit.removeFriendIds.includes(i.friendId));
   const texts: TextToSend[] = [
     ...staying.map((i) => ({ friendId: i.friendId, name: firstWord(i.parentName), label: i.label, channel: i.channel, href: smsBodyHref(i.phoneE164, sentence) })),

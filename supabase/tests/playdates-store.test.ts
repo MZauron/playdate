@@ -1,6 +1,7 @@
 // Send invite against the real database (migration 0003 and src/lib/db/playdates.ts through the local Supabase API with the
 // service role): one transaction, only token hashes stored, never another parent's friend. Skipped unless scripts/test-db.sh could
 // give it the local API; the privilege check needs only the database.
+import { fakePlaces } from "@/lib/integrations/places/fake";
 import { randomUUID } from "node:crypto";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { apiEnabled, closeDb, enabled, failsAs, q } from "./helpers";
@@ -80,7 +81,7 @@ describe.skipIf(!apiEnabled)("playdates repository", () => {
 
   const send = (organizerId: string, friendIds: string[], extra: Partial<import("@/lib/domain/playdates").PlanFormInput> = {}) =>
     domain.sendInvite(
-      { store: repo.playdateStore, limiter: { hit: () => ({ ok: true }) }, linkBase: "https://kindred.test" },
+      { store: repo.playdateStore, limiter: { hit: () => ({ ok: true }) }, linkBase: "https://kindred.test", places: fakePlaces },
       { id: organizerId, firstName: "Alex", childFirstName: "Mia" },
       {
         friendIds,
@@ -92,7 +93,7 @@ describe.skipIf(!apiEnabled)("playdates repository", () => {
         zone: "America/Toronto",
         placeName: "",
         placeAddress: "",
-        savePlace: false,
+        savePlace: false, placeId: "",
         yourName: "Alex",
         message: "Park?",
         ...extra,

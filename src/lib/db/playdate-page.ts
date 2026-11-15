@@ -3,6 +3,7 @@ import "server-only";
 import type { OrganizerPlaydate, PlaydatePageStore } from "@/lib/domain/playdate-page";
 import type { AnswerKind, DaySlot, DeclineReason, InviteChannel, PlaydateStatus, TimeMode } from "@/lib/rules/types";
 import { adminClient } from "./admin";
+import { shownPlace } from "./shown-place";
 
 type Row = {
   id: string;
@@ -17,6 +18,7 @@ type Row = {
   confirmed_at: string | null;
   place_name: string | null;
   place_address: string | null;
+  place_provider_id: string | null;
   message: string;
   time_version: number;
   availability_slots: { day: string; slot: DaySlot }[];
@@ -38,7 +40,7 @@ export const playdatePageStore: PlaydatePageStore = {
     const { data, error } = await adminClient()
       .from("playdates")
       .select(
-        "id, title, mode, status, timezone, start_at, end_at, final_start_at, final_end_at, confirmed_at, place_name, place_address, message, time_version, availability_slots(day, slot), invites(id, friend_id, channel, created_at, majority_notice_at, friends(parent_name, label, phone_e164), answers(kind, reason, note, answered_at, pick_start_at, pick_end_at, time_version))",
+        "id, title, mode, status, timezone, start_at, end_at, final_start_at, final_end_at, confirmed_at, place_name, place_address, place_provider_id, message, time_version, availability_slots(day, slot), invites(id, friend_id, channel, created_at, majority_notice_at, friends(parent_name, label, phone_e164), answers(kind, reason, note, answered_at, pick_start_at, pick_end_at, time_version))",
       )
       .eq("id", playdateId)
       .eq("organizer_id", organizerId)
@@ -58,8 +60,7 @@ export const playdatePageStore: PlaydatePageStore = {
       finalStartAt: date(data.final_start_at),
       finalEndAt: date(data.final_end_at),
       confirmedAt: date(data.confirmed_at),
-      placeName: data.place_name,
-      placeAddress: data.place_address,
+      ...(await shownPlace(data)),
       message: data.message,
       timeVersion: data.time_version,
       slots: data.availability_slots,

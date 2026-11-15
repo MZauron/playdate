@@ -23,6 +23,7 @@ const view = (patch: Partial<InviteView> = {}): InviteView => ({
   confirmed: false,
   placeName: null,
   placeAddress: null,
+  placeFacts: null,
   timeVersion: 1,
   answer: null,
   slots: [{ day: MON, slot: "morning" }, { day: MON, slot: "afternoon" }],

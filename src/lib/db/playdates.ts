@@ -6,6 +6,7 @@ import type { InviteeFriend, PlaydateStore } from "@/lib/domain/playdates";
 import { playdateEnd } from "@/lib/rules/links";
 import type { AnswerKind, DaySlot, PlaydateStatus, TimeMode } from "@/lib/rules/types";
 import { adminClient } from "./admin";
+import { shownPlace } from "./shown-place";
 
 export const playdateStore: PlaydateStore = {
   async friendsForInvite(ownerId, friendIds) {
@@ -41,6 +42,7 @@ export const playdateStore: PlaydateStore = {
         slots: p.slots,
         place_name: p.placeName,
         place_address: p.placeAddress,
+        place_provider_id: p.placeProviderId,
         message: p.message,
         links_expire_at: p.linksExpireAt.toISOString(),
       },
@@ -89,6 +91,8 @@ type HomeRow = {
   final_end_at: string | null;
   confirmed_at: string | null;
   place_name: string | null;
+  place_address: string | null;
+  place_provider_id: string | null;
   time_version: number;
   availability_slots: { day: string; slot: DaySlot }[];
   invites: { friends: { parent_name: string } | null; answers: { kind: AnswerKind; answered_at: string; time_version: number } | null }[];
@@ -101,7 +105,7 @@ export async function listHomePlaydates(organizerId: string, now: Date): Promise
   const { data, error } = await adminClient()
     .from("playdates")
     .select(
-      "id, title, mode, status, timezone, start_at, end_at, final_start_at, final_end_at, confirmed_at, place_name, time_version, availability_slots(day, slot), invites(friends(parent_name), answers(kind, answered_at, time_version))",
+      "id, title, mode, status, timezone, start_at, end_at, final_start_at, final_end_at, confirmed_at, place_name, place_address, place_provider_id, time_version, availability_slots(day, slot), invites(friends(parent_name), answers(kind, answered_at, time_version))",
     )
     .eq("organizer_id", organizerId)
     .neq("status", "cancelled")
@@ -109,7 +113,10 @@ export async function listHomePlaydates(organizerId: string, now: Date): Promise
     .order("created_at", { ascending: false })
     .overrideTypes<HomeRow[], { merge: false }>();
   if (error) throw new Error(`listHomePlaydates failed: ${error.code}`);
-  return (data ?? []).flatMap((row): HomePlaydate[] => {
+  const rows = await Promise.all(
+    (data ?? []).map(async (row) => ({ row, placeName: (await shownPlace(row)).placeName })), // the cache keeps repeats cheap
+  );
+  return rows.flatMap(({ row, placeName }): HomePlaydate[] => {
     const end = playdateEnd({ finalEnd: date(row.final_end_at), setEnd: date(row.end_at), slots: row.availability_slots, zone: row.timezone });
     if (!end) return [];
     const answers = row.invites.flatMap((i) => (i.answers && i.answers.time_version === row.time_version ? [i.answers] : []));
@@ -123,7 +130,7 @@ export async function listHomePlaydates(organizerId: string, now: Date): Promise
         start: date(row.final_start_at) ?? date(row.start_at),
         end,
         confirmedAt: date(row.confirmed_at),
-        placeName: row.place_name,
+        placeName,
         inviteCount: row.invites.length,
         answers: answers.map((a) => ({ kind: a.kind, answeredAt: new Date(a.answered_at) })),
         friendInitials: row.invites.map((i) => (i.friends?.parent_name.trim()[0] ?? "?").toUpperCase()),
@@ -151,6 +158,7 @@ export const applyPlaydateUpdate: import("@/lib/domain/edit-playdate").ApplyUpda
       slots: u.slots,
       place_name: u.placeName,
       place_address: u.placeAddress,
+      place_provider_id: u.placeProviderId,
       message: u.message,
       links_expire_at: u.linksExpireAt.toISOString(),
       time_version: u.timeVersion,

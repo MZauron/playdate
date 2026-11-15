@@ -26,6 +26,7 @@ function stored(patch: Partial<StoredInvite["playdate"]> = {}, rest: Partial<Sto
       finalEndAt: null,
       placeName: "Riverdale Park",
       placeAddress: "373 Broadview Ave",
+      searchedPlace: null,
       message: "Park at 10?",
       timeVersion: 1,
       linksExpireAt: at("2026-11-17", 0, 0, ZONE),
@@ -133,7 +134,7 @@ describe("loadInvite and the view (KD-14, KD-17)", () => {
   it("holds only the listed fields: no phone number, invite id, other invite or token", () => {
     const view = toView(stored(), NOW);
     expect(Object.keys(view).sort()).toEqual(
-      ["answer", "confirmed", "end", "label", "message", "mode", "organizerChild", "organizerFirstName", "picks", "placeAddress", "placeName", "slots", "start", "state", "timeVersion", "title", "zone"].sort(),
+      ["answer", "confirmed", "end", "label", "message", "mode", "organizerChild", "organizerFirstName", "picks", "placeAddress", "placeFacts", "placeName", "slots", "start", "state", "timeVersion", "title", "zone"].sort(),
     );
     expect(JSON.stringify(view)).not.toMatch(/\+1\d{10}|invite-1/);
   });

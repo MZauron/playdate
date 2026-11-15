@@ -11,6 +11,9 @@ import { cx } from "@/components/cx";
 import { Field } from "@/components/Field";
 import { NumberedStep } from "@/components/NumberedStep";
 import { AddFriendForm } from "@/components/friends/AddFriendForm";
+import { FindPlace } from "@/components/places/FindPlace";
+import { PlaceCard } from "@/components/places/PlaceCard";
+import type { Place } from "@/lib/integrations/places/types";
 import type { Friend } from "@/lib/domain/friends";
 import type { TimeMode } from "@/lib/rules/types";
 import { enCA } from "@/lib/i18n/en-CA";
@@ -28,12 +31,12 @@ export type SavedPlace = { name: string; address: string };
 export type EditPlaydate = {
   playdateId: string;
   zone: string;
-  initial: { friendIds: string[]; mode: TimeMode; slots: string[]; day: string; start: string; end: string; placeName: string; placeAddress: string; message: string };
+  initial: { friendIds: string[]; mode: TimeMode; slots: string[]; day: string; start: string; end: string; place: Place | null; placeName: string; placeAddress: string; message: string };
 };
 
 /** The planning screen (T08): 1 Who's invited, 2 When, Details, Send. The server decides on Send; nothing here is trusted. */
 /** T19: a new plan started from a group (its families) or from Plan again (also the same place, next week). */
-export type PlanPrefill = { friendIds: string[]; day?: string; start?: string; end?: string; placeName?: string; placeAddress?: string };
+export type PlanPrefill = { friendIds: string[]; day?: string; start?: string; end?: string; place?: Place | null; placeName?: string; placeAddress?: string };
 
 export function PlanForm({
   friends,
@@ -63,6 +66,9 @@ export function PlanForm({
       ? { mode: initial.mode, day: initial.day, start: initial.start || DEFAULT_START, end: initial.end || DEFAULT_END, slots: initial.slots, done: true }
       : { mode: "set_time", day: prefill?.day ?? "", start: prefill?.start || DEFAULT_START, end: prefill?.end || DEFAULT_END, slots: [], done: !!prefill?.day },
   );
+  // 3 Where (T17): a place found by search. When there is one, the typed place under Details is not used.
+  const [place, setPlace] = useState<Place | null>(initial?.place ?? prefill?.place ?? null);
+  const [finding, setFinding] = useState(false);
   const [placeName, setPlaceName] = useState(initial?.placeName ?? prefill?.placeName ?? "");
   const [placeAddress, setPlaceAddress] = useState(initial?.placeAddress ?? prefill?.placeAddress ?? "");
   const [savePlace, setSavePlace] = useState(false);
@@ -76,7 +82,7 @@ export function PlanForm({
   const invited = friends.filter((f) => selected.includes(f.id));
   // Two friends with the same label ("Noor's parent") would look the same: show the parent's name under those.
   const clashing = new Set(friends.map((f) => f.label).filter((label, i, all) => all.indexOf(label) !== i));
-  const start = initial ?? { friendIds: [], mode: "set_time" as TimeMode, slots: [], day: "", start: when.start, end: when.end, placeName: "", placeAddress: "", message: "" };
+  const start = initial ?? { friendIds: [], mode: "set_time" as TimeMode, slots: [], day: "", start: when.start, end: when.end, place: null, placeName: "", placeAddress: "", message: "" };
   const dirty =
     !state.sent &&
     ([...selected].sort().join() !== [...start.friendIds].sort().join() ||
@@ -84,6 +90,7 @@ export function PlanForm({
       when.mode !== start.mode ||
       [...when.slots].sort().join() !== [...start.slots].sort().join() ||
       (initial !== undefined && (when.start !== start.start || when.end !== start.end)) ||
+      (place?.id ?? null) !== (start.place?.id ?? null) ||
       placeName !== start.placeName ||
       placeAddress !== start.placeAddress ||
       message !== start.message ||
@@ -119,9 +126,12 @@ export function PlanForm({
     if (when.done && when.mode === "availability") for (const slot of when.slots) form.append("slot", slot);
     form.set("zone", zone());
     if (edit) form.set("playdateId", edit.playdateId);
-    form.set("placeName", placeName);
-    form.set("placeAddress", placeAddress);
-    if (savePlace) form.set("savePlace", "1");
+    if (place) form.set("placeId", place.id);
+    else {
+      form.set("placeName", placeName);
+      form.set("placeAddress", placeAddress);
+      if (savePlace) form.set("savePlace", "1");
+    }
     form.set("yourName", yourName);
     form.set("message", message);
     startTransition(() => action(form));
@@ -228,75 +238,114 @@ export function PlanForm({
         />
       </NumberedStep>
 
+      <NumberedStep number={3} done={!!place || !!placeName.trim()} title={t.whereTitle}>
+        <div className="mt-2 flex flex-col gap-3">
+          {place && !finding ? (
+            <PlaceCard place={place}>
+              <Button compact onClick={() => setFinding(true)}>
+                {enCA.places.change}
+              </Button>
+              <Button
+                compact
+                variant="destructive"
+                onClick={() => {
+                  touch("place");
+                  setPlace(null);
+                }}
+              >
+                {enCA.places.remove}
+              </Button>
+            </PlaceCard>
+          ) : finding ? (
+            <FindPlace
+              onSelect={(found) => {
+                touch("place");
+                setPlace(found);
+                setFinding(false);
+              }}
+              onClose={() => setFinding(false)}
+            />
+          ) : (
+            <Button compact className="w-fit" onClick={() => setFinding(true)}>
+              {enCA.places.findPlace}
+            </Button>
+          )}
+          {errors.place && <ErrorLine>{errors.place}</ErrorLine>}
+        </div>
+      </NumberedStep>
+
       <section aria-labelledby="details-title" className="flex flex-col gap-4">
         <h2 id="details-title" className="text-lg font-semibold">
           {t.detailsTitle}
         </h2>
-        <Card className="flex flex-col gap-4">
-          <div>
+        {/* A typed place (name + address), only when no place was found by search (DESIGN.md "Screens"). */}
+        {!place && (
+          <Card className="flex flex-col gap-4">
+            <div>
+              <Field
+                id="place-name"
+                label={t.placeNameLabel}
+                placeholder={t.placeNamePlaceholder}
+                value={placeName}
+                onChange={(e) => {
+                  touch("placeName");
+                  setPlaceName(e.target.value);
+                }}
+                error={errors.placeName}
+                maxLength={80}
+                autoComplete="off"
+              />
+              {suggestions.length > 0 && (
+                <div className="mt-2">
+                  <p className="mb-1.5 text-label font-semibold uppercase tracking-wider text-muted">{t.savedPlaces}</p>
+                  <div className="flex flex-wrap gap-2">
+                    {suggestions.map((place) => (
+                      <button
+                        key={place.name}
+                        type="button"
+                        onClick={() => {
+                          touch("placeName");
+                          touch("placeAddress");
+                          setPlaceName(place.name);
+                          setPlaceAddress(place.address);
+                        }}
+                        className="inline-flex min-h-11 items-center rounded-full bg-primary-tint px-4 text-[15px] font-medium text-primary"
+                      >
+                        {place.name}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
             <Field
-              id="place-name"
-              label={t.placeNameLabel}
-              placeholder={t.placeNamePlaceholder}
-              value={placeName}
+              id="place-address"
+              label={t.placeAddressLabel}
+              value={placeAddress}
               onChange={(e) => {
-                touch("placeName");
-                setPlaceName(e.target.value);
+                touch("placeAddress");
+                setPlaceAddress(e.target.value);
               }}
-              error={errors.placeName}
-              maxLength={80}
+              error={errors.placeAddress}
+              maxLength={200}
               autoComplete="off"
             />
-            {suggestions.length > 0 && (
-              <div className="mt-2">
-                <p className="mb-1.5 text-label font-semibold uppercase tracking-wider text-muted">{t.savedPlaces}</p>
-                <div className="flex flex-wrap gap-2">
-                  {suggestions.map((place) => (
-                    <button
-                      key={place.name}
-                      type="button"
-                      onClick={() => {
-                        touch("placeName");
-                        touch("placeAddress");
-                        setPlaceName(place.name);
-                        setPlaceAddress(place.address);
-                      }}
-                      className="inline-flex min-h-11 items-center rounded-full bg-primary-tint px-4 text-[15px] font-medium text-primary"
-                    >
-                      {place.name}
-                    </button>
-                  ))}
-                </div>
-              </div>
-            )}
-          </div>
-          <Field
-            id="place-address"
-            label={t.placeAddressLabel}
-            value={placeAddress}
-            onChange={(e) => {
-              touch("placeAddress");
-              setPlaceAddress(e.target.value);
-            }}
-            error={errors.placeAddress}
-            maxLength={200}
-            autoComplete="off"
-          />
-          <button
-            type="button"
-            aria-pressed={savePlace}
-            onClick={() => {
-              touch("placeAddress");
-              setSavePlace((on) => !on);
-            }}
-            className={cx("flex min-h-11 w-fit items-center gap-2 text-[15px] font-semibold", savePlace ? "text-primary" : "text-ink")}
-          >
-            <span aria-hidden="true" className="text-xl leading-none">
-              {savePlace ? "★" : "☆"}
-            </span>
-            {t.savePlace}
-          </button>
-        </Card>
+            <button
+              type="button"
+              aria-pressed={savePlace}
+              onClick={() => {
+                touch("placeAddress");
+                setSavePlace((on) => !on);
+              }}
+              className={cx("flex min-h-11 w-fit items-center gap-2 text-[15px] font-semibold", savePlace ? "text-primary" : "text-ink")}
+            >
+              <span aria-hidden="true" className="text-xl leading-none">
+                {savePlace ? "★" : "☆"}
+              </span>
+              {t.savePlace}
+            </button>
+          </Card>
+        )}
         <Field
           id="your-name"
           label={t.yourNameLabel}
@@ -317,7 +366,7 @@ export function PlanForm({
             setMessage(value);
           }}
           error={errors.message}
-          plan={{ friendIds: selected, day: when.done ? when.day : "", startTime: when.done ? when.start : "", endTime: when.done ? when.end : "", placeName }}
+          plan={{ friendIds: selected, day: when.done ? when.day : "", startTime: when.done ? when.start : "", endTime: when.done ? when.end : "", placeName: place?.name ?? placeName }}
         />
       </section>
 

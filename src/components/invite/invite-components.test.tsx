@@ -21,6 +21,7 @@ const view = (patch: Partial<InviteView> = {}): InviteView => ({
   confirmed: false,
   placeName: "Riverdale Park",
   placeAddress: "373 Broadview Ave",
+  placeFacts: null,
   timeVersion: 1,
   answer: null,
   slots: [],

@@ -7,6 +7,7 @@ import { checkConfirm } from "@/lib/rules/confirm";
 import { linkExpiresAt } from "@/lib/rules/links";
 import { groupPicks } from "@/lib/rules/picks";
 import type { AnswerKind, DeclineReason, ErrorCode, FreeSlot, InviteChannel, PlaydateStatus, Range, TimeMode, Zone } from "@/lib/rules/types";
+import type { Place } from "@/lib/integrations/places/types";
 import { firstWord } from "./playdates";
 
 export type OrganizerInvite = {
@@ -34,8 +35,11 @@ export type OrganizerPlaydate = {
   finalStartAt: Date | null;
   finalEndAt: Date | null;
   confirmedAt: Date | null;
+  /** The place as shown: typed, or a searched place's name and address looked up for this read (never stored, Q6). */
   placeName: string | null;
   placeAddress: string | null;
+  /** A searched place (T17): the provider's details, looked up when read; null for a typed place or none. */
+  searchedPlace: Place | null;
   message: string;
   timeVersion: number;
   slots: FreeSlot[];

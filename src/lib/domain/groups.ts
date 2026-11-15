@@ -1,6 +1,7 @@
 // Groups (T19): a parent's private lists of friends ("Dance friends"). Only the owner sees them (DESIGN.md "Privacy"). The owner is
 // always the signed-in parent the caller passes in; ids in a form only name a group or friends, and only the owner's own count.
 // Pure apart from the ports passed in.
+import type { Place } from "@/lib/integrations/places/types";
 import { z } from "zod";
 
 export const GROUP_NAME_MAX = 40;
@@ -66,6 +67,8 @@ export type LastPlaydate = {
   end: Date | null;
   placeName: string | null;
   placeAddress: string | null;
+  /** A searched place (T17), looked up when read. */
+  searchedPlace: Place | null;
 };
 
 /**
@@ -73,7 +76,7 @@ export type LastPlaydate = {
  * time, or the confirmed final time), the same clock times one week later on its own clock. The message stays empty: Kindred never
  * writes it (KD-05).
  */
-export function planAgainValues(last: LastPlaydate): { day: string; start: string; end: string; placeName: string; placeAddress: string } {
+export function planAgainValues(last: LastPlaydate): { day: string; start: string; end: string; place: Place | null; placeName: string; placeAddress: string } {
   const zone = last.timezone;
   const day = (d: Date) => new Intl.DateTimeFormat("en-CA", { timeZone: zone, year: "numeric", month: "2-digit", day: "2-digit" }).format(d);
   const clock = (d: Date) => new Intl.DateTimeFormat("en-CA", { timeZone: zone, hour: "2-digit", minute: "2-digit", hourCycle: "h23" }).format(d);
@@ -87,7 +90,8 @@ export function planAgainValues(last: LastPlaydate): { day: string; start: strin
     day: timed ? nextWeek(day(last.start!)) : "",
     start: timed ? clock(last.start!) : "",
     end: timed ? clock(last.end!) : "",
-    placeName: last.placeName ?? "",
-    placeAddress: last.placeAddress ?? "",
+    place: last.searchedPlace,
+    placeName: last.searchedPlace ? "" : (last.placeName ?? ""),
+    placeAddress: last.searchedPlace ? "" : (last.placeAddress ?? ""),
   };
 }

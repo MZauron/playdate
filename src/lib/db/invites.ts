@@ -5,6 +5,7 @@ import "server-only";
 import type { InviteStore, StoredInvite } from "@/lib/domain/invite-page";
 import type { AnswerKind, DaySlot, DeclineReason, InviteLabel, PlaydateStatus, TimeMode } from "@/lib/rules/types";
 import { adminClient } from "./admin";
+import { shownPlace } from "./shown-place";
 
 type Row = {
   id: string;
@@ -21,6 +22,7 @@ type Row = {
     final_end_at: string | null;
     place_name: string | null;
     place_address: string | null;
+    place_provider_id: string | null;
     message: string;
     time_version: number;
     links_expire_at: string;
@@ -48,7 +50,7 @@ async function findOne(where: { token_hash: string } | { id: string; invitee_use
     const { data, error } = await db
       .from("invites")
       .select(
-        "id, label, playdates(id, title, mode, status, timezone, start_at, end_at, final_start_at, final_end_at, place_name, place_address, message, time_version, links_expire_at, organizer_id, profiles(first_name), availability_slots(day, slot)), answers(kind, reason, note, pick_start_at, pick_end_at, time_version)",
+        "id, label, playdates(id, title, mode, status, timezone, start_at, end_at, final_start_at, final_end_at, place_name, place_address, place_provider_id, message, time_version, links_expire_at, organizer_id, profiles(first_name), availability_slots(day, slot)), answers(kind, reason, note, pick_start_at, pick_end_at, time_version)",
       )
       .match(where)
       .maybeSingle()
@@ -98,8 +100,7 @@ async function findOne(where: { token_hash: string } | { id: string; invitee_use
         endAt: date(p.end_at),
         finalStartAt: date(p.final_start_at),
         finalEndAt: date(p.final_end_at),
-        placeName: p.place_name,
-        placeAddress: p.place_address,
+        ...(await shownPlace(p)),
         message: p.message,
         timeVersion: p.time_version,
         linksExpireAt: new Date(p.links_expire_at),
@@ -166,6 +167,8 @@ type HomeInviteRow = {
     final_start_at: string | null;
     final_end_at: string | null;
     place_name: string | null;
+    place_address: string | null;
+    place_provider_id: string | null;
     time_version: number;
     links_expire_at: string;
     profiles: { first_name: string } | null;
@@ -180,14 +183,16 @@ type HomeInviteRow = {
 export async function listInvitesForUser(userId: string, now: Date): Promise<HomeInvite[]> {
   const { data, error } = await adminClient()
     .from("invites")
-    .select("id, playdates(title, mode, status, timezone, start_at, end_at, final_start_at, final_end_at, place_name, time_version, links_expire_at, profiles(first_name)), answers(kind, time_version)")
+    .select("id, playdates(title, mode, status, timezone, start_at, end_at, final_start_at, final_end_at, place_name, place_address, place_provider_id, time_version, links_expire_at, profiles(first_name)), answers(kind, time_version)")
     .eq("invitee_user_id", userId)
     .order("created_at", { ascending: false })
     .overrideTypes<HomeInviteRow[], { merge: false }>();
   if (error) throw new Error(`listInvitesForUser failed: ${error.code}`);
-  return (data ?? []).flatMap((r): HomeInvite[] => {
+  const open = (data ?? []).filter((r) => r.playdates && r.playdates.status !== "cancelled" && new Date(r.playdates.links_expire_at) > now);
+  const places = await Promise.all(open.map((r) => shownPlace(r.playdates!)));
+  return open.flatMap((r, index): HomeInvite[] => {
     const p = r.playdates;
-    if (!p || p.status === "cancelled" || new Date(p.links_expire_at) <= now) return [];
+    if (!p) return [];
     const confirmed = p.status === "confirmed";
     return [
       {
@@ -199,7 +204,7 @@ export async function listInvitesForUser(userId: string, now: Date): Promise<Hom
         zone: p.timezone,
         start: date(confirmed ? p.final_start_at : p.start_at),
         end: date(confirmed ? p.final_end_at : p.end_at),
-        placeName: p.place_name,
+        placeName: places[index]!.placeName,
         myAnswer: r.answers && r.answers.time_version === p.time_version ? r.answers.kind : null,
       },
     ];

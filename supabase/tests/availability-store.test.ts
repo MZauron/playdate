@@ -1,5 +1,6 @@
 // Share availability against the real database (migration 0005): Send writes the free slots with the playdate, Send update rewrites
 // them, and switching to a set time clears them (KD-02). Through the local Supabase API (scripts/test-db.sh).
+import { fakePlaces } from "@/lib/integrations/places/fake";
 import { randomUUID } from "node:crypto";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { apiEnabled, closeDb, q } from "./helpers";
@@ -42,13 +43,13 @@ describe.skipIf(!apiEnabled)("Share availability against the database", () => {
 
   const NOW = new Date("2030-11-01T12:00:00Z");
   const open = { hit: () => ({ ok: true as const }) };
-  const base = { mode: "availability", day: "", startTime: "", endTime: "", zone: "America/Toronto", placeName: "", placeAddress: "", savePlace: false, yourName: "Alex", message: "Which works?" };
+  const base = { mode: "availability", day: "", startTime: "", endTime: "", zone: "America/Toronto", placeName: "", placeAddress: "", savePlace: false, placeId: "", yourName: "Alex", message: "Which works?" };
   const slotsOf = (id: string) => q<{ day: string; slot: string }>("select to_char(day, 'YYYY-MM-DD') as day, slot::text from availability_slots where playdate_id = $1 order by day, slot", [id]);
 
   it("Send writes the slots with the playdate, no start or end, and links until the last slot + 12 h", async () => {
     const alex = await parent();
     const f = await friend(alex);
-    const sent = await sendInvite({ store: playdates.playdateStore, limiter: open, linkBase: "https://kindred.test" }, { id: alex, firstName: "Alex", childFirstName: "Mia" }, { ...base, friendIds: [f], slots: ["2030-11-18|morning", "2030-11-20|evening"] }, NOW);
+    const sent = await sendInvite({ store: playdates.playdateStore, limiter: open, linkBase: "https://kindred.test", places: fakePlaces }, { id: alex, firstName: "Alex", childFirstName: "Mia" }, { ...base, friendIds: [f], slots: ["2030-11-18|morning", "2030-11-20|evening"] }, NOW);
     if (!sent.ok) throw new Error(JSON.stringify(sent.errors));
     expect(await slotsOf(sent.playdateId)).toEqual([{ day: "2030-11-18", slot: "morning" }, { day: "2030-11-20", slot: "evening" }]);
     expect(await q("select mode, start_at, end_at, links_expire_at from playdates where id = $1", [sent.playdateId])).toEqual([
@@ -61,9 +62,9 @@ describe.skipIf(!apiEnabled)("Share availability against the database", () => {
     const alex = await parent();
     const f = await friend(alex);
     const org = { id: alex, firstName: "Alex", childFirstName: "Mia" };
-    const sent = await sendInvite({ store: playdates.playdateStore, limiter: open, linkBase: "https://kindred.test" }, org, { ...base, friendIds: [f], slots: ["2030-11-18|morning"] }, NOW);
+    const sent = await sendInvite({ store: playdates.playdateStore, limiter: open, linkBase: "https://kindred.test", places: fakePlaces }, org, { ...base, friendIds: [f], slots: ["2030-11-18|morning"] }, NOW);
     if (!sent.ok) throw new Error("expected ok");
-    const deps = { pages: pages.playdatePageStore, playdates: playdates.playdateStore, apply: playdates.applyPlaydateUpdate, limiter: open, linkBase: "https://kindred.test" };
+    const deps = { pages: pages.playdatePageStore, playdates: playdates.playdateStore, apply: playdates.applyPlaydateUpdate, limiter: open, linkBase: "https://kindred.test", places: fakePlaces };
 
     await sendUpdate(deps, org, sent.playdateId, { ...base, friendIds: [f], slots: ["2030-11-19|afternoon", "2030-11-18|morning"] }, NOW);
     expect(await slotsOf(sent.playdateId)).toEqual([{ day: "2030-11-18", slot: "morning" }, { day: "2030-11-19", slot: "afternoon" }]);
@@ -83,7 +84,7 @@ describe.skipIf(!apiEnabled)("Share availability against the database", () => {
       `insert into friends (owner_id, parent_name, child_first_name, label, phone_e164, phone_hash) values ($1, 'Maya Chen', 'Lily', 'Lily''s parent', $2, $3) returning id`,
       [alex, `+1416555${Math.floor(1000 + Math.random() * 8999)}`, `h-${randomUUID()}`],
     ))[0]!.id;
-    const sent = await sendInvite({ store: playdates.playdateStore, limiter: open, linkBase: "https://kindred.test" }, { id: alex, firstName: "Alex", childFirstName: "Mia" }, { ...base, friendIds: [dev, maya], slots: ["2030-11-18|morning", "2030-11-18|afternoon"] }, NOW);
+    const sent = await sendInvite({ store: playdates.playdateStore, limiter: open, linkBase: "https://kindred.test", places: fakePlaces }, { id: alex, firstName: "Alex", childFirstName: "Mia" }, { ...base, friendIds: [dev, maya], slots: ["2030-11-18|morning", "2030-11-18|afternoon"] }, NOW);
     if (!sent.ok) throw new Error("expected ok");
     const [devToken, mayaToken] = sent.texts.map((t) => decodeURIComponent(t.href).split("/r/")[1]!);
     const deps = { store: inviteStore, limiters: { token: open, address: open } };
@@ -115,7 +116,7 @@ describe.skipIf(!apiEnabled)("Share availability against the database", () => {
     const page = await import("@/lib/domain/invite-page");
     const alex = await parent();
     const ids = [await friend(alex), await friend(alex), await friend(alex)];
-    const sent = await sendInvite({ store: playdates.playdateStore, limiter: open, linkBase: "https://kindred.test" }, { id: alex, firstName: "Alex", childFirstName: "Mia" }, { ...base, friendIds: ids, slots: ["2030-11-18|morning", "2030-11-18|afternoon"] }, NOW);
+    const sent = await sendInvite({ store: playdates.playdateStore, limiter: open, linkBase: "https://kindred.test", places: fakePlaces }, { id: alex, firstName: "Alex", childFirstName: "Mia" }, { ...base, friendIds: ids, slots: ["2030-11-18|morning", "2030-11-18|afternoon"] }, NOW);
     if (!sent.ok) throw new Error("expected ok");
     const tokens = sent.texts.map((t) => decodeURIComponent(t.href).split("/r/")[1]!);
     const deps = { store: inviteStore, limiters: { token: open, address: open } };

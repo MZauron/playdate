@@ -10,13 +10,14 @@ import { sendUpdate, updatesLimiter } from "@/lib/domain/edit-playdate";
 import { parsePlanForm } from "@/lib/domain/playdates";
 import type { SendInviteState } from "@/app/(app)/plan/actions";
 import { enCA } from "@/lib/i18n/en-CA";
+import { places } from "@/lib/integrations/places";
 
 /** Send update (T16). Whose playdate this is comes from the session; the form's playdate id only names it. */
 export async function sendUpdateAction(_previous: SendInviteState, form: FormData): Promise<SendInviteState> {
   const { user, profile } = await requireParent();
   const playdateId = String(form.get("playdateId") ?? "");
   const result = await sendUpdate(
-    { pages: playdatePageStore, playdates: playdateStore, apply: applyPlaydateUpdate, limiter: updatesLimiter, linkBase: env.PUBLIC_LINK_BASE },
+    { pages: playdatePageStore, places: places(), playdates: playdateStore, apply: applyPlaydateUpdate, limiter: updatesLimiter, linkBase: env.PUBLIC_LINK_BASE },
     { id: user.id, firstName: profile.firstName, childFirstName: profile.children[0]?.firstName ?? "" }, // Q4 default: the first child
     playdateId,
     parsePlanForm(form),

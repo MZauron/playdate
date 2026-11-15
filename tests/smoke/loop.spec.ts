@@ -1,6 +1,6 @@
-// The Phase 1 loop end to end (T11), with fakes: a parent signs up, adds a friend, plans and sends; the friend answers from their link
-// in a separate browser with no account; the organizer sees it live and confirms; the friend sees it's on. Nothing is texted: the
-// test reads the friend's link from the organizer's Text button, as a phone would open it.
+// The Phase 1 loop end to end (T11), with fakes: a parent signs up, adds a friend, plans (a place found by search, T17) and sends;
+// the friend answers from their link in a separate browser with no account; the organizer sees it live and confirms; the friend sees
+// it's on. Nothing is texted: the test reads the friend's link from the organizer's Text button, as a phone would open it.
 import { devices, expect, test } from "@playwright/test";
 import { resetSmokeAccount, smokePhone } from "./reset";
 
@@ -42,6 +42,11 @@ test("sign up, invite a friend by text link, the friend answers, the organizer s
 
   await page.getByLabel("Date").fill(dayAhead(3));
   await page.getByRole("button", { name: "Done" }).click();
+  // Find a place (T17, fake provider): a quick chip, then Select. Only the provider's id is stored.
+  await page.getByRole("button", { name: "Find a place" }).click();
+  await page.getByRole("button", { name: "Parks", exact: true }).click();
+  await page.getByRole("button", { name: "Select High Park" }).click();
+  await expect(page.getByRole("button", { name: "Change place" })).toBeVisible();
   await page.getByLabel("Message to the parents").fill("Park on the weekend?");
   await page.getByRole("button", { name: "Send invite" }).click();
 
@@ -65,6 +70,7 @@ test("sign up, invite a friend by text link, the friend answers, the organizer s
   await friend.goto(`/r/${token}`);
   await expect(friend.getByText("Sam · Leo's parent")).toBeVisible();
   await expect(friend.getByText("Park on the weekend?")).toBeVisible();
+  await expect(friend.getByText("High Park", { exact: true })).toBeVisible();
   await friend.getByRole("button", { name: "We're in!" }).click();
   await expect(friend.getByText("Thanks! Your answer is in")).toBeVisible();
 

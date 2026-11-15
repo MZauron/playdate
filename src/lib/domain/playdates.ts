@@ -3,6 +3,7 @@
 // organizer's own friends are ever invited. Pure apart from the ports passed in.
 import { z } from "zod";
 import { createRateLimiter, type RateLimiter } from "@/platform/rate-limit";
+import { PLACE_ID_PATTERN, type Places } from "@/lib/integrations/places/types";
 import { DEFAULT_ZONE } from "@/lib/rules/config";
 import { linkExpiresAt } from "@/lib/rules/links";
 import { checkPlan, playdateTitle, type PlanTime } from "@/lib/rules/plan";
@@ -30,6 +31,8 @@ export type PlanFormInput = {
   placeName: string;
   placeAddress: string;
   savePlace: boolean;
+  /** Find a place (T17): the provider's id of the place the parent selected; when set, the typed place is ignored. */
+  placeId: string;
   yourName: string;
   message: string;
 };
@@ -48,6 +51,7 @@ export function parsePlanForm(form: FormData): PlanFormInput {
     placeName: text("placeName"),
     placeAddress: text("placeAddress"),
     savePlace: form.get("savePlace") === "1",
+    placeId: text("placeId"),
     yourName: text("yourName"),
     message: text("message"), // exactly as typed (KD-05)
   };
@@ -109,8 +113,11 @@ export type NewPlaydate = {
   endAt: Date | null;
   /** Share availability only (KD-02, KD-04). */
   slots: FreeSlot[];
+  /** Typed places only. */
   placeName: string | null;
   placeAddress: string | null;
+  /** Searched places only, and then nothing else about the place is stored (Q6, migration 0008). */
+  placeProviderId: string | null;
   message: string;
   linksExpireAt: Date;
   invites: NewInvite[];
@@ -128,7 +135,7 @@ export type PlaydateStore = {
 };
 
 // --- Send ---------------------------------------------------------------------------------------------------------------------------
-export type PlanErrorCode = ErrorCode | "NAME_REQUIRED" | "PLACE_NAME_REQUIRED" | "ADDRESS_REQUIRED" | "TOO_MANY_PLAYDATES";
+export type PlanErrorCode = ErrorCode | "NAME_REQUIRED" | "PLACE_NAME_REQUIRED" | "ADDRESS_REQUIRED" | "PLACE_NOT_FOUND" | "TOO_MANY_PLAYDATES";
 export type PlanError = { code: PlanErrorCode; field?: string };
 
 /** One "Text Aisha" button: opens the organizer's Messages with that friend's number, the message and that friend's link (Q3). */
@@ -141,6 +148,8 @@ export const playdatesLimiter = createRateLimiter({ max: 30, windowMs: 60 * 60 *
 
 export type SendDeps = {
   store: PlaydateStore;
+  /** Checks that a selected place exists (the id comes from the browser). */
+  places: Pick<Places, "details">;
   limiter: RateLimiter;
   linkBase: string;
   newToken?: () => { token: string; tokenHash: string };
@@ -156,7 +165,14 @@ export function firstWord(name: string): string {
 }
 
 export type CheckedPlanForm =
-  | { ok: true; plan: { time: PlanTime; message: string }; yourName: string; placeName: string | null; placeAddress: string | null }
+  | {
+      ok: true;
+      plan: { time: PlanTime; message: string };
+      yourName: string;
+      placeName: string | null;
+      placeAddress: string | null;
+      placeProviderId: string | null;
+    }
   | { ok: false; errors: PlanError[] };
 
 /**
@@ -182,13 +198,29 @@ export function checkPlanForm(input: PlanFormInput, inviteeCount: number, zone: 
   const yourName = input.yourName.trim();
   if (!yourName || yourName.length > NAME_MAX) errors.push({ code: "NAME_REQUIRED", field: "yourName" });
 
-  const placeName = input.placeName.trim().slice(0, PLACE_NAME_MAX) || null;
-  const placeAddress = input.placeAddress.trim().slice(0, PLACE_ADDRESS_MAX) || null;
+  // A selected place wins over a typed one; whether the id is real is checked against the provider (checkSelectedPlace).
+  const placeProviderId = input.placeId.trim() || null;
+  if (placeProviderId && !PLACE_ID_PATTERN.test(placeProviderId)) errors.push({ code: "PLACE_NOT_FOUND", field: "place" });
+  const placeName = placeProviderId ? null : input.placeName.trim().slice(0, PLACE_NAME_MAX) || null;
+  const placeAddress = placeProviderId ? null : input.placeAddress.trim().slice(0, PLACE_ADDRESS_MAX) || null;
   if (placeAddress && !placeName) errors.push({ code: "PLACE_NAME_REQUIRED", field: "placeName" });
   if (input.savePlace && placeName && !placeAddress) errors.push({ code: "ADDRESS_REQUIRED", field: "placeAddress" });
 
   if (!plan.ok || errors.length) return { ok: false, errors };
-  return { ok: true, plan: { time: plan.value.time, message: plan.value.message }, yourName, placeName, placeAddress };
+  return { ok: true, plan: { time: plan.value.time, message: plan.value.message }, yourName, placeName, placeAddress, placeProviderId };
+}
+
+/**
+ * The selected place's id came from the browser: the provider must know it. Returns the place's name to use in this answer's
+ * texts (never stored), or an error. A provider that fails counts as not found, so nothing unverified is stored.
+ */
+export async function checkSelectedPlace(
+  places: Pick<Places, "details">,
+  placeProviderId: string | null,
+): Promise<{ ok: true; shownName: string | null } | { ok: false; errors: PlanError[] }> {
+  if (!placeProviderId) return { ok: true, shownName: null };
+  const place = await places.details(placeProviderId).catch(() => null);
+  return place ? { ok: true, shownName: place.name } : { ok: false, errors: [{ code: "PLACE_NOT_FOUND", field: "place" }] };
 }
 
 /**
@@ -202,7 +234,9 @@ export async function sendInvite(deps: SendDeps, organizer: Organizer, input: Pl
 
   const checked = checkPlanForm(input, friends.length, zone, now);
   if (!checked.ok) return { ok: false, errors: checked.errors };
-  const { plan, yourName, placeName, placeAddress } = checked;
+  const { plan, yourName, placeName, placeAddress, placeProviderId } = checked;
+  const place = await checkSelectedPlace(deps.places, placeProviderId);
+  if (!place.ok) return place;
 
   // A try counts once the plan is complete: only a sendable plan makes links.
   const attempt = deps.limiter.hit(organizer.id);
@@ -223,6 +257,7 @@ export async function sendInvite(deps: SendDeps, organizer: Organizer, input: Pl
     slots: time.slots,
     placeName,
     placeAddress,
+    placeProviderId,
     message: plan.message,
     linksExpireAt: linkExpiresAt({ finalEnd: null, setEnd: time.end, slots: time.slots, zone }), // KD-14: set end, else the last slot
     invites: links.map(({ friend, tokenHash }) => ({
