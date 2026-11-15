@@ -84,6 +84,13 @@ export function SetupForm() {
           {enCA.setup.addChild}
         </Button>
       )}
+      {/* Q13 default: a consent line at Setup, with the privacy page a tap away (a new tab, so the form keeps what was typed). */}
+      <p className="text-[15px] text-muted">
+        {enCA.setup.consent}{" "}
+        <a href="/privacy" target="_blank" rel="noopener" className="font-medium text-primary underline underline-offset-2">
+          {enCA.setup.consentLink}
+        </a>
+      </p>
       <Button type="submit" variant="main" fullWidth disabled={pending}>
         {enCA.setup.submit}
       </Button>

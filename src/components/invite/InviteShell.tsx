@@ -6,6 +6,10 @@ export function InviteShell({ children }: { children: React.ReactNode }) {
     <main className="mx-auto flex min-h-dvh max-w-md flex-col gap-5 px-4 pb-10 pt-6">
       <p className="text-xl font-bold text-primary">{enCA.app.name}</p>
       {children}
+      {/* T24: the privacy page, for friends without an account too. A new tab keeps the invite page as it was. */}
+      <a href="/privacy" target="_blank" rel="noopener" className="mt-auto flex min-h-11 items-center justify-center text-[15px] font-medium text-muted underline-offset-4 hover:underline">
+        {enCA.app.privacy}
+      </a>
     </main>
   );
 }
