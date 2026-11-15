@@ -9,7 +9,11 @@ const nextConfig: NextConfig = {
   reactStrictMode: true,
   // Every response carries the security headers (no framing by other sites, no MIME sniffing, HTTPS only in production).
   async headers() {
-    return [{ source: "/:path*", headers: securityHeaders(process.env.NODE_ENV === "production") }];
+    return [
+      { source: "/:path*", headers: securityHeaders(process.env.NODE_ENV === "production") },
+      // The invite page: its URL holds the friend's link token, so no page it links to learns the URL, and no search engine lists it.
+      { source: "/r/:token*", headers: [{ key: "Referrer-Policy", value: "no-referrer" }, { key: "X-Robots-Tag", value: "noindex, nofollow" }] },
+    ];
   },
 };
 
