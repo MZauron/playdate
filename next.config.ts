@@ -7,6 +7,9 @@ const nextConfig: NextConfig = {
   // Do not say which framework serves the app.
   poweredByHeader: false,
   reactStrictMode: true,
+  // `next dev` serves its scripts to localhost only. To try the app from a phone on the same Wi-Fi, list the laptop's address in
+  // DEV_ORIGINS (in .env.local, comma-separated, e.g. 192.168.1.146). Development only; production ignores it.
+  allowedDevOrigins: (process.env.DEV_ORIGINS ?? "").split(",").map((host) => host.trim()).filter(Boolean),
   // Every response carries the security headers (no framing by other sites, no MIME sniffing, HTTPS only in production).
   async headers() {
     return [
