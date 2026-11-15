@@ -69,15 +69,15 @@ describe("saveGroup", () => {
 
 describe("planAgainValues (Plan again: same place, next week)", () => {
   const ZONE = "America/Toronto";
-  const last = { id: "p", title: "Playdate", mode: "set_time" as const, timezone: ZONE, start: at("2026-11-16", 10, 0, ZONE), end: at("2026-11-16", 12, 0, ZONE), placeName: "High Park", placeAddress: "1873 Bloor St W" };
+  const last = { id: "p", title: "Playdate", mode: "set_time" as const, timezone: ZONE, start: at("2026-11-16", 10, 0, ZONE), end: at("2026-11-16", 12, 0, ZONE), placeName: "High Park", placeAddress: "1873 Bloor St W", searchedPlace: null };
   it("keeps the place and the clock times, one week later", () => {
-    expect(planAgainValues(last)).toEqual({ day: "2026-11-23", start: "10:00", end: "12:00", placeName: "High Park", placeAddress: "1873 Bloor St W" });
+    expect(planAgainValues(last)).toEqual({ day: "2026-11-23", start: "10:00", end: "12:00", place: null, placeName: "High Park", placeAddress: "1873 Bloor St W" });
   });
   it("keeps the wall-clock time across the clock change", () => {
     expect(planAgainValues({ ...last, start: at("2026-10-31", 10, 0, ZONE), end: at("2026-10-31", 12, 0, ZONE) })).toMatchObject({ day: "2026-11-07", start: "10:00", end: "12:00" });
   });
   it("uses a confirmed availability playdate's final time, and only the place when there was no time", () => {
     expect(planAgainValues({ ...last, mode: "availability" })).toMatchObject({ day: "2026-11-23", start: "10:00" });
-    expect(planAgainValues({ ...last, mode: "availability", start: null, end: null })).toEqual({ day: "", start: "", end: "", placeName: "High Park", placeAddress: "1873 Bloor St W" });
+    expect(planAgainValues({ ...last, mode: "availability", start: null, end: null })).toEqual({ day: "", start: "", end: "", place: null, placeName: "High Park", placeAddress: "1873 Bloor St W" });
   });
 });

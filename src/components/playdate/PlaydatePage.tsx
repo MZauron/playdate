@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { placeFacts } from "@/components/places/place-text";
 import { ButtonLink } from "@/components/Button";
 import { Card } from "@/components/Card";
 import { NumberedStep } from "@/components/NumberedStep";
@@ -112,10 +113,11 @@ export function PlaydatePage({ playdate: p, view, live, texts }: { playdate: Org
           <div className="min-w-0">
             <p className="font-semibold">{p.placeName ?? enCA.home.noPlace}</p>
             {p.placeAddress && <p className="text-[15px] text-muted">{p.placeAddress}</p>}
+            {p.searchedPlace && placeFacts(p.searchedPlace) && <p className="text-[15px] text-primary">{placeFacts(p.searchedPlace)}</p>}
           </div>
           {p.placeName && (
             <a
-              href={directionsHref(p.placeName, p.placeAddress)}
+              href={p.searchedPlace?.mapsUrl ?? directionsHref(p.placeName, p.placeAddress)}
               target="_blank"
               rel="noopener noreferrer"
               className="inline-flex h-11 shrink-0 items-center rounded-button bg-primary-tint px-4 text-[15px] font-semibold text-primary"

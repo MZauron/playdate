@@ -1,6 +1,7 @@
 // update_playdate (migration 0004) and Send update against the real database: server only, one transaction, the KD-10 effects on
 // rows, and an answer from an old link after a time change refused (STALE_TIME). The privilege check needs only the database; the
 // rest goes through the local Supabase API (scripts/test-db.sh).
+import { fakePlaces } from "@/lib/integrations/places/fake";
 import { randomUUID } from "node:crypto";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { apiEnabled, closeDb, enabled, failsAs, q } from "./helpers";
@@ -59,8 +60,8 @@ describe.skipIf(!apiEnabled)("Send update against the database", () => {
 
   const NOW = new Date("2030-11-01T12:00:00Z");
   const open = { hit: () => ({ ok: true as const }) };
-  const base = { mode: "set_time", day: "2030-11-18", startTime: "10:00", endTime: "12:00", slots: [] as string[], zone: "America/Toronto", placeName: "High Park", placeAddress: "", savePlace: false, yourName: "Alex", message: "Park?" };
-  const deps = () => ({ pages: pages.playdatePageStore, playdates: playdates.playdateStore, apply: playdates.applyPlaydateUpdate, limiter: open, linkBase: "https://kindred.test" });
+  const base = { mode: "set_time", day: "2030-11-18", startTime: "10:00", endTime: "12:00", slots: [] as string[], zone: "America/Toronto", placeName: "High Park", placeAddress: "", savePlace: false, placeId: "", yourName: "Alex", message: "Park?" };
+  const deps = () => ({ pages: pages.playdatePageStore, playdates: playdates.playdateStore, apply: playdates.applyPlaydateUpdate, limiter: open, linkBase: "https://kindred.test", places: fakePlaces });
   const answer = (token: string, timeVersion: number) =>
     answerInvite({ store: invites.inviteStore, limiters: { token: open, address: open } }, token, "1.2.3.4", { kind: "yes", reason: null, note: null, timeVersion }, NOW);
 
@@ -68,7 +69,7 @@ describe.skipIf(!apiEnabled)("Send update against the database", () => {
     const alex = await parent("Alex");
     const [f1, f2, f3] = [await friend(alex, "Arjun"), await friend(alex, "Lily"), await friend(alex, "Zoe")];
     const org = { id: alex, firstName: "Alex", childFirstName: "Mia" };
-    const sent = await sendInvite({ store: playdates.playdateStore, limiter: open, linkBase: "https://kindred.test" }, org, { friendIds: [f1!, f2!], ...base }, NOW);
+    const sent = await sendInvite({ store: playdates.playdateStore, limiter: open, linkBase: "https://kindred.test", places: fakePlaces }, org, { friendIds: [f1!, f2!], ...base }, NOW);
     if (!sent.ok) throw new Error(JSON.stringify(sent.errors));
     const token = decodeURIComponent(sent.texts[0]!.href).split("/r/")[1]!;
     await answer(token, 1);

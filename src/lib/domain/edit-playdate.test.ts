@@ -1,5 +1,6 @@
 // Send update through the service with in-memory stores: each KD-10 branch (docs/rules.test-cases.md KD-10a…i), the update texts
 // (Q19 default), and that only the organizer's own playdate and friends are touched.
+import { fakePlaces } from "@/lib/integrations/places/fake";
 import { describe, expect, it } from "vitest";
 import { at } from "@/lib/rules/time";
 import { editFormValues, sendUpdate, type PlaydateUpdate, type UpdateDeps } from "./edit-playdate";
@@ -52,6 +53,7 @@ function playdate(patch: Partial<OrganizerPlaydate> = {}): OrganizerPlaydate {
     confirmedAt: NOW,
     placeName: "High Park",
     placeAddress: null,
+    searchedPlace: null,
     message: "Park?",
     timeVersion: 1,
     slots: [],
@@ -77,6 +79,7 @@ function world(p: OrganizerPlaydate = playdate()) {
     apply: async (_o, _id, u) => void applied.push(u),
     limiter: { hit: () => ({ ok: true }) },
     linkBase: "https://kindred.test",
+    places: fakePlaces,
     newToken: () => {
       const token = `new-token-${++n}-abcdefgh`.slice(0, 22);
       tokens.push(token);
@@ -98,6 +101,7 @@ const form = (patch: Partial<PlanFormInput> = {}): PlanFormInput => ({
   placeName: "High Park",
   placeAddress: "",
   savePlace: false,
+  placeId: "",
   yourName: "Alex",
   message: "Park?",
   ...patch,
@@ -176,7 +180,7 @@ describe("sendUpdate (KD-10)", () => {
 
 describe("editFormValues", () => {
   it("fills the form in the playdate's zone", () => {
-    expect(editFormValues(playdate())).toEqual({ friendIds: [F1, F2], mode: "set_time", slots: [], day: "2026-11-16", start: "10:00", end: "12:00", placeName: "High Park", placeAddress: "", message: "Park?" });
+    expect(editFormValues(playdate())).toEqual({ friendIds: [F1, F2], mode: "set_time", slots: [], day: "2026-11-16", start: "10:00", end: "12:00", place: null, placeName: "High Park", placeAddress: "", message: "Park?" });
     expect(editFormValues(playdate({ timezone: "Asia/Kolkata", startAt: at("2026-11-16", 23, 30, "Asia/Kolkata"), endAt: at("2026-11-17", 0, 30, "Asia/Kolkata") }))).toMatchObject({
       day: "2026-11-16",
       start: "23:30",
@@ -215,5 +219,29 @@ describe("sendUpdate with Share availability (KD-10b, c, i)", () => {
     const { deps, applied } = world(avail());
     expect(await sendUpdate(deps, organizer, ID, availForm(["2026-11-17|evening", "2026-11-16|morning"]), NOW)).toEqual({ ok: true, changed: false });
     expect(applied).toEqual([]);
+  });
+});
+
+describe("Send update with a place found by search (T17)", () => {
+  const park = { id: "fake-high-park", name: "High Park", address: "1873 Bloor St W, Toronto, ON", setting: "outdoor" as const, ages: null, price: null, rating: null, phone: null, website: null, mapsUrl: "https://maps.test" };
+
+  it("switching from a typed place to a searched one is an Updated change; the id is stored, the name only goes in the text", async () => {
+    const { deps, applied } = world();
+    const result = await sendUpdate(deps, organizer, ID, form({ placeId: "fake-high-park" }), NOW);
+    expect(result).toMatchObject({ ok: true, changed: true, kind: "updated" });
+    expect(applied[0]).toMatchObject({ placeProviderId: "fake-high-park", placeName: null, placeAddress: null, status: "confirmed", label: "updated" });
+    if (result.ok && result.changed) expect(decodeURIComponent(result.texts[0]!.href)).toContain("High Park");
+  });
+  it("the same searched place again changes nothing; the edit form brings it back as the selected place", async () => {
+    const p = playdate({ placeName: "High Park", placeAddress: "1873 Bloor St W, Toronto, ON", searchedPlace: park });
+    const { deps, applied } = world(p);
+    expect(await sendUpdate(deps, organizer, ID, form({ placeId: "fake-high-park", placeName: "", placeAddress: "" }), NOW)).toEqual({ ok: true, changed: false });
+    expect(applied).toHaveLength(0);
+    expect(editFormValues(p)).toMatchObject({ place: park, placeName: "", placeAddress: "" });
+  });
+  it("an unknown place is refused before anything changes", async () => {
+    const { deps, applied } = world();
+    expect(await sendUpdate(deps, organizer, ID, form({ placeId: "fake-nowhere" }), NOW)).toEqual({ ok: false, errors: [{ code: "PLACE_NOT_FOUND", field: "place" }] });
+    expect(applied).toHaveLength(0);
   });
 });

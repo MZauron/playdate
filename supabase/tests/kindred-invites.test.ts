@@ -1,5 +1,6 @@
 // T15 against the real database: a Kindred friend finds and answers only their own invites (by id + their user id), Home lists only
 // theirs while open, and another parent's id finds nothing. Through the local Supabase API (scripts/test-db.sh).
+import { fakePlaces } from "@/lib/integrations/places/fake";
 import { randomUUID } from "node:crypto";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { apiEnabled, closeDb, q } from "./helpers";
@@ -49,9 +50,9 @@ describe.skipIf(!apiEnabled)("invites between Kindred users (T15)", () => {
     const sam = await parent("Sam");
     const f = await friendWithKindred(alex, priya);
     const sent = await sendInvite(
-      { store: playdates.playdateStore, limiter: open, linkBase: "https://kindred.test" },
+      { store: playdates.playdateStore, limiter: open, linkBase: "https://kindred.test", places: fakePlaces },
       { id: alex, firstName: "Alex", childFirstName: "Mia" },
-      { friendIds: [f], mode: "set_time", day: "2030-11-18", startTime: "10:00", endTime: "12:00", slots: [], zone: "America/Toronto", placeName: "Christie Pits", placeAddress: "", savePlace: false, yourName: "Alex", message: "Sunday?" },
+      { friendIds: [f], mode: "set_time", day: "2030-11-18", startTime: "10:00", endTime: "12:00", slots: [], zone: "America/Toronto", placeName: "Christie Pits", placeAddress: "", savePlace: false, placeId: "", yourName: "Alex", message: "Sunday?" },
       NOW,
     );
     if (!sent.ok) throw new Error(JSON.stringify(sent.errors));

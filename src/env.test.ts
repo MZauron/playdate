@@ -36,6 +36,12 @@ describe("parseEnv", () => {
     expect(env.ANTHROPIC_API_KEY).toBeUndefined();
   });
 
+  it("defaults places to the fake list and treats an empty places key as none (T17)", () => {
+    expect(parseEnv(valid).PLACES_MODE).toBe("fake");
+    expect(parseEnv({ ...valid, PLACES_MODE: "live", PLACES_API_KEY: "" }).PLACES_API_KEY).toBeUndefined();
+    expect(() => parseEnv({ ...valid, PLACES_MODE: "google" })).toThrow(/PLACES_MODE/);
+  });
+
   it("treats an empty SITE_PASSWORD as no curtain and refuses one shorter than 8 characters", () => {
     expect(parseEnv({ ...valid, SITE_PASSWORD: "" }).SITE_PASSWORD).toBeUndefined();
     expect(parseEnv({ ...valid, SITE_PASSWORD: "long-enough" }).SITE_PASSWORD).toBe("long-enough");

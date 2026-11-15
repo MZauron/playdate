@@ -64,6 +64,7 @@ describe("homeNotices (Q2 default)", () => {
     confirmedAt: null,
     placeName: null,
     placeAddress: null,
+    searchedPlace: null,
     message: "Which works?",
     timeVersion: 1,
     slots: [],

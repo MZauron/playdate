@@ -37,6 +37,7 @@ function playdate(invites: OrganizerInvite[], patch: Partial<OrganizerPlaydate> 
     confirmedAt: null,
     placeName: "High Park",
     placeAddress: null,
+    searchedPlace: null,
     message: "Park?",
     timeVersion: 1,
     slots: [],

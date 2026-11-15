@@ -1,6 +1,7 @@
 import { Card } from "@/components/Card";
 import { StatusLine } from "@/components/StatusLine";
 import type { InviteView } from "@/lib/domain/invite-page";
+import { placeFacts } from "@/components/places/place-text";
 import { enCA, formatDateTile, formatShortDay, formatTimeRange } from "@/lib/i18n/en-CA";
 import { AnswerPanel, type InviteKey } from "./AnswerPanel";
 import { InviteShell as LinkShell } from "./InviteShell";
@@ -72,10 +73,11 @@ export function InvitePage({ view, inviteKey, embedded = false }: { view: Invite
             <p className="text-label font-semibold uppercase tracking-wider text-muted">{t.whereLabel}</p>
             <p className="font-semibold">{view.placeName ?? t.placeToDecide}</p>
             {view.placeAddress && <p className="text-[15px] text-muted">{view.placeAddress}</p>}
+            {view.placeFacts && placeFacts(view.placeFacts) && <p className="text-[15px] text-primary">{placeFacts(view.placeFacts)}</p>}
           </div>
           {view.placeName && (
             <a
-              href={directionsHref(view.placeName, view.placeAddress)}
+              href={view.placeFacts?.mapsUrl ?? directionsHref(view.placeName, view.placeAddress)}
               target="_blank"
               rel="noopener noreferrer"
               className="inline-flex h-11 shrink-0 items-center rounded-button bg-primary-tint px-4 text-[15px] font-semibold text-primary"

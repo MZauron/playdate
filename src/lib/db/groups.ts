@@ -4,6 +4,7 @@ import "server-only";
 import type { Group, GroupStore, GroupSummary, LastPlaydate } from "@/lib/domain/groups";
 import type { TimeMode } from "@/lib/rules/types";
 import { adminClient } from "./admin";
+import { shownPlace } from "./shown-place";
 
 export const groupStore: GroupStore = {
   async ownFriendIds(ownerId, friendIds) {
@@ -81,7 +82,7 @@ export async function lastPlaydateWith(ownerId: string, friendIds: readonly stri
   if (!friendIds.length) return null;
   const { data, error } = await adminClient()
     .from("invites")
-    .select("playdates(id, title, mode, timezone, start_at, end_at, final_start_at, final_end_at, place_name, place_address, created_at, status)")
+    .select("playdates(id, title, mode, timezone, start_at, end_at, final_start_at, final_end_at, place_name, place_address, place_provider_id, created_at, status)")
     .eq("organizer_id", ownerId)
     .in("friend_id", [...friendIds])
     .overrideTypes<
@@ -97,6 +98,7 @@ export async function lastPlaydateWith(ownerId: string, friendIds: readonly stri
           final_end_at: string | null;
           place_name: string | null;
           place_address: string | null;
+          place_provider_id: string | null;
           created_at: string;
           status: string;
         } | null;
@@ -116,7 +118,6 @@ export async function lastPlaydateWith(ownerId: string, friendIds: readonly stri
     timezone: latest.timezone,
     start: date(latest.final_start_at) ?? date(latest.start_at),
     end: date(latest.final_end_at) ?? date(latest.end_at),
-    placeName: latest.place_name,
-    placeAddress: latest.place_address,
+    ...(await shownPlace(latest)),
   };
 }
