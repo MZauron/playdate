@@ -14,6 +14,8 @@ const schema = z.object({
   /** `fake` (tests, phone sessions, no key) or `live` (Anthropic). Live without a key falls back to the built-in suggestions. */
   AI_MODE: z.enum(["fake", "live"]).default("fake"),
   ANTHROPIC_API_KEY: z.string().min(1).optional(),
+  /** The cron service sends `Authorization: Bearer $CRON_SECRET` to /api/cron/tick. Unset = the tick refuses every call. */
+  CRON_SECRET: z.string().optional().transform((v) => v || undefined).pipe(z.string().min(32).optional()),
   /** Optional curtain for staging and demos (src/lib/gate). Unset or empty = no curtain. */
   SITE_PASSWORD: z.string().optional().transform((v) => v || undefined).pipe(z.string().min(8).optional()),
 });

@@ -1,6 +1,8 @@
 import { HomeView } from "@/components/home/HomeView";
 import { requireParent } from "@/lib/auth/require-parent";
+import { listOpenAvailability } from "@/lib/db/playdate-page";
 import { listHomePlaydates } from "@/lib/db/playdates";
+import { homeNotices } from "@/lib/domain/majority";
 import { DEFAULT_ZONE } from "@/lib/rules/config";
 
 // Always the current time and the current parent.
@@ -18,6 +20,7 @@ export default async function HomePage({ searchParams }: { searchParams: Promise
       welcome={welcome === "1"}
       childName={profile.children[0]?.firstName} // Q4 default: the first child
       playdates={await listHomePlaydates(user.id, now)}
+      notices={(await listOpenAvailability(user.id, now)).flatMap(homeNotices)}
       now={now}
       zone={DEFAULT_ZONE}
     />

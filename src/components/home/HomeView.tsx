@@ -3,6 +3,7 @@ import { StatusLine } from "@/components/StatusLine";
 import { answeredCount } from "@/lib/rules/answers";
 import { dayPartOf, enCA, formatDateTile, formatLongDay, formatTimeRange } from "@/lib/i18n/en-CA";
 import Link from "next/link";
+import type { MajorityNotice } from "@/lib/domain/majority";
 import { groupForHome, type HomePlaydate } from "./home-data";
 import { Kite } from "./Kite";
 
@@ -13,12 +14,14 @@ export type HomeViewProps = {
   /** Q4 default: one child per family in v1, so the banner names the first. */
   childName?: string;
   playdates: readonly HomePlaydate[];
+  /** KD-12, Q2 default: text friends to tell that most families picked another time (under Needs you). */
+  notices?: readonly MajorityNotice[];
   now: Date;
   /** The zone for the banner's date and greeting. */
   zone: string;
 };
 
-export function HomeView({ firstName, welcome = false, childName, playdates, now, zone }: HomeViewProps) {
+export function HomeView({ firstName, welcome = false, childName, playdates, notices = [], now, zone }: HomeViewProps) {
   const sections = groupForHome(playdates, now);
   const greeting = welcome && firstName ? enCA.home.welcome(firstName) : enCA.home.greeting[dayPartOf(now, zone)];
 
@@ -41,7 +44,18 @@ export function HomeView({ firstName, welcome = false, childName, playdates, now
         <span className="text-lg font-semibold">{enCA.home.planCard}</span>
       </Link>
 
-      <Section title={enCA.home.sections.needsYou} playdates={sections.needs_you} render={(p) => <ProgressItem playdate={p} />} />
+      <Section title={enCA.home.sections.needsYou} playdates={sections.needs_you} render={(p) => <ProgressItem playdate={p} />}>
+        {notices.map((n) => (
+          <li key={n.inviteId}>
+            <Card className="flex items-center justify-between gap-3">
+              <p className="min-w-0 text-[15px] font-medium">{enCA.home.majorityNotice(n.name, n.rangeText)}</p>
+              <a href={n.href} className="inline-flex h-11 shrink-0 items-center rounded-button bg-accent px-4 text-[15px] font-semibold text-white">
+                {enCA.plan.textButton(n.name)}
+              </a>
+            </Card>
+          </li>
+        ))}
+      </Section>
       <Section title={enCA.home.sections.upcoming} playdates={sections.upcoming} render={(p) => <UpcomingItem playdate={p} />} />
       <Section title={enCA.home.sections.waiting} playdates={sections.waiting} render={(p) => <ProgressItem playdate={p} />} />
     </div>
@@ -49,12 +63,13 @@ export function HomeView({ firstName, welcome = false, childName, playdates, now
 }
 
 /** A section only exists when it has something in it. */
-function Section({ title, playdates, render }: { title: string; playdates: readonly HomePlaydate[]; render: (p: HomePlaydate) => React.ReactNode }) {
-  if (playdates.length === 0) return null;
+function Section({ title, playdates, render, children }: { title: string; playdates: readonly HomePlaydate[]; render: (p: HomePlaydate) => React.ReactNode; children?: React.ReactNode[] }) {
+  if (playdates.length === 0 && !children?.length) return null;
   return (
     <section aria-label={title}>
       <h2 className="mb-2 px-1 text-label font-semibold uppercase tracking-wider text-muted">{title}</h2>
       <ul className="flex flex-col gap-3">
+        {children}
         {playdates.map((p) => (
           <li key={p.id}>{render(p)}</li>
         ))}

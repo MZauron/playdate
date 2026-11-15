@@ -12,6 +12,7 @@ import { durationMinutes } from "@/lib/rules/plan";
 import { dayLabel, slotValues } from "@/components/plan/plan-time";
 import { CancelButton } from "./CancelButton";
 import { ConfirmButton } from "./ConfirmButton";
+import { SuggestedTimes } from "./SuggestedTimes";
 
 const t = enCA.playdate;
 
@@ -92,7 +93,9 @@ export function PlaydatePage({ playdate: p, view, live, texts }: { playdate: Org
           )}
           {view.confirmed ? (
             <StatusLine tone="success">{t.confirmed}</StatusLine>
-          ) : view.cancelled || p.mode === "availability" ? null : (
+          ) : view.cancelled ? null : p.mode === "availability" ? (
+            <SuggestedTimes playdateId={p.id} suggestions={view.suggestions} zone={p.timezone} />
+          ) : (
             <>
               <p className="text-[15px]">{view.comingNames.length ? t.canCome(view.comingNames) : t.nobodyYet}</p>
               <ConfirmButton playdateId={p.id} enabled={view.canConfirm} />
