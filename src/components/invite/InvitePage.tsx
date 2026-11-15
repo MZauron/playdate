@@ -1,7 +1,7 @@
 import { Card } from "@/components/Card";
 import { StatusLine } from "@/components/StatusLine";
 import type { InviteView } from "@/lib/domain/invite-page";
-import { enCA, formatDateTile } from "@/lib/i18n/en-CA";
+import { enCA, formatDateTile, formatShortDay, formatTimeRange } from "@/lib/i18n/en-CA";
 import { AnswerPanel } from "./AnswerPanel";
 import { InviteShell } from "./InviteShell";
 import { LocalTime } from "./LocalTime";
@@ -42,8 +42,16 @@ export function InvitePage({ view, token }: { view: InviteView; token: string })
       </div>
 
       <p className="whitespace-pre-wrap break-words rounded-card rounded-tl-md bg-card px-4 py-3 shadow-card">{view.message}</p>
+      {view.confirmed && view.start && view.end && (
+        <p className="rounded-card rounded-tl-md bg-success/10 px-4 py-3 font-medium text-success">
+          {enCA.itsOn(formatShortDay(view.start, view.zone), formatTimeRange(view.start, view.end, view.zone), view.placeName)}
+        </p>
+      )}
 
-      <Card className="flex flex-col gap-4">
+      <Card className="flex flex-col gap-4 overflow-hidden">
+        {view.confirmed && (
+          <p className="-mx-4 -mt-4 bg-success px-4 py-2 text-label font-bold uppercase tracking-wider text-white">{t.confirmedBand}</p>
+        )}
         <div className="flex items-center gap-4">
           {tile && (
             <div aria-hidden="true" className="flex size-14 shrink-0 flex-col items-center justify-center rounded-button bg-accent-tint text-accent">

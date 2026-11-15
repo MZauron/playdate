@@ -171,6 +171,32 @@ export const enCA = {
     when: (day: string, time: string) => `${day}, ${time}`,
     at: (place: string) => ` at ${place}`,
   },
+  playdate: {
+    back: "Home",
+    whoTitle: "Who's invited",
+    answered: (answered: number, total: number) => `${answered} of ${total} answered`,
+    live: "Live",
+    whenTitle: "When",
+    whereTitle: "Where",
+    detailsTitle: "Details",
+    messageLabel: "Your message",
+    canCome: (names: readonly string[]) =>
+      `${names.length} ${names.length === 1 ? "family" : "families"} can come: ${names.join(", ")}`,
+    nobodyYet: "Nobody can come yet. You can confirm once a family says yes.",
+    confirm: "Confirm and send update",
+    confirmed: "Confirmed",
+    updateSent: "✓ Update sent",
+    updateNote: "Families who open their link now see it's on. Text each one the news from your phone:",
+    cancelled: "This playdate was cancelled.",
+    errors: {
+      CONFIRM_NEEDS_YES: "You can confirm once at least one family says yes.",
+      CONFIRM_NEEDS_TIME: "Choose a time first.",
+      PLAYDATE_CANCELLED: "This playdate was cancelled.",
+      NOT_FOUND: "That playdate isn't yours or doesn't exist any more.",
+    },
+  },
+  /** KD-09: the confirmation, on the invite page's bubble and in the organizer's Text. "Sat, Nov 21", "10:00 AM to 12:00 PM". */
+  itsOn: (day: string, time: string, place: string | null) => `It's on! 🎉 See you ${day}, ${time}${place ? ` at ${place}` : ""}.`,
   gate: {
     title: "Kindred is being tested",
     note: "Enter the password you were given to continue.",
@@ -182,6 +208,7 @@ export const enCA = {
   invite: {
     from: (name: string, child: string | null) => (child ? `${name} · ${child}'s parent` : name),
     labels: { updated: "Updated", new_time: "New time" },
+    confirmedBand: "Confirmed",
     whenLabel: "When",
     whereLabel: "Where",
     timeToDecide: "Time to be decided",
