@@ -51,6 +51,7 @@ describe("PlaydatePage", () => {
     expect(html).toContain("✓ Update sent");
     expect(html).toContain("Text Dev");
     expect(html).toContain("sms:+14165550111?&amp;body=");
+    expect(html).toContain('href="/playdates/aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa/calendar.ics"');
     expect(html).not.toContain("Confirm and send update");
   });
 });
@@ -95,6 +96,8 @@ describe("InvitePage once confirmed", () => {
     expect(html).toContain("It&#x27;s on! 🎉 See you Mon, Nov 16, 10:00 AM to 12:00 PM at High Park.");
     expect(html).toContain("Confirmed");
     expect(html).toContain("We&#x27;re in!");
+    expect(html).toContain('href="/r/AAAAAAAAAAAAAAAAAAAAAA/calendar.ics"');
+    expect(renderToStaticMarkup(<InvitePage view={{ ...view, confirmed: false }} token="AAAAAAAAAAAAAAAAAAAAAA" />)).not.toContain("calendar.ics");
     expect(renderToStaticMarkup(<InvitePage view={{ ...view, confirmed: false }} token="AAAAAAAAAAAAAAAAAAAAAA" />)).not.toContain("It&#x27;s on!");
   });
 });

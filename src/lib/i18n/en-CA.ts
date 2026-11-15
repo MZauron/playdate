@@ -232,6 +232,7 @@ export const enCA = {
     from: (name: string, child: string | null) => (child ? `${name} · ${child}'s parent` : name),
     labels: { updated: "Updated", new_time: "New time" },
     confirmedBand: "Confirmed",
+    addToCalendar: "Add to calendar",
     whenLabel: "When",
     whereLabel: "Where",
     timeToDecide: "Time to be decided",
