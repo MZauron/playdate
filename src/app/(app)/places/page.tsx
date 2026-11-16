@@ -1,6 +1,6 @@
 import { ButtonLink } from "@/components/Button";
 import { PlaceCard } from "@/components/places/PlaceCard";
-import { SearchPlaces } from "@/components/places/AskPlaces";
+import { AskPlaces, SearchPlaces } from "@/components/places/AskPlaces";
 import { SavedPlaces } from "@/components/places/SavedPlaces";
 import { requireParent } from "@/lib/auth/require-parent";
 import { listFavouritePlaces, listPopularPlaces } from "@/lib/db/favourites";
@@ -12,14 +12,21 @@ export const dynamic = "force-dynamic";
 
 const t = enCA.explore;
 
-// Explore (T18): Your favourites (only this parent's), Your saved places (T30: the places they typed, with Rename and Remove),
-// Popular with parents (counts only, Q22), and search.
-export default async function ExplorePage() {
+// The Places tab (T32, Q25/Q7: Ask Kindred and Explore in one): Ask Kindred first (T18), then Your favourites (only this parent's),
+// Your saved places (T30: the places they typed, with Rename and Remove), Popular with parents (counts only, Q22), and search.
+export default async function PlacesPage() {
   const { user } = await requireParent();
   const [favourites, saved, popular] = await Promise.all([listFavouritePlaces(user.id), listTypedPlaces(user.id), listPopularPlaces(user.id)]);
   return (
     <section className="flex flex-col gap-6 pt-6 pb-6">
       <h1 className="text-title font-bold leading-tight">{t.title}</h1>
+      <section aria-labelledby="places-ask" className="flex flex-col gap-3">
+        <h2 id="places-ask" className="text-lg font-semibold">
+          {enCA.ask.title}
+        </h2>
+        <p className="text-[15px] text-muted">{enCA.ask.intro}</p>
+        <AskPlaces />
+      </section>
       <Places title={t.favourites} places={favourites} empty={t.noFavourites} />
       <section aria-labelledby="explore-saved" className="flex flex-col gap-3">
         <h2 id="explore-saved" className="text-lg font-semibold">

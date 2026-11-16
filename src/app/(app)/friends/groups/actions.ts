@@ -15,9 +15,9 @@ export async function saveGroupAction(_previous: GroupFormState, form: FormData)
   const groupId = String(form.get("groupId") ?? "") || null;
   const result = await saveGroup(groupStore, user.id, groupId, parseGroupForm(form));
   if (!result.ok) return { errors: { [result.field ?? "form"]: enCA.groups.errors[result.code] } };
-  revalidatePath("/groups");
+  revalidatePath("/friends");
   revalidatePath("/plan");
-  redirect(`/groups/${result.groupId}`);
+  redirect(`/friends/groups/${result.groupId}`);
 }
 
 /** Remove one friend from a group; they stay a friend. */
@@ -25,14 +25,14 @@ export async function removeMemberAction(form: FormData): Promise<void> {
   const { user } = await requireParent();
   const groupId = String(form.get("groupId") ?? "");
   await removeMember(groupStore, user.id, groupId, String(form.get("friendId") ?? ""));
-  revalidatePath(`/groups/${groupId}`);
-  revalidatePath("/groups");
+  revalidatePath(`/friends/groups/${groupId}`);
+  revalidatePath("/friends");
 }
 
 /** Delete group, after the page asked. Its friends stay friends. */
 export async function deleteGroupAction(form: FormData): Promise<void> {
   const { user } = await requireParent();
   await deleteGroup(groupStore, user.id, String(form.get("groupId") ?? ""));
-  revalidatePath("/groups");
-  redirect("/groups");
+  revalidatePath("/friends");
+  redirect("/friends");
 }

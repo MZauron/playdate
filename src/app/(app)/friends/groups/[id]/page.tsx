@@ -4,7 +4,7 @@ import { z } from "zod";
 import { ButtonLink } from "@/components/Button";
 import { Card } from "@/components/Card";
 import { DeleteGroup } from "@/components/groups/DeleteGroup";
-import { removeMemberAction } from "@/app/(app)/groups/actions";
+import { removeMemberAction } from "@/app/(app)/friends/groups/actions";
 import { Initials } from "@/components/groups/Initials";
 import { requireParent } from "@/lib/auth/require-parent";
 import { getGroup, lastPlaydateWith } from "@/lib/db/groups";
@@ -27,8 +27,8 @@ export default async function GroupPage({ params }: { params: Promise<{ id: stri
     <div className="flex flex-col gap-5 pb-6">
       <header className="flex flex-col gap-2">
         <div className="flex items-center justify-between gap-2">
-          <Link href="/groups" className="-ml-2 flex min-h-11 items-center px-2 text-[15px] font-semibold text-primary">
-            ← {t.title}
+          <Link href="/friends" className="-ml-2 flex min-h-11 items-center px-2 text-[15px] font-semibold text-primary">
+            ← {enCA.tabs.friends}
           </Link>
           <DeleteGroup groupId={group.id} />
         </div>
@@ -71,7 +71,7 @@ export default async function GroupPage({ params }: { params: Promise<{ id: stri
         ))}
       </ul>
 
-      <ButtonLink href={`/groups/${group.id}/edit`} fullWidth>
+      <ButtonLink href={`/friends/groups/${group.id}/edit`} fullWidth>
         {t.edit}
       </ButtonLink>
     </div>

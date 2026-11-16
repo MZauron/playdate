@@ -3,7 +3,7 @@
 // The heart (T18) on a place card: tap to keep the place in Your favourites, tap again to let it go. Shows the change at once and
 // puts it back if the server says no.
 import { useState, useTransition } from "react";
-import { heartAction } from "@/app/(app)/explore/actions";
+import { heartAction } from "@/app/(app)/places/actions";
 import { cx } from "@/components/cx";
 import { enCA } from "@/lib/i18n/en-CA";
 

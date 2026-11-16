@@ -60,6 +60,8 @@ export const enCA = {
     consentLink: "How Kindred uses your information",
   },
   friends: {
+    /** T32 (Q25): the Friends tab, with groups on it. */
+    tabTitle: "Friends",
     title: "Your friends",
     empty: "No friends yet. Add someone you'd like to plan with.",
     hasKindred: "has Kindred",
@@ -244,7 +246,7 @@ export const enCA = {
   },
   // Explore (T18).
   explore: {
-    title: "Explore",
+    title: "Places",
     favourites: "Your favourites",
     noFavourites: "Tap ♡ on a place to keep it here.",
     popular: "Popular with parents",
@@ -491,9 +493,8 @@ export const enCA = {
   tabs: {
     label: "Main",
     home: "Home",
-    groups: "Groups",
-    ask: "Ask",
-    explore: "Explore",
+    friends: "Friends",
+    places: "Places",
   },
   home: {
     welcome: (firstName: string) => `Welcome, ${firstName}`,
