@@ -269,6 +269,7 @@ export const enCA = {
     nobodyYet: "Nobody can come yet. You can confirm once a family says yes.",
     confirm: "Confirm and send update",
     edit: "Edit playdate",
+    preview: "Preview what friends see",
     cancel: "Cancel playdate",
     cancelAsk: "Cancel this playdate?",
     cancelNote: "Everyone you invited will see it's cancelled, and their links won't take answers any more.",
@@ -362,6 +363,11 @@ export const enCA = {
     deleteFailed: "We couldn't delete your account. Please try again.",
     deleted: "Your account and everything in it are deleted.",
     backHome: "Back to Home",
+  },
+  /** T27: the organizer's look at the invite page. */
+  preview: {
+    banner: "Preview: this is what friends see. Nothing here is sent.",
+    back: "Back to your playdate",
   },
   gate: {
     title: "Kindred is being tested",

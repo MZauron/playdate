@@ -53,6 +53,11 @@ export type InviteStore = {
   findByTokenHash(tokenHash: string): Promise<StoredInvite | null>;
   /** T15: a Kindred friend's own invite, found by its id and THEIR user id only; anyone else's id finds nothing. */
   findForInvitee(inviteId: string, userId: string): Promise<StoredInvite | null>;
+  /**
+   * T27 Preview what friends see: one of this playdate's invites, found by the playdate id and THE ORGANIZER's user id only (anyone
+   * else's playdate finds nothing). The caller drops its answer; any invite will do, since every friend sees the same page.
+   */
+  findPreview(playdateId: string, organizerId: string): Promise<StoredInvite | null>;
   /** Replaces this invite's answer (KD-07: one current answer per invite). */
   saveAnswer(inviteId: string, answer: Answer, timeVersion: number, answeredAt: Date): Promise<void>;
 };
@@ -136,6 +141,19 @@ export async function loadInviteForInvitee(store: InviteStore, inviteId: string,
   if (!isUuid(inviteId)) return null;
   const stored = await store.findForInvitee(inviteId, userId);
   return stored ? toView(stored, now) : null;
+}
+
+/** No real invite has this id, so in a preview every family's pick counts as another family's. */
+const PREVIEW_INVITE_ID = "preview";
+
+/**
+ * T27: the invite page as a friend who hasn't answered sees it, for the organizer's own playdate; null for a malformed id or anyone
+ * else's playdate. Same view as the link (toView), with no answer of anyone's as "yours".
+ */
+export async function loadPreview(store: InviteStore, playdateId: string, organizerId: string, now: Date): Promise<InviteView | null> {
+  if (!isUuid(playdateId)) return null;
+  const stored = await store.findPreview(playdateId, organizerId);
+  return stored ? toView({ ...stored, inviteId: PREVIEW_INVITE_ID, answer: null }, now) : null;
 }
 
 /** The page's lookup: null when the token is malformed or matches no invite. */

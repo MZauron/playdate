@@ -42,10 +42,13 @@ type PickRow = {
 const date = (value: string | null) => (value ? new Date(value) : null);
 
 /**
- * One invite and its playdate, as the invite page shows it. `where` is either the link's hash (a friend without an account) or the
- * invite id together with the signed-in invitee's own user id (a Kindred friend, T15): both read exactly the same fields.
+ * One invite and its playdate, as the invite page shows it. `where` is the link's hash (a friend without an account), the invite id
+ * together with the signed-in invitee's own user id (a Kindred friend, T15), or the playdate id together with the signed-in
+ * organizer's own id (Preview what friends see, T27): all read exactly the same fields.
  */
-async function findOne(where: { token_hash: string } | { id: string; invitee_user_id: string }): Promise<StoredInvite | null> {
+async function findOne(
+  where: { token_hash: string } | { id: string; invitee_user_id: string } | { playdate_id: string; organizer_id: string },
+): Promise<StoredInvite | null> {
     const db = adminClient();
     const { data, error } = await db
       .from("invites")
@@ -53,6 +56,7 @@ async function findOne(where: { token_hash: string } | { id: string; invitee_use
         "id, label, playdates(id, title, mode, status, timezone, start_at, end_at, final_start_at, final_end_at, place_name, place_address, place_provider_id, message, time_version, links_expire_at, organizer_id, profiles(first_name), availability_slots(day, slot)), answers(kind, reason, note, pick_start_at, pick_end_at, time_version)",
       )
       .match(where)
+      .limit(1) // a preview matches every invite of the playdate; the others match one at most
       .maybeSingle()
       .overrideTypes<Row, { merge: false }>();
     if (error) throw new Error(`findInvite failed: ${error.code}`);
@@ -121,6 +125,7 @@ async function findOne(where: { token_hash: string } | { id: string; invitee_use
 export const inviteStore: InviteStore = {
   findByTokenHash: (tokenHash) => findOne({ token_hash: tokenHash }),
   findForInvitee: (inviteId, userId) => findOne({ id: inviteId, invitee_user_id: userId }),
+  findPreview: (playdateId, organizerId) => findOne({ playdate_id: playdateId, organizer_id: organizerId }),
 
   async saveAnswer(inviteId, answer, timeVersion, answeredAt) {
     const { error } = await adminClient()

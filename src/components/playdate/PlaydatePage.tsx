@@ -138,14 +138,20 @@ export function PlaydatePage({ playdate: p, view, live, texts }: { playdate: Org
         </Card>
       </section>
 
-      {!view.cancelled && (
-        <div className="flex flex-col gap-3">
-          <ButtonLink href={`/playdates/${p.id}/edit`} fullWidth>
-            {t.edit}
-          </ButtonLink>
-          <CancelButton playdateId={p.id} />
-        </div>
-      )}
+      <div className="flex flex-col gap-3">
+        {/* T27: the invite page as a friend sees it, for every state of the playdate. */}
+        <Link href={`/preview/${p.id}`} className="flex min-h-11 items-center justify-center font-semibold text-primary">
+          {t.preview}
+        </Link>
+        {!view.cancelled && (
+          <>
+            <ButtonLink href={`/playdates/${p.id}/edit`} fullWidth>
+              {t.edit}
+            </ButtonLink>
+            <CancelButton playdateId={p.id} />
+          </>
+        )}
+      </div>
     </div>
   );
 }
