@@ -94,6 +94,7 @@ async function findOne(
     }
     const stored: StoredInvite = {
       inviteId: data.id,
+      playdateId: p.id,
       label: data.label,
       playdate: {
         title: p.title,

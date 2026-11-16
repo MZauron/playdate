@@ -29,6 +29,12 @@ export const MESSAGE_MAX_LENGTH = 1000;
 /** KD-07: the optional note with "Can't make it" (`answers.note`, 280 in the schema). */
 export const NOTE_MAX_LENGTH = 280;
 
+/** KD-18 (Q27 default): check-ins open 30 minutes before a confirmed playdate starts and close 1 hour after it ends. */
+export const CHECKIN_OPENS_BEFORE_MINUTES = 30;
+export const CHECKIN_CLOSES_AFTER_MINUTES = 60;
+/** KD-18: the optional note on a check-in. */
+export const CHECKIN_NOTE_MAX_LENGTH = 80;
+
 /** KD-07: reason chips, in the order shown. Copy lives in en-CA.ts. */
 export const DECLINE_REASONS: readonly DeclineReason[] = [
   "maybe_another_time",

@@ -63,6 +63,6 @@ describe.skipIf(!enabled)("privileges on every table", () => {
     const rows = await q<{ tablename: string }>(
       "select tablename from pg_publication_tables where pubname = 'supabase_realtime' and schemaname = 'public' order by tablename",
     );
-    expect(rows.map((r) => r.tablename)).toEqual(["answers", "invites", "playdates"]);
+    expect(rows.map((r) => r.tablename)).toEqual(["answers", "check_ins", "invites", "playdates"]);
   });
 });

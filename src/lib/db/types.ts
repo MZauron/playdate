@@ -61,6 +61,31 @@ isOneToOne: false
       referencedColumns: ["id"]
     }
                   ]
+                },"check_ins": {
+                  Row: {
+                    "created_at": string,"id": string,"invite_id": string | null,"kind": Database["public"]['Enums']["check_in_kind"],"note": string | null,"playdate_id": string
+                  }
+                  Insert: {
+                    "created_at"?: string,"id"?: string,"invite_id"?: string | null,"kind": Database["public"]['Enums']["check_in_kind"],"note"?: string | null,"playdate_id": string
+                  }
+                  Update: {
+                    "created_at"?: string,"id"?: string,"invite_id"?: string | null,"kind"?: Database["public"]['Enums']["check_in_kind"],"note"?: string | null,"playdate_id"?: string
+                  }
+                  Relationships: [
+                    {
+      foreignKeyName: "check_ins_invite_id_fkey"
+      columns: ["invite_id"]
+isOneToOne: false
+      referencedRelation: "invites"
+      referencedColumns: ["id"]
+    },{
+      foreignKeyName: "check_ins_playdate_id_fkey"
+      columns: ["playdate_id"]
+isOneToOne: false
+      referencedRelation: "playdates"
+      referencedColumns: ["id"]
+    }
+                  ]
                 },"children": {
                   Row: {
                     "age_label": string,"created_at": string,"first_name": string,"id": string,"parent_id": string,"sort": number
@@ -297,7 +322,7 @@ isOneToOne: false
                            }
           }
           Enums: {
-            "answer_kind": "yes"|"no"|"pick","day_slot": "morning"|"afternoon"|"evening","decline_reason": "maybe_another_time"|"busy"|"not_feeling_well"|"too_far"|"other_plans","invite_channel": "app"|"text","invite_label": "none"|"updated"|"new_time","place_source": "typed"|"searched","playdate_status": "collecting"|"confirmed"|"cancelled","time_mode": "set_time"|"availability"
+            "answer_kind": "yes"|"no"|"pick","check_in_kind": "here"|"late"|"all_good"|"heading_home","day_slot": "morning"|"afternoon"|"evening","decline_reason": "maybe_another_time"|"busy"|"not_feeling_well"|"too_far"|"other_plans","invite_channel": "app"|"text","invite_label": "none"|"updated"|"new_time","place_source": "typed"|"searched","playdate_status": "collecting"|"confirmed"|"cancelled","time_mode": "set_time"|"availability"
           }
           CompositeTypes: {
             [_ in never]: never
@@ -417,7 +442,7 @@ export const Constants = {
           }
         },"public": {
           Enums: {
-            "answer_kind": ["yes", "no", "pick"],"day_slot": ["morning", "afternoon", "evening"],"decline_reason": ["maybe_another_time", "busy", "not_feeling_well", "too_far", "other_plans"],"invite_channel": ["app", "text"],"invite_label": ["none", "updated", "new_time"],"place_source": ["typed", "searched"],"playdate_status": ["collecting", "confirmed", "cancelled"],"time_mode": ["set_time", "availability"]
+            "answer_kind": ["yes", "no", "pick"],"check_in_kind": ["here", "late", "all_good", "heading_home"],"day_slot": ["morning", "afternoon", "evening"],"decline_reason": ["maybe_another_time", "busy", "not_feeling_well", "too_far", "other_plans"],"invite_channel": ["app", "text"],"invite_label": ["none", "updated", "new_time"],"place_source": ["typed", "searched"],"playdate_status": ["collecting", "confirmed", "cancelled"],"time_mode": ["set_time", "availability"]
           }
         }
 } as const

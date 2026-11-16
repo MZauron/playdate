@@ -15,6 +15,7 @@ const PLAYDATE = "11111111-1111-4111-8111-111111111111"; // Alex's playdate in t
 function stored(patch: Partial<StoredInvite["playdate"]> = {}, rest: Partial<StoredInvite> = {}): StoredInvite {
   return {
     inviteId: "invite-1",
+    playdateId: "11111111-1111-4111-8111-111111111111",
     label: "none",
     playdate: {
       title: "Playdate: Mia & Arjun",

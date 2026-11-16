@@ -23,7 +23,20 @@ const t = enCA.playdate;
  * (who can come and Confirm and send update, KD-09), 3 Where, Details. `live` is the "· Live" marker; `texts` the confirmation's
  * Text buttons once confirmed.
  */
-export function PlaydatePage({ playdate: p, view, live, texts }: { playdate: OrganizerPlaydate; view: PlaydatePageView; live: React.ReactNode; texts: TextButton[] }) {
+export function PlaydatePage({
+  playdate: p,
+  view,
+  live,
+  texts,
+  checkIns,
+}: {
+  playdate: OrganizerPlaydate;
+  view: PlaydatePageView;
+  live: React.ReactNode;
+  texts: TextButton[];
+  /** T35: How it's going, once confirmed. */
+  checkIns?: React.ReactNode;
+}) {
   const zone = p.timezone;
   return (
     <div className="flex flex-col gap-6 pb-6">
@@ -59,6 +72,7 @@ export function PlaydatePage({ playdate: p, view, live, texts }: { playdate: Org
       )}
 
       {!view.cancelled && !view.confirmed && <SavedInviteTexts playdateId={p.id} />}
+      {checkIns}
 
       <NumberedStep number={1} done={view.total > 0 && view.answered === view.total} title={t.whoTitle}>
         <p className="text-[15px] text-muted">
