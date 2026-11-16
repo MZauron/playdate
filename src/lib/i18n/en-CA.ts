@@ -11,6 +11,7 @@ export const enCA = {
     description: "Plan a playdate with families you already know.",
     comingSoon: "Coming soon.",
     signOut: "Sign out",
+    privacy: "Privacy",
   },
   signIn: {
     title: "Sign in",
@@ -55,6 +56,8 @@ export const enCA = {
       TOO_MANY_CHILDREN: "That's more children than we can add here.",
       PHONE_MISSING: "Something went wrong. Please sign in again.",
     },
+    consent: "By continuing, you agree that Kindred keeps your children's first names and ages to plan playdates.",
+    consentLink: "How Kindred uses your information",
   },
   friends: {
     title: "Your friends",
@@ -298,6 +301,68 @@ export const enCA = {
   cancelledText: (day: string | null) => (day ? `Sorry, our playdate on ${day} is cancelled.` : "Sorry, our playdate is cancelled."),
   /** KD-09: the confirmation, on the invite page's bubble and in the organizer's Text. "Sat, Nov 21", "10:00 AM to 12:00 PM". */
   itsOn: (day: string, time: string, place: string | null) => `It's on! 🎉 See you ${day}, ${time}${place ? ` at ${place}` : ""}.`,
+  /** The privacy page (T24, Q13 default): a plain first draft, to be reviewed against PIPEDA before the beta. */
+  privacy: {
+    title: "Privacy",
+    intro: "Kindred helps you plan playdates with families you already know. Here's what it keeps, who sees it, and how to delete it.",
+    updated: "Last updated November 15, 2026.",
+    sections: [
+      {
+        title: "What Kindred keeps",
+        lines: [
+          "Your first name and phone number, to sign you in.",
+          "Your children's first names and ages. Ages are used only to suggest places.",
+          "The friends you add: their name, their child's first name and their phone number, so you can text them an invite.",
+          "Your groups, saved places and favourite places.",
+          "Your playdates, and the answers friends give.",
+        ],
+      },
+      {
+        title: "Who sees it",
+        lines: [
+          "Your friends list, groups and saved places are only yours.",
+          "Friends you invite see your first name, your child's first name, the time, the place, your message and the first names of the other families invited. Never phone numbers, ages or groups.",
+          "Favourite places are only counted together, from two parents up, without saying who.",
+        ],
+      },
+      {
+        title: "What Kindred doesn't do",
+        lines: [
+          "It never reads your address book. Only the contacts you choose are checked, to see who already uses Kindred.",
+          "It never texts your friends. Invites and updates go from your own phone, when you tap Text.",
+          "No public profiles, no strangers, no feed.",
+        ],
+      },
+      {
+        title: "Invite links and answers",
+        lines: [
+          "Each friend gets their own link. It works only for that playdate and stops working after it.",
+          "Friends answer without an account. Kindred keeps their answer and any note for that playdate.",
+          "30 days after a playdate, its links and notes are removed.",
+        ],
+      },
+      {
+        title: "Services Kindred uses",
+        lines: [
+          "Supabase stores Kindred's information and handles sign-in.",
+          "Railway runs the app.",
+          "Google Places finds places when you search. It gets your search words.",
+          "Anthropic's Claude suggests messages and places. It gets the plan's day, time and place, or your question and your children's ages. Never names or phone numbers.",
+        ],
+      },
+    ],
+    deleteTitle: "Delete your account",
+    deleteNote:
+      "This removes your profile, your children, friends, groups, saved places and the playdates you planned. Links you sent stop working, and invites you received are removed from those playdates.",
+    deleteSignedOut: "Sign in, then come back to this page to delete your account.",
+    deleteButton: "Delete my account",
+    deleteAsk: "Delete your account?",
+    deleteAskNote: "It can't be undone. Friends you invited aren't told, so cancel any upcoming playdates first if they should know.",
+    keepAccount: "Keep my account",
+    deleteFailed: "We couldn't delete your account. Please try again.",
+    deleted: "Your account and everything in it are deleted.",
+    backHome: "Back to Home",
+  },
   gate: {
     title: "Kindred is being tested",
     note: "Enter the password you were given to continue.",

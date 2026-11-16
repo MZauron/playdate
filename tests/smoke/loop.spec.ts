@@ -86,5 +86,19 @@ test("sign up, invite a friend by text link, the friend answers, the organizer s
   await friend.reload();
   await expect(friend.getByText(/It's on! 🎉 See you/)).toBeVisible();
   await expect(friend.getByText("Confirmed", { exact: true })).toBeVisible();
+  await expect(friend.getByRole("link", { name: "Privacy" })).toHaveAttribute("href", "/privacy"); // T24, for friends too
+
+  // 7. Delete my account (T24): from Home's Privacy link, asked first; the organizer's playdate and the friend's link go with it.
+  await page.goto("/");
+  await page.getByRole("link", { name: "Privacy" }).click();
+  await page.getByRole("button", { name: "Delete my account" }).click();
+  await expect(page.getByRole("alertdialog", { name: "Delete your account?" })).toBeVisible();
+  await page.getByRole("alertdialog").getByRole("button", { name: "Delete my account" }).click();
+  await expect(page).toHaveURL(/\/sign-in\?deleted=1$/);
+  await expect(page.getByText("Your account and everything in it are deleted.")).toBeVisible();
+  await page.goto("/");
+  await expect(page).toHaveURL(/\/sign-in$/); // signed out on this device
+  await friend.reload();
+  await expect(friend.getByRole("heading", { name: "This link doesn't work" })).toBeVisible();
   await friendContext.close();
 });

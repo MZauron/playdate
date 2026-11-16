@@ -9,9 +9,10 @@ import { GATE_COOKIE, gateOpen } from "@/lib/gate/gate";
 
 export async function proxy(request: NextRequest) {
   // Staging curtain (SITE_PASSWORD): every page and action waits behind /gate until the password was given. The invite page and
-  // the API routes are outside this matcher, so friends' links and the health check always work.
+  // the API routes are outside this matcher, so friends' links and the health check always work. The privacy page (T24) is
+  // linked from the invite page, so it skips the curtain too.
   const { pathname, search } = request.nextUrl;
-  if (pathname !== "/gate" && !gateOpen(env.SITE_PASSWORD, request.cookies.get(GATE_COOKIE)?.value)) {
+  if (pathname !== "/gate" && pathname !== "/privacy" && !gateOpen(env.SITE_PASSWORD, request.cookies.get(GATE_COOKIE)?.value)) {
     const gate = new URL("/gate", request.url);
     gate.searchParams.set("next", pathname + search);
     return NextResponse.redirect(gate);

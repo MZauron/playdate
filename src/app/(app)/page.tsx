@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { signOutAction } from "@/app/(app)/actions";
 import { HomeView } from "@/components/home/HomeView";
 import { enCA } from "@/lib/i18n/en-CA";
@@ -29,11 +30,16 @@ export default async function HomePage({ searchParams }: { searchParams: Promise
       now={now}
       zone={DEFAULT_ZONE}
     />
-      <form action={signOutAction} className="flex justify-center pb-6">
-        <button type="submit" className="min-h-11 px-4 text-[15px] font-medium text-muted underline-offset-4 hover:underline">
-          {enCA.app.signOut}
-        </button>
-      </form>
+      <div className="flex justify-center gap-2 pb-6">
+        <Link href="/privacy" className="flex min-h-11 items-center px-4 text-[15px] font-medium text-muted underline-offset-4 hover:underline">
+          {enCA.app.privacy}
+        </Link>
+        <form action={signOutAction}>
+          <button type="submit" className="min-h-11 px-4 text-[15px] font-medium text-muted underline-offset-4 hover:underline">
+            {enCA.app.signOut}
+          </button>
+        </form>
+      </div>
     </>
   );
 }
