@@ -80,6 +80,25 @@ isOneToOne: false
       referencedColumns: ["id"]
     }
                   ]
+                },"friend_links": {
+                  Row: {
+                    "created_at": string,"id": string,"owner_id": string,"token_hash": string
+                  }
+                  Insert: {
+                    "created_at"?: string,"id"?: string,"owner_id": string,"token_hash": string
+                  }
+                  Update: {
+                    "created_at"?: string,"id"?: string,"owner_id"?: string,"token_hash"?: string
+                  }
+                  Relationships: [
+                    {
+      foreignKeyName: "friend_links_owner_id_fkey"
+      columns: ["owner_id"]
+isOneToOne: false
+      referencedRelation: "profiles"
+      referencedColumns: ["id"]
+    }
+                  ]
                 },"friends": {
                   Row: {
                     "child_first_name": string | null,"created_at": string,"id": string,"kindred_user_id": string | null,"label": string,"owner_id": string,"parent_name": string,"phone_hash": string
@@ -237,7 +256,10 @@ isOneToOne: false
             [_ in never]: never
           }
           Functions: {
-            "clean_up_old_playdates":
+            "befriend":
+{ Args: { "p_a": string,"p_b": string }; Returns: boolean
+                           },
+"clean_up_old_playdates":
 { Args: { "p_cutoff": string }; Returns: {
               "links_removed": number,"notes_removed": number
             }[]

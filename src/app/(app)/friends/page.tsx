@@ -1,7 +1,9 @@
 import Link from "next/link";
 import { ButtonLink } from "@/components/Button";
 import { Card } from "@/components/Card";
+import { StatusLine } from "@/components/StatusLine";
 import { AddFriendForm } from "@/components/friends/AddFriendForm";
+import { InviteToKindred } from "@/components/friends/InviteToKindred";
 import { FriendRow } from "@/components/friends/FriendRow";
 import { Initials } from "@/components/groups/Initials";
 import { requireParent } from "@/lib/auth/require-parent";
@@ -15,12 +17,18 @@ const g = enCA.groups;
 
 // The Friends tab (T32, Q25): this parent's groups (T19), their friends (T07) and Add a friend. All of it private to them. The Plan
 // screen (T08) shows the same friends and groups under "Who's invited".
-export default async function FriendsPage() {
+export default async function FriendsPage({ searchParams }: { searchParams: Promise<{ befriended?: string }> }) {
   const { user } = await requireParent();
+  const { befriended } = await searchParams;
   const [friends, groups] = await Promise.all([listFriends(user.id), listGroups(user.id)]); // only this parent's
   return (
     <div className="flex flex-col gap-6 pt-6 pb-6">
       <h1 className="text-title font-bold leading-tight">{enCA.friends.tabTitle}</h1>
+      {befriended === "1" && (
+        <StatusLine tone="success" role="status">
+          {enCA.friendLink.befriended}
+        </StatusLine>
+      )}
 
       <section aria-labelledby="friends-groups" className="flex flex-col gap-3">
         <h2 id="friends-groups" className="text-lg font-semibold">
@@ -66,6 +74,14 @@ export default async function FriendsPage() {
           </ul>
         )}
         <AddFriendForm />
+      </section>
+
+      {/* T34 (Q26): friends on Kindred without typing a number. */}
+      <section aria-labelledby="friends-invite" className="flex flex-col gap-3">
+        <h2 id="friends-invite" className="text-lg font-semibold">
+          {enCA.friendLink.title}
+        </h2>
+        <InviteToKindred />
       </section>
     </div>
   );
