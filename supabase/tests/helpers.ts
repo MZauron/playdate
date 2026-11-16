@@ -115,12 +115,7 @@ export async function buildWorld() {
   return w;
 }
 
-/**
- * Deletes everything a world made: removing the users cascades to profiles and everything they own. Organizers go first:
- * deleting an invitee who still has an app invite fails (`invites.invitee_user_id` is set null, which an app invite refuses;
- * see account-deletion.test.ts).
- */
+/** Deletes everything a world made: removing the users cascades to profiles and everything they own (account-deletion.test.ts). */
 export async function destroyWorld(w: World): Promise<void> {
-  await q("delete from auth.users where id = any($1)", [[w.alex, w.xan]]);
-  await q("delete from auth.users where id = any($1)", [[w.dev, w.maya]]);
+  await q("delete from auth.users where id = any($1)", [[w.alex, w.xan, w.dev, w.maya]]);
 }
