@@ -97,6 +97,40 @@ export function dayLabel(day: string): string {
   return `${h.weekday}, ${h.month} ${h.date}`;
 }
 
+// --- The faster picker (T31): two weeks of days and one-tap shortcuts. KD-02 and KD-04 are unchanged: the rule still decides on Done.
+
+/** How many days the picker offers, from today. */
+export const PICKER_DAYS = 14;
+
+/** Today and the next 13 days. */
+export function pickerDays(today: string): string[] {
+  return Array.from({ length: PICKER_DAYS }, (_, i) => addDays(today, i));
+}
+
+const weekday = (day: string) => dayToUtc(day).getUTCDay(); // 0 = Sunday, 6 = Saturday
+const isWeekend = (day: string) => weekday(day) === 0 || weekday(day) === 6;
+
+export type Shortcut = "weekend_mornings" | "weekend_afternoons" | "weekday_afternoons";
+export const SHORTCUTS: readonly Shortcut[] = ["weekend_mornings", "weekend_afternoons", "weekday_afternoons"];
+
+/**
+ * The slots one shortcut stands for: weekend mornings or afternoons in the two weeks shown, or weekday afternoons in the next 7
+ * days ("this week"). Values as the picker holds them, "2026-11-21|morning".
+ */
+export function shortcutSlots(shortcut: Shortcut, today: string): string[] {
+  const days = pickerDays(today);
+  if (shortcut === "weekday_afternoons") return days.slice(0, 7).filter((d) => !isWeekend(d)).map((d) => `${d}|afternoon`);
+  const slot = shortcut === "weekend_mornings" ? "morning" : "afternoon";
+  return days.filter(isWeekend).map((d) => `${d}|${slot}`);
+}
+
+/** One tap on a shortcut: adds all its slots, or takes them all off again when every one was already on. */
+export function applyShortcut(value: readonly string[], shortcut: Shortcut, today: string): string[] {
+  const slots = shortcutSlots(shortcut, today);
+  if (slots.length && slots.every((s) => value.includes(s))) return value.filter((v) => !slots.includes(v));
+  return [...value, ...slots.filter((s) => !value.includes(s))];
+}
+
 /** "2026-11-16|morning" values, as the form posts them, to free slots; sorted by day then slot. */
 export function slotValues(values: readonly string[]): FreeSlot[] {
   const order: DaySlot[] = ["morning", "afternoon", "evening"];
