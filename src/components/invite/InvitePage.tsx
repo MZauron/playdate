@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { Card } from "@/components/Card";
 import { StatusLine } from "@/components/StatusLine";
 import type { InviteView } from "@/lib/domain/invite-page";
@@ -15,14 +16,33 @@ export function directionsHref(placeName: string, placeAddress: string | null): 
   return `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(query)}`;
 }
 
-/** The invite page (DESIGN.md "Screens"): who invites, the message as a bubble, the details card, and the answer. */
-export function InvitePage({ view, inviteKey, embedded = false }: { view: InviteView; inviteKey: InviteKey; embedded?: boolean }) {
+/**
+ * The invite page (DESIGN.md "Screens"): who invites, the message as a bubble, the details card, and the answer. `preview` (T27) is
+ * the organizer looking at their own playdate: the same page with a banner on top, the answer buttons shown but disabled, and the
+ * organizer's own calendar file.
+ */
+export function InvitePage({ view, inviteKey, embedded = false, preview }: { view: InviteView; inviteKey: InviteKey; embedded?: boolean; preview?: { playdateId: string } }) {
   // Signed in (T15), the page sits inside the app's own column and tabs; through a link it has its own shell.
   const InviteShell = embedded ? EmbeddedShell : LinkShell;
-  const calendarHref = "token" in inviteKey ? `/r/${inviteKey.token}/calendar.ics` : `/invites/${inviteKey.inviteId}/calendar.ics`;
+  const calendarHref = preview
+    ? `/playdates/${preview.playdateId}/calendar.ics`
+    : "token" in inviteKey
+      ? `/r/${inviteKey.token}/calendar.ics`
+      : `/invites/${inviteKey.inviteId}/calendar.ics`;
+  const banner = preview && (
+    <div className="flex flex-col gap-1 rounded-card bg-purple/10 px-4 py-3">
+      <p role="status" className="font-medium text-purple">
+        {enCA.preview.banner}
+      </p>
+      <Link href={`/playdates/${preview.playdateId}`} className="-ml-2 flex min-h-11 w-fit items-center px-2 text-[15px] font-semibold text-primary">
+        ← {enCA.preview.back}
+      </Link>
+    </div>
+  );
   if (view.state === "over") {
     return (
       <InviteShell>
+        {banner}
         <h1 className="text-title font-bold leading-tight">{t.overTitle}</h1>
         <p className="text-muted">{view.title}</p>
         <p className="text-muted">{t.overNote}</p>
@@ -31,8 +51,19 @@ export function InvitePage({ view, inviteKey, embedded = false }: { view: Invite
   }
 
   const tile = view.start ? formatDateTile(view.start, view.zone) : null;
+  const answerPanel = (
+    <AnswerPanel
+      inviteKey={inviteKey}
+      timeVersion={view.timeVersion}
+      answer={view.answer}
+      zone={view.zone}
+      // Availability (T13): friends pick a time inside the organizer's free slots (still, once confirmed: KD-07n).
+      availability={view.mode === "availability" ? { organizerFirstName: view.organizerFirstName, zone: view.zone, slots: view.slots, picks: view.picks } : undefined}
+    />
+  );
   return (
     <InviteShell>
+      {banner}
       <header className="flex items-center gap-3">
         <span aria-hidden="true" className="flex size-10 shrink-0 items-center justify-center rounded-full bg-primary-tint text-lg font-bold text-primary">
           {view.organizerFirstName.trim()[0]?.toUpperCase() ?? "?"}
@@ -101,15 +132,13 @@ export function InvitePage({ view, inviteKey, embedded = false }: { view: Invite
         <StatusLine tone="danger">{t.cancelled}</StatusLine>
       ) : view.state === "started" ? (
         <StatusLine tone="muted">{t.started}</StatusLine>
+      ) : preview ? (
+        // Every button inside is disabled, so nothing can be sent from a preview.
+        <fieldset disabled className="m-0 min-w-0 border-0 p-0">
+          {answerPanel}
+        </fieldset>
       ) : (
-        <AnswerPanel
-          inviteKey={inviteKey}
-          timeVersion={view.timeVersion}
-          answer={view.answer}
-          zone={view.zone}
-          // Availability (T13): friends pick a time inside the organizer's free slots (still, once confirmed: KD-07n).
-          availability={view.mode === "availability" ? { organizerFirstName: view.organizerFirstName, zone: view.zone, slots: view.slots, picks: view.picks } : undefined}
-        />
+        answerPanel
       )}
     </InviteShell>
   );

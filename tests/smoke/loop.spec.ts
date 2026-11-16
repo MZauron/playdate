@@ -62,6 +62,13 @@ test("sign up, invite a friend by text link, the friend answers, the organizer s
   await page.getByRole("link", { name: "Back to Home" }).click();
   await page.getByRole("link", { name: /Playdate: Leo & Ava/ }).click();
   await expect(page.getByText("0 of 1 answered")).toBeVisible();
+  // Preview what friends see (T27): the friend's page with the answer buttons disabled, then back.
+  await page.getByRole("link", { name: "Preview what friends see" }).click();
+  await expect(page.getByText("Preview: this is what friends see. Nothing here is sent.")).toBeVisible();
+  await expect(page.getByText("Park on the weekend?")).toBeVisible();
+  await expect(page.getByRole("button", { name: "We're in!" })).toBeDisabled();
+  await page.getByRole("link", { name: "← Back to your playdate" }).click();
+  await expect(page.getByText("0 of 1 answered")).toBeVisible();
   await expect(page.getByText("· Live")).toBeVisible({ timeout: 20_000 });
 
   // 4. The friend, with no account, answers from the link in their own browser.

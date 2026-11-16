@@ -3,13 +3,14 @@
 import { describe, expect, it } from "vitest";
 import type { Answer } from "@/lib/rules/answers";
 import { at } from "@/lib/rules/time";
-import { answerInvite, answerInviteAsInvitee, loadInvite, loadInviteForInvitee, parseAnswerForm, toView, type AnswerDeps, type InviteStore, type StoredInvite } from "./invite-page";
+import { answerInvite, answerInviteAsInvitee, loadInvite, loadInviteForInvitee, loadPreview, parseAnswerForm, toView, type AnswerDeps, type InviteStore, type StoredInvite } from "./invite-page";
 import { hashToken } from "./invite-token";
 
 const ZONE = "America/Toronto";
 const NOW = at("2026-11-14", 10, 0, ZONE);
 const TOKEN = "AAAAAAAAAAAAAAAAAAAAAA"; // 22 characters, as Kindred makes them
 const OTHER_TOKEN = "BBBBBBBBBBBBBBBBBBBBBB";
+const PLAYDATE = "11111111-1111-4111-8111-111111111111"; // Alex's playdate in the preview tests (T27)
 
 function stored(patch: Partial<StoredInvite["playdate"]> = {}, rest: Partial<StoredInvite> = {}): StoredInvite {
   return {
@@ -53,6 +54,9 @@ function world(byToken: Record<string, StoredInvite>) {
     },
     async findForInvitee(inviteId, userId) {
       return [...invites.values()].find((x) => x.inviteId === inviteId && inviteeOf.get(inviteId) === userId) ?? null;
+    },
+    async findPreview(playdateId, organizerId) {
+      return playdateId === PLAYDATE && organizerId === "user-alex" ? ([...invites.values()][0] ?? null) : null;
     },
     async saveAnswer(inviteId, answer, timeVersion) {
       saved.push({ inviteId, answer, timeVersion });
@@ -153,7 +157,7 @@ describe("loadInvite and the view (KD-14, KD-17)", () => {
 
   it("finds nothing for a malformed token without asking the store", async () => {
     let asked = 0;
-    const store: InviteStore = { findByTokenHash: async () => (asked++, null), findForInvitee: async () => (asked++, null), saveAnswer: async () => {} };
+    const store: InviteStore = { findByTokenHash: async () => (asked++, null), findForInvitee: async () => (asked++, null), findPreview: async () => (asked++, null), saveAnswer: async () => {} };
     expect(await loadInvite(store, "../../etc/passwd", NOW)).toBeNull();
     expect(asked).toBe(0);
   });
@@ -260,5 +264,52 @@ describe("a Kindred friend, signed in (T15)", () => {
     expect((await answerInviteAsInvitee(deps, INVITE, "user-dev", yes, NOW)).ok).toBe(true);
     expect(saved.map((x) => x.inviteId)).toEqual([INVITE]);
     expect(await answerInviteAsInvitee(world({ [TOKEN]: stored({ status: "cancelled" }, { inviteId: INVITE }) }).deps, INVITE, "user-dev", yes, NOW)).toEqual({ ok: false, code: "PLAYDATE_CANCELLED" });
+  });
+});
+
+describe("Preview what friends see (T27)", () => {
+  const dev = { start: at("2026-11-16", 10, 0, ZONE), end: at("2026-11-16", 11, 0, ZONE) };
+  const maya = { start: at("2026-11-16", 13, 0, ZONE), end: at("2026-11-16", 14, 0, ZONE) };
+
+  it("is a friend's page with nobody's answer as yours and every family's pick as another family's", async () => {
+    const { store } = world({
+      [TOKEN]: stored(
+        { mode: "availability", startAt: null, endAt: null, slots: [{ day: "2026-11-16", slot: "morning" }, { day: "2026-11-16", slot: "afternoon" }] },
+        {
+          answer: { kind: "pick", reason: null, note: null, pick: dev },
+          picks: [
+            { inviteId: "invite-1", firstName: "Dev", range: dev },
+            { inviteId: "invite-2", firstName: "Maya", range: maya },
+          ],
+        },
+      ),
+    });
+    const view = await loadPreview(store, PLAYDATE, "user-alex", NOW);
+    expect(view).toMatchObject({ state: "open", title: "Playdate: Mia & Arjun", organizerFirstName: "Alex", answer: null });
+    expect(view?.picks.map((p) => ({ others: p.others, yours: p.yours }))).toEqual([
+      { others: ["Dev"], yours: false },
+      { others: ["Maya"], yours: false },
+    ]);
+  });
+
+  it("matches what the link shows for set-time, confirmed and cancelled playdates, apart from the answer", async () => {
+    for (const patch of [
+      {},
+      { status: "confirmed" as const, finalStartAt: at("2026-11-16", 10, 30, ZONE), finalEndAt: at("2026-11-16", 11, 30, ZONE) },
+      { status: "cancelled" as const },
+    ]) {
+      const { store } = world({ [TOKEN]: stored(patch, { answer: { kind: "yes", reason: null, note: null, pick: null } }) });
+      const link = await loadInvite(store, TOKEN, NOW);
+      expect(await loadPreview(store, PLAYDATE, "user-alex", NOW)).toEqual({ ...link, answer: null });
+    }
+  });
+
+  it("finds nothing for another parent's playdate, or for a malformed id without asking the store", async () => {
+    const { store } = world({ [TOKEN]: stored() });
+    expect(await loadPreview(store, PLAYDATE, "user-sam", NOW)).toBeNull();
+    let asked = 0;
+    const counting: InviteStore = { ...store, findPreview: async () => (asked++, null) };
+    expect(await loadPreview(counting, "not-a-uuid", "user-alex", NOW)).toBeNull();
+    expect(asked).toBe(0);
   });
 });
