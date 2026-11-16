@@ -11,7 +11,7 @@ import type { FreeSlot, InviteChannel, InviteLabel, PlaydateStatus, TimeMode } f
 import { inviteLink, newInviteToken } from "./invite-token";
 import { isPlaydateId, type OrganizerPlaydate, type PlaydatePageStore } from "./playdate-page";
 import { checkPlanForm, checkSelectedPlace, firstWord, MAX_INVITEES, type NewInvite, type PlanError, type PlanFormInput, type PlaydateStore, type TextToSend } from "./playdates";
-import { smsBodyHref, smsHref } from "./text-message";
+import { textBody } from "./text-message";
 
 export type PlaydateUpdate = {
   title: string;
@@ -165,13 +165,13 @@ export async function sendUpdate(deps: UpdateDeps, organizer: { id: string; firs
   const sentence = updateSentence(kind, shownStart, shownEnd, zone, selected.shownName ?? placeName);
   const staying = p.invites.filter((i) => !edit.removeFriendIds.includes(i.friendId));
   const texts: TextToSend[] = [
-    ...staying.map((i) => ({ friendId: i.friendId, name: firstWord(i.parentName), label: i.label, channel: i.channel, href: smsBodyHref(i.phoneE164, sentence) })),
+    ...staying.map((i) => ({ friendId: i.friendId, name: firstWord(i.parentName), label: i.label, channel: i.channel, body: sentence })),
     ...added.map(({ friend, token }) => ({
       friendId: friend.id,
       name: firstWord(friend.parentName),
       label: friend.label,
       channel: (friend.kindredUserId ? "app" : "text") as InviteChannel,
-      href: smsHref(friend.phoneE164, plan.message, inviteLink(deps.linkBase, token)),
+      body: textBody(plan.message, inviteLink(deps.linkBase, token)),
     })),
   ];
   return { ok: true, changed: true, kind, texts };

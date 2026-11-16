@@ -18,9 +18,9 @@ async function parent(firstName: string): Promise<string> {
 }
 async function friend(ownerId: string): Promise<string> {
   const rows = await q<{ id: string }>(
-    `insert into friends (owner_id, parent_name, child_first_name, label, phone_e164, phone_hash)
-     values ($1, 'Dev Patel', 'Arjun', 'Arjun''s dad', $2, $3) returning id`,
-    [ownerId, `+1416555${Math.floor(1000 + Math.random() * 8999)}`, `h-${randomUUID()}`],
+    `insert into friends (owner_id, parent_name, child_first_name, label, phone_hash)
+     values ($1, 'Dev Patel', 'Arjun', 'Arjun''s dad', $2) returning id`,
+    [ownerId, `h-${randomUUID()}`],
   );
   return rows[0]!.id;
 }
@@ -81,7 +81,7 @@ describe.skipIf(!apiEnabled)("searched places through the repositories (T17)", (
       { place_name: null, place_address: null, place_provider_id: "fake-high-park" },
     ]);
 
-    const token = decodeURIComponent(sent.texts[0]!.href).split("/r/")[1]!;
+    const token = sent.texts[0]!.body.split("/r/")[1]!;
     const view = await invitePage.loadInvite(invites.inviteStore, token, NOW);
     expect(view).toMatchObject({ placeName: "High Park", placeAddress: "1873 Bloor St W, Toronto, ON", placeFacts: { setting: "outdoor" } });
 

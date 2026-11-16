@@ -16,9 +16,9 @@ async function parent(): Promise<string> {
 }
 async function friend(ownerId: string): Promise<string> {
   const rows = await q<{ id: string }>(
-    `insert into friends (owner_id, parent_name, child_first_name, label, phone_e164, phone_hash)
-     values ($1, 'Dev Patel', 'Arjun', 'Arjun''s dad', $2, $3) returning id`,
-    [ownerId, `+1416555${Math.floor(1000 + Math.random() * 8999)}`, `h-${randomUUID()}`],
+    `insert into friends (owner_id, parent_name, child_first_name, label, phone_hash)
+     values ($1, 'Dev Patel', 'Arjun', 'Arjun''s dad', $2) returning id`,
+    [ownerId, `h-${randomUUID()}`],
   );
   return rows[0]!.id;
 }
@@ -81,12 +81,12 @@ describe.skipIf(!apiEnabled)("Share availability against the database", () => {
     const alex = await parent();
     const dev = await friend(alex);
     const maya = (await q<{ id: string }>(
-      `insert into friends (owner_id, parent_name, child_first_name, label, phone_e164, phone_hash) values ($1, 'Maya Chen', 'Lily', 'Lily''s parent', $2, $3) returning id`,
-      [alex, `+1416555${Math.floor(1000 + Math.random() * 8999)}`, `h-${randomUUID()}`],
+      `insert into friends (owner_id, parent_name, child_first_name, label, phone_hash) values ($1, 'Maya Chen', 'Lily', 'Lily''s parent', $2) returning id`,
+      [alex, `h-${randomUUID()}`],
     ))[0]!.id;
     const sent = await sendInvite({ store: playdates.playdateStore, limiter: open, linkBase: "https://kindred.test", places: fakePlaces }, { id: alex, firstName: "Alex", childFirstName: "Mia" }, { ...base, friendIds: [dev, maya], slots: ["2030-11-18|morning", "2030-11-18|afternoon"] }, NOW);
     if (!sent.ok) throw new Error("expected ok");
-    const [devToken, mayaToken] = sent.texts.map((t) => decodeURIComponent(t.href).split("/r/")[1]!);
+    const [devToken, mayaToken] = sent.texts.map((t) => t.body.split("/r/")[1]!);
     const deps = { store: inviteStore, limiters: { token: open, address: open } };
     const pick = (from: string, until: string) => ({ kind: "pick" as const, reason: null, note: null, timeVersion: 1, pickDay: "2030-11-18", pickFrom: from, pickUntil: until });
 
@@ -118,7 +118,7 @@ describe.skipIf(!apiEnabled)("Share availability against the database", () => {
     const ids = [await friend(alex), await friend(alex), await friend(alex)];
     const sent = await sendInvite({ store: playdates.playdateStore, limiter: open, linkBase: "https://kindred.test", places: fakePlaces }, { id: alex, firstName: "Alex", childFirstName: "Mia" }, { ...base, friendIds: ids, slots: ["2030-11-18|morning", "2030-11-18|afternoon"] }, NOW);
     if (!sent.ok) throw new Error("expected ok");
-    const tokens = sent.texts.map((t) => decodeURIComponent(t.href).split("/r/")[1]!);
+    const tokens = sent.texts.map((t) => t.body.split("/r/")[1]!);
     const deps = { store: inviteStore, limiters: { token: open, address: open } };
     const pick = (from: string, until: string) => ({ kind: "pick" as const, reason: null, note: null, timeVersion: 1, pickDay: "2030-11-18", pickFrom: from, pickUntil: until });
     await page.answerInvite(deps, tokens[0]!, "1.2.3.4", pick("09:30", "11:00"), NOW);

@@ -17,7 +17,6 @@ const invite = (id: string, parentName: string, label: string, answer: Organizer
   parentName,
   label,
   channel,
-  phoneE164: `+1416555${id.padStart(4, "0").slice(-4)}`,
   answer,
 });
 const yes = { kind: "yes" as const, reason: null, note: null, answeredAt: NOW };
@@ -131,9 +130,9 @@ describe("the confirmation texts (Q3)", () => {
     expect(confirmationSentence({ ...confirmed, finalStartAt: null })).toBeNull();
   });
   it("go to every family, each to their own number, Kindred friends too (Q11 default)", () => {
-    expect(confirmationTexts(confirmed).map((t) => ({ name: t.name, channel: t.channel, href: decodeURIComponent(t.href) }))).toEqual([
-      { name: "Dev", channel: "text", href: "sms:+14165550001?&body=It's on! 🎉 See you Mon, Nov 16, 10:00 AM to 12:00 PM at High Park." },
-      { name: "Maya", channel: "app", href: "sms:+14165550002?&body=It's on! 🎉 See you Mon, Nov 16, 10:00 AM to 12:00 PM at High Park." },
+    expect(confirmationTexts(confirmed).map((t) => ({ name: t.name, channel: t.channel, body: t.body }))).toEqual([
+      { name: "Dev", channel: "text", body: "It's on! 🎉 See you Mon, Nov 16, 10:00 AM to 12:00 PM at High Park." },
+      { name: "Maya", channel: "app", body: "It's on! 🎉 See you Mon, Nov 16, 10:00 AM to 12:00 PM at High Park." },
     ]);
     expect(confirmationTexts(playdate([invite("1", "Dev", "Arjun's dad", yes)]))).toEqual([]);
   });
@@ -157,9 +156,9 @@ describe("cancelPlaydate (KD-15, Q1 default)", () => {
   });
   it("gives every family a Text button saying it's off, with the day", () => {
     const texts = cancellationTexts(playdate([invite("1", "Dev Patel", "Arjun's dad", yes), invite("2", "Maya Chen", "Lily's parent", null, "app")], { status: "cancelled" }));
-    expect(texts.map((t) => [t.name, decodeURIComponent(t.href)])).toEqual([
-      ["Dev", "sms:+14165550001?&body=Sorry, our playdate on Mon, Nov 16 is cancelled."],
-      ["Maya", "sms:+14165550002?&body=Sorry, our playdate on Mon, Nov 16 is cancelled."],
+    expect(texts.map((t) => [t.name, t.body])).toEqual([
+      ["Dev", "Sorry, our playdate on Mon, Nov 16 is cancelled."],
+      ["Maya", "Sorry, our playdate on Mon, Nov 16 is cancelled."],
     ]);
   });
 });

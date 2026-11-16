@@ -39,6 +39,14 @@ describe.skipIf(!enabled)("privileges on every table", () => {
     expect(rows).toEqual([]);
   });
 
+  it("no table keeps a phone number of a friend (Q26, migration 0011): only the parents' own sign-in numbers in auth", async () => {
+    const rows = await q(
+      `select table_name, column_name from information_schema.columns
+       where table_schema = 'public' and (column_name like '%phone%' or column_name like '%e164%') and column_name not like '%hash%'`,
+    );
+    expect(rows).toEqual([]);
+  });
+
   it("the functions a client may call are only the three row-level-security helpers", async () => {
     // Supabase grants new functions to everyone; a migration must revoke that for anything meant for the server only.
     const rows = await q<{ proname: string }>(

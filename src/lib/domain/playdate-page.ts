@@ -16,8 +16,6 @@ export type OrganizerInvite = {
   label: string;
   parentName: string;
   channel: InviteChannel;
-  /** The organizer's own friend's number: used only for the organizer's Text buttons. */
-  phoneE164: string;
   /** This time version's answer, if any. */
   answer: { kind: AnswerKind; reason: DeclineReason | null; note: string | null; answeredAt: Date; pick?: Range | null } | null;
   /** KD-12: when this text friend was flagged for the "most families picked" text, once ever. */

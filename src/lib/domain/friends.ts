@@ -32,7 +32,7 @@ export type FriendStore = {
     parentName: string;
     childFirstName: string;
     label: string;
-    phoneE164: string;
+    /** Only the keyed hash (for "has Kindred" and duplicates): the number itself is never stored (Q26). */
     phoneHash: string;
     kindredUserId: string | null;
   }): Promise<{ status: "added"; friend: Friend } | { status: "duplicate"; label: string }>;
@@ -68,7 +68,7 @@ export type AddFriendDeps = { store: FriendStore; phoneHashKey: string; limiter:
 
 /**
  * `ownerId` comes from `auth.getUser()`. The number is normalized to E.164, hashed with the server's key, and matched against
- * Kindred parents; the friend is stored for the owner only.
+ * Kindred parents; then it is dropped (Q26): only the hash is stored, for the owner only.
  */
 export async function addFriend(
   deps: AddFriendDeps,
@@ -94,7 +94,6 @@ export async function addFriend(
     parentName: input.name.trim(),
     childFirstName,
     label: defaultLabel(childFirstName),
-    phoneE164: phone,
     phoneHash: hash,
     kindredUserId,
   });

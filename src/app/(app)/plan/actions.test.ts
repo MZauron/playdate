@@ -10,8 +10,8 @@ const SAMS_FRIEND = "cccccccc-cccc-4ccc-8ccc-cccccccccccc";
 
 let session = ALEX;
 const fake = createFakePlaydateStore([
-  { ownerId: ALEX, id: DEV, parentName: "Dev Patel", childFirstName: "Arjun", label: "Arjun's dad", phoneE164: "+14165550111", kindredUserId: null },
-  { ownerId: SAM, id: SAMS_FRIEND, parentName: "Zoe's mom", childFirstName: "Zoe", label: "Zoe's mom", phoneE164: "+14165550199", kindredUserId: null },
+  { ownerId: ALEX, id: DEV, parentName: "Dev Patel", childFirstName: "Arjun", label: "Arjun's dad", kindredUserId: null },
+  { ownerId: SAM, id: SAMS_FRIEND, parentName: "Zoe's mom", childFirstName: "Zoe", label: "Zoe's mom", kindredUserId: null },
 ]);
 vi.mock("@/lib/auth/require-parent", () => ({
   requireParent: async () => ({ user: { id: session, phone: "14165550101" }, profile: { id: session, firstName: "Alex", children: [{ firstName: "Mia", ageLabel: "5" }] } }),

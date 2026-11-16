@@ -3,7 +3,7 @@
 import { randomUUID } from "node:crypto";
 import type { Friend, FriendStore } from "./friends";
 
-type Row = Friend & { ownerId: string; phoneE164: string; phoneHash: string; kindredUserId: string | null };
+type Row = Friend & { ownerId: string; phoneHash: string; kindredUserId: string | null };
 
 export function createFakeFriendStore(profilesByHash: Record<string, string> = {}) {
   const rows: Row[] = [];
@@ -21,7 +21,6 @@ export function createFakeFriendStore(profilesByHash: Record<string, string> = {
         label: input.label,
         hasKindred: input.kindredUserId !== null,
         ownerId: input.ownerId,
-        phoneE164: input.phoneE164,
         phoneHash: input.phoneHash,
         kindredUserId: input.kindredUserId,
       };

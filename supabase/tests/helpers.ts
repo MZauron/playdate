@@ -93,11 +93,11 @@ export async function buildWorld() {
   }
   await q("insert into children (parent_id, first_name, age_label) values ($1, 'Mia', '5')", [w.alex]);
   await q(
-    `insert into friends (id, owner_id, parent_name, child_first_name, label, phone_e164, phone_hash, kindred_user_id) values
-     ($1, $2, 'Dev Patel', 'Arjun', 'Arjun''s dad', $3, $4, $5),
-     ($6, $2, 'Aisha Rahman', 'Zara', 'Zara''s mom', $7, $8, null),
-     ($9, $10, 'Maya', 'Lily', 'Lily''s mom', $11, $12, $13)`,
-    [w.friendDev, w.alex, phone(), `hDev-${w.tag}`, w.dev, w.friendAisha, phone(), `hZ-${w.tag}`, w.friendMayaOfXan, w.xan, phone(), `hMaya-${w.tag}`, w.maya],
+    `insert into friends (id, owner_id, parent_name, child_first_name, label, phone_hash, kindred_user_id) values
+     ($1, $2, 'Dev Patel', 'Arjun', 'Arjun''s dad', $3, $4),
+     ($5, $2, 'Aisha Rahman', 'Zara', 'Zara''s mom', $6, null),
+     ($7, $8, 'Maya', 'Lily', 'Lily''s mom', $9, $10)`,
+    [w.friendDev, w.alex, `hDev-${w.tag}`, w.dev, w.friendAisha, `hZ-${w.tag}`, w.friendMayaOfXan, w.xan, `hMaya-${w.tag}`, w.maya],
   );
   await q("insert into groups (id, owner_id, name) values ($1, $2, 'Dance friends')", [w.group, w.alex]);
   await q(

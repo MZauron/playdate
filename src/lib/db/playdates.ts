@@ -12,7 +12,7 @@ export const playdateStore: PlaydateStore = {
   async friendsForInvite(ownerId, friendIds) {
     const { data, error } = await adminClient()
       .from("friends")
-      .select("id, parent_name, child_first_name, label, phone_e164, kindred_user_id")
+      .select("id, parent_name, child_first_name, label, kindred_user_id")
       .eq("owner_id", ownerId)
       .in("id", [...friendIds])
       .order("created_at")
@@ -24,7 +24,6 @@ export const playdateStore: PlaydateStore = {
         parentName: row.parent_name,
         childFirstName: row.child_first_name,
         label: row.label,
-        phoneE164: row.phone_e164,
         kindredUserId: row.kindred_user_id,
       }),
     );

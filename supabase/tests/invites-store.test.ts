@@ -17,9 +17,9 @@ async function parent(firstName: string, child: string): Promise<string> {
 }
 async function friend(ownerId: string, child: string): Promise<string> {
   const rows = await q<{ id: string }>(
-    `insert into friends (owner_id, parent_name, child_first_name, label, phone_e164, phone_hash)
-     values ($1, $2, $3, $4, $5, $6) returning id`,
-    [ownerId, `${child} Parent`, child, `${child}'s parent`, `+1416555${Math.floor(1000 + Math.random() * 8999)}`, `h-${randomUUID()}`],
+    `insert into friends (owner_id, parent_name, child_first_name, label, phone_hash)
+     values ($1, $2, $3, $4, $5) returning id`,
+    [ownerId, `${child} Parent`, child, `${child}'s parent`, `h-${randomUUID()}`],
   );
   return rows[0]!.id;
 }
@@ -56,7 +56,7 @@ describe.skipIf(!apiEnabled)("invites repository", () => {
       NOW,
     );
     if (!result.ok) throw new Error(JSON.stringify(result.errors));
-    const [devToken, mayaToken] = result.texts.map((t) => decodeURIComponent(t.href).split("/r/")[1]!);
+    const [devToken, mayaToken] = result.texts.map((t) => t.body.split("/r/")[1]!);
     return { playdateId: result.playdateId, devToken: devToken!, mayaToken: mayaToken! };
   }
   const deps = () => ({ store: invites.inviteStore, limiters: { token: { hit: () => ({ ok: true as const }) }, address: { hit: () => ({ ok: true as const }) } } });

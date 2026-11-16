@@ -51,7 +51,7 @@ Before every commit: `npm run lint && npm run typecheck && npm test`.
 - Phones: E.164 (`+14165550111`) via libphonenumber-js; Canada/US first (Q10).
 - Clients never write to the database. Mutations = server actions / route handlers → zod → `auth.getUser()` → rules → repository (service role), scoped to that parent. Never trust an id or a phone number sent by the client. The browser's Supabase client is used only for Realtime on the organizer's playdate page.
 - Friends without an account act only through the link token (sha256 lookup); they never get a session.
-- Texts come from the organizer's own phone: the app shows a "Text Aisha" button per text friend that opens an `sms:` link with the message and that friend's link. The server never sends invite or update texts.
+- Texts come from the organizer's own phone: the app shows a "Share with Aisha" button per friend that opens the phone's share sheet with the message and that friend's link; the parent picks Aisha from their own contacts (Q26). Kindred keeps no friend's phone number, only its keyed hash. The server never sends invite or update texts.
 - DB changes: a new numbered migration (never edit an applied one), plus a test for every constraint, privilege or policy.
 - Integrations (AI, places, push): interface in `index.ts`, `live.ts`, `fake.ts`, chosen by env (`AI_MODE`, `PLACES_MODE`, `PUSH_MODE` = `fake|live`). Tests and phone sessions use fakes. Every AI feature has a non-AI fallback.
 - UI: mobile-first (works at 375 px), follow DESIGN.md "Visual design" (teal brand, coral for the ONE main action per screen, 44 px touch targets, status lines not badges). Copy is short, warm and plain; buttons say what happens.

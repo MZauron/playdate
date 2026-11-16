@@ -9,9 +9,9 @@ import { enCA } from "@/lib/i18n/en-CA";
 
 const t = enCA.plan;
 
-/** After Send invite (or Send update, T16): one Text button per family (Q3). */
+/** After Send invite (or Send update, T16): one Share button per family (Q3, Q26). */
 export function SentView({ texts, playdateId, update = false, backTo = "/" }: { texts: TextToSend[]; playdateId: string; update?: boolean; backTo?: string }) {
-  const buttons = texts.map((x) => ({ key: x.friendId, name: x.name, label: x.label, channel: x.channel, href: x.href }));
+  const buttons = texts.map((x) => ({ key: x.friendId, name: x.name, label: x.label, channel: x.channel, body: x.body }));
   // Kept on this phone for a day, so the playdate page can show the ones not sent yet after a reload.
   useEffect(() => saveTexts(playdateId, buttons), [playdateId]); // eslint-disable-line react-hooks/exhaustive-deps
   return (

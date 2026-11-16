@@ -1,4 +1,5 @@
 import { Card } from "@/components/Card";
+import { ShareButton } from "@/components/ShareButton";
 import { StatusLine } from "@/components/StatusLine";
 import { answeredCount } from "@/lib/rules/answers";
 import { dayPartOf, enCA, formatDateTile, formatLongDay, formatTimeRange } from "@/lib/i18n/en-CA";
@@ -71,9 +72,7 @@ export function HomeView({ firstName, welcome = false, childName, playdates, not
                     .map((n) => (
                       <Card key={n.inviteId} className="flex items-center justify-between gap-3">
                         <p className="min-w-0 text-[15px] font-medium">{enCA.home.majorityNotice(n.name, n.rangeText)}</p>
-                        <a href={n.href} className="inline-flex h-11 shrink-0 items-center rounded-button bg-accent px-4 text-[15px] font-semibold text-white">
-                          {enCA.plan.textButton(n.name)}
-                        </a>
+                        <ShareButton text={n.body} name={n.name} />
                       </Card>
                     ))}
                 </li>

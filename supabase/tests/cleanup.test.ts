@@ -13,7 +13,7 @@ async function playdateWithAnswer(linksExpireAt: Date): Promise<{ playdateId: st
   await q("insert into auth.users (id, phone) values ($1, $2)", [alex, `1${Math.floor(1_000_000_000 + Math.random() * 9_000_000_000)}`]);
   await q("insert into profiles (id, first_name, phone_hash) values ($1, 'Alex', $2)", [alex, `own-${alex}`]);
   const [f] = await q<{ id: string }>(
-    "insert into friends (owner_id, parent_name, child_first_name, label, phone_e164, phone_hash) values ($1, 'Dev', 'Arjun', 'Arjun''s dad', '+14165550111', $2) returning id",
+    "insert into friends (owner_id, parent_name, child_first_name, label, phone_hash) values ($1, 'Dev', 'Arjun', 'Arjun''s dad', $2) returning id",
     [alex, `h-${randomUUID()}`],
   );
   const end = new Date(linksExpireAt.getTime() - 12 * 3_600_000);
