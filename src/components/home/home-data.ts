@@ -1,5 +1,7 @@
-// What the Home screen needs about each playdate. The repository (T08) fills it; the sections come from src/lib/rules/home.ts (KD-13).
-import { homeSection, type HomeSection } from "@/lib/rules/home";
+// What the Home screen needs about each playdate. The repository (T08) fills it; each one's status and the list's order come from
+// src/lib/rules/home.ts (KD-13, Q24: one list, soonest first).
+import type { HomeInvite } from "@/lib/db/invites";
+import { homeSortKey, homeStatus, type HomeStatus } from "@/lib/rules/home";
 import type { AnswerKind, PlaydateStatus, TimeMode } from "@/lib/rules/types";
 
 export type HomePlaydate = {
@@ -22,15 +24,16 @@ export type HomePlaydate = {
   friendInitials: readonly string[];
 };
 
-export type HomeSections = Record<HomeSection, HomePlaydate[]>;
+export type HomeItem = { kind: "playdate"; playdate: HomePlaydate; status: HomeStatus } | { kind: "invite"; invite: HomeInvite };
 
-/** KD-13: puts each playdate in its section; over and cancelled ones leave Home. Upcoming is soonest first. */
-export function groupForHome(playdates: readonly HomePlaydate[], now: Date): HomeSections {
-  const sections: HomeSections = { needs_you: [], upcoming: [], waiting: [] };
-  for (const p of playdates) {
-    const section = homeSection(p, now);
-    if (section) sections[section].push(p);
+/** KD-13: the parent's own playdates still on Home and the invites they received, in one list, soonest first. */
+export function homeList(playdates: readonly HomePlaydate[], invites: readonly HomeInvite[], now: Date): HomeItem[] {
+  const items: HomeItem[] = [];
+  for (const playdate of playdates) {
+    const status = homeStatus(playdate, now);
+    if (status) items.push({ kind: "playdate", playdate, status });
   }
-  sections.upcoming.sort((a, b) => (a.start?.getTime() ?? Infinity) - (b.start?.getTime() ?? Infinity));
-  return sections;
+  for (const invite of invites) items.push({ kind: "invite", invite });
+  const key = (i: HomeItem) => homeSortKey(i.kind === "playdate" ? i.playdate : i.invite);
+  return items.sort((a, b) => key(a) - key(b)); // stable: equal times keep the parent's own playdates first
 }

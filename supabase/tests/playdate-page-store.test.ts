@@ -95,9 +95,9 @@ describe.skipIf(!apiEnabled)("playdate page repository", () => {
       confirmed_at: NOW,
       links_expire_at: new Date("2030-11-19T05:00:00Z"),
     });
-    const { groupForHome } = await import("@/components/home/home-data");
-    const home = groupForHome(await playdates.listHomePlaydates(alex, NOW), NOW);
-    expect(home.upcoming.map((h) => h.id)).toEqual([playdateId]);
+    const { homeList } = await import("@/components/home/home-data");
+    const home = homeList(await playdates.listHomePlaydates(alex, NOW), [], NOW);
+    expect(home.map((h) => (h.kind === "playdate" ? [h.playdate.id, h.status.kind] : null))).toEqual([[playdateId, "upcoming"]]);
     expect((await invitePage.loadInvite(invites.inviteStore, token, NOW))?.confirmed).toBe(true);
   });
 
