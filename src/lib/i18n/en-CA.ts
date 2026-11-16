@@ -128,7 +128,6 @@ export const enCA = {
     placeNameLabel: "Place",
     placeNamePlaceholder: "e.g. Riverdale Park",
     placeAddressLabel: "Address",
-    savedPlaces: "Your saved places",
     savePlace: "Save this place",
     yourNameLabel: "Your name",
     yourNameHint: "Friends see it with your message.",
@@ -198,9 +197,9 @@ export const enCA = {
     search: "Search",
     quickSearches: ["Parks", "Playgrounds", "Indoor play", "Libraries", "Splash pads"],
     searching: "Searching…",
-    noResults: "No places found. Try other words, or type the place under Details.",
+    noResults: "No places found. Try other words, or type the place yourself.",
     searchFailed: "Couldn't search right now. Please try again.",
-    typeInstead: "Or type the place and address under Details.",
+    typeInstead: "Or close this and tap Type a place.",
     close: "Close",
     select: "Select",
     selectPlace: (name: string) => `Select ${name}`,
@@ -222,6 +221,11 @@ export const enCA = {
     planHere: "Plan a playdate here",
     orAsk: "or ask Kindred",
     favouritesLabel: "Your favourites",
+    // T30: the Where step opens with the parent's own places.
+    yourPlaces: "Your places",
+    typePlace: "Type a place",
+    clearPlace: "Clear",
+    favouriteChip: (name: string) => `♥ ${name}`,
   },
   // Ask Kindred (T18).
   ask: {
@@ -246,6 +250,23 @@ export const enCA = {
     popular: "Popular with parents",
     noPopular: "Places other parents love will show up here.",
     search: "Search",
+    // T30: the places a parent typed and saved (Q14).
+    saved: "Your saved places",
+    noSaved: "Places you type and save when planning show up here.",
+    rename: "Rename",
+    renameLabel: (name: string) => `New name for ${name}`,
+    save: "Save",
+    cancel: "Cancel",
+    remove: "Remove",
+    removeAsk: (name: string) => `Remove ${name}?`,
+    keep: "Keep",
+    savedErrors: {
+      NAME_REQUIRED: "Give the place a name.",
+      NAME_TOO_LONG: "That name is too long.",
+      NAME_TAKEN: "You already have a place with that name.",
+      NOT_FOUND: "That place isn't there any more.",
+      FAILED: "Couldn't change that place. Please try again.",
+    },
   },
   suggestionWords: {
     noKids: "your kids",
@@ -483,16 +504,21 @@ export const enCA = {
     },
     planFor: (childName: string) => `Plan playdates for ${childName}.`,
     planCard: "Plan a playdate",
-    sections: {
-      needsYou: "Needs you",
-      upcoming: "Upcoming",
-      waiting: "Waiting for answers",
-    },
+    /** Under the Plan card when nothing is on Home yet (Q24). */
+    emptyNote: "Pick a friend, a time and a place. They answer from a text.",
+    listTitle: "Your playdates",
     answered: (answered: number, total: number) => `${answered} of ${total} ${total === 1 ? "family" : "families"} answered`,
+    /** KD-13 needs you: what to look at on the playdate page. */
+    needsYou: {
+      all_answered: "Everyone answered",
+      times_picked: (families: number) => `${families === 1 ? "1 family" : `${families} families`} picked a time`,
+      changed_to_no: "Someone can't make it now",
+    },
+    confirmed: "Confirmed",
+    noTime: "Time to be decided",
     noPlace: "Place to be decided",
     majorityNotice: (name: string, range: string) => `Text ${name}: most families picked ${range}`,
     /** T15: invites from other Kindred parents. */
-    invitesTitle: "Invites",
     invitedBy: (organizer: string, child: string | null) => (child ? `${organizer} invited ${child}` : `${organizer} invited you`),
     pickATime: "Pick a time that works",
     myAnswer: {

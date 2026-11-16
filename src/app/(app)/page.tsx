@@ -12,8 +12,8 @@ import { DEFAULT_ZONE } from "@/lib/rules/config";
 // Always the current time and the current parent.
 export const dynamic = "force-dynamic";
 
-// The banner, the Plan a playdate card, and the playdates this parent organizes in their KD-13 sections. Invites from other
-// parents join with T15.
+// The banner, the Plan a playdate card, and one list (KD-13, Q24): the playdates this parent organizes and the invites they
+// received from other Kindred parents (T15), soonest first.
 export default async function HomePage({ searchParams }: { searchParams: Promise<{ welcome?: string }> }) {
   const { user, profile } = await requireParent();
   const { welcome } = await searchParams;

@@ -12,7 +12,7 @@ Where the doc is silent, the reading used is marked *(reading)*.
 ## KD-01 Nothing confirms itself
 | Id | Input | Expected |
 | --- | --- | --- |
-| KD-01a | Collecting set-time playdate, every friend answered yes | Answer rules return no status; Home shows it under Needs you, not Upcoming (only `checkConfirm` produces a final time) |
+| KD-01a | Collecting set-time playdate, every friend answered yes | Answer rules return no status; Home shows it as needs you (everyone answered), not Confirmed (only `checkConfirm` produces a final time) |
 
 ## KD-02 One time mode
 | Id | Input | Expected |
@@ -131,17 +131,18 @@ Where the doc is silent, the reading used is marked *(reading)*.
 | KD-12d | As KD-12a but Aisha has Kindred (app) | Nobody (text friends only) |
 | KD-12e | Dev, Maya and Aisha (text) all pick Mon 9–12 | Nobody |
 
-## KD-13 Home sections
+## KD-13 Home as one list (Q24, 2026-11-15)
 | Id | Input | Expected |
 | --- | --- | --- |
-| KD-13a | Collecting set-time playdate, 3 invites, 3 answers | Needs you |
-| KD-13b | Collecting availability playdate, 1 pick of 3 | Needs you |
-| KD-13c | Confirmed; a friend answered no after confirmation | Needs you ("changed to Can't make it" = a no answered after `confirmed_at`) *(reading)* |
-| KD-13d | Confirmed, not over | Upcoming |
-| KD-13e | Collecting set-time playdate, 1 of 3 answered | Waiting for answers |
+| KD-13a | Collecting set-time playdate, 3 invites, 3 answers | On Home, needs you: everyone answered |
+| KD-13b | Collecting availability playdate, 1 pick of 3 | On Home, needs you: times picked |
+| KD-13c | Confirmed; a friend answered no after confirmation | On Home, needs you: changed to Can't make it (a no answered after `confirmed_at`) *(reading)* |
+| KD-13d | Confirmed, not over | On Home, upcoming (Confirmed) |
+| KD-13e | Collecting set-time playdate, 1 of 3 answered | On Home, waiting for answers |
 | KD-13f | Confirmed, ended Fri | Not on Home |
 | KD-13g | Cancelled | Not on Home |
-| KD-13h | Confirmed; the only no came before confirmation | Upcoming |
+| KD-13h | Confirmed; the only no came before confirmation | On Home, upcoming |
+| KD-13i | Tue 10:00, no time at all, availability whose last free time ends Sun 19:00, Mon 9:00 | Order: the availability one, Mon, Tue, then the one with no time *(reading: a playdate without a time sorts by its last free time)* |
 
 ## KD-14 Links
 | Id | Input | Expected |

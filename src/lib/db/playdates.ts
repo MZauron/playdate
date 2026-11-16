@@ -64,20 +64,41 @@ export const playdateStore: PlaydateStore = {
   },
 };
 
-export type TypedPlace = { name: string; address: string };
+export type TypedPlace = { id: string; name: string; address: string };
 
-/** The owner's typed saved places, for the suggestions under Place. */
+/** The owner's typed saved places: Your places on the Where step, and Your saved places under Places (T30). */
 export async function listTypedPlaces(ownerId: string): Promise<TypedPlace[]> {
   const { data, error } = await adminClient()
     .from("saved_places")
-    .select("name, address")
+    .select("id, name, address")
     .eq("owner_id", ownerId)
     .eq("source", "typed")
     .order("created_at", { ascending: false })
     .limit(20);
   if (error) throw new Error(`listTypedPlaces failed: ${error.code}`);
-  return (data ?? []).flatMap((p) => (p.name ? [{ name: p.name, address: p.address ?? "" }] : [])); // typed rows always have a name
+  return (data ?? []).flatMap((p) => (p.name ? [{ id: p.id, name: p.name, address: p.address ?? "" }] : [])); // typed rows always have a name
 }
+
+/** T30: rename and remove one of the owner's typed places; every query is scoped to the owner, so another parent's id finds nothing. */
+export const savedPlaceStore: import("@/lib/domain/saved-places").SavedPlaceStore = {
+  async rename(ownerId, id, name) {
+    const { data, error } = await adminClient()
+      .from("saved_places")
+      .update({ name })
+      .eq("id", id)
+      .eq("owner_id", ownerId)
+      .eq("source", "typed")
+      .select("id");
+    if (error?.code === "23505") return "taken"; // saved_places_typed_uq: one typed place per name (any case)
+    if (error) throw new Error(`renameSavedPlace failed: ${error.code}`);
+    return data?.length ? "ok" : "missing";
+  },
+  async remove(ownerId, id) {
+    const { data, error } = await adminClient().from("saved_places").delete().eq("id", id).eq("owner_id", ownerId).eq("source", "typed").select("id");
+    if (error) throw new Error(`removeSavedPlace failed: ${error.code}`);
+    return !!data?.length;
+  },
+};
 
 type HomeRow = {
   id: string;

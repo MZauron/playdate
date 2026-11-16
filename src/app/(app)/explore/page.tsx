@@ -1,8 +1,10 @@
 import { ButtonLink } from "@/components/Button";
 import { PlaceCard } from "@/components/places/PlaceCard";
 import { SearchPlaces } from "@/components/places/AskPlaces";
+import { SavedPlaces } from "@/components/places/SavedPlaces";
 import { requireParent } from "@/lib/auth/require-parent";
 import { listFavouritePlaces, listPopularPlaces } from "@/lib/db/favourites";
+import { listTypedPlaces } from "@/lib/db/playdates";
 import type { PlaceForParent } from "@/lib/domain/favourites";
 import { enCA } from "@/lib/i18n/en-CA";
 
@@ -10,14 +12,21 @@ export const dynamic = "force-dynamic";
 
 const t = enCA.explore;
 
-// Explore (T18): Your favourites (only this parent's), Popular with parents (counts only, Q22), and search.
+// Explore (T18): Your favourites (only this parent's), Your saved places (T30: the places they typed, with Rename and Remove),
+// Popular with parents (counts only, Q22), and search.
 export default async function ExplorePage() {
   const { user } = await requireParent();
-  const [favourites, popular] = await Promise.all([listFavouritePlaces(user.id), listPopularPlaces(user.id)]);
+  const [favourites, saved, popular] = await Promise.all([listFavouritePlaces(user.id), listTypedPlaces(user.id), listPopularPlaces(user.id)]);
   return (
     <section className="flex flex-col gap-6 pt-6 pb-6">
       <h1 className="text-title font-bold leading-tight">{t.title}</h1>
       <Places title={t.favourites} places={favourites} empty={t.noFavourites} />
+      <section aria-labelledby="explore-saved" className="flex flex-col gap-3">
+        <h2 id="explore-saved" className="text-lg font-semibold">
+          {t.saved}
+        </h2>
+        <SavedPlaces places={saved} />
+      </section>
       <Places title={t.popular} places={popular} empty={t.noPopular} />
       <section aria-labelledby="explore-search" className="flex flex-col gap-3">
         <h2 id="explore-search" className="text-lg font-semibold">
