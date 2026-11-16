@@ -1,7 +1,10 @@
 import type { Metadata } from "next";
 import { headers } from "next/headers";
 import { notFound } from "next/navigation";
+import { CheckIns } from "@/components/CheckIns";
 import { InvitePage } from "@/components/invite/InvitePage";
+import { checkInStore } from "@/lib/db/check-ins";
+import { panelByLink } from "@/lib/domain/check-ins";
 import { InviteMessage } from "@/components/invite/InviteShell";
 import { inviteStore } from "@/lib/db/invites";
 import { loadInvite, viewLimiter } from "@/lib/domain/invite-page";
@@ -19,5 +22,6 @@ export default async function InviteRoute({ params }: { params: Promise<{ token:
   if (!viewLimiter.hit(clientAddress(await headers())).ok) return <InviteMessage title={enCA.invite.tooManyTitle} note={enCA.invite.tooManyNote} />;
   const view = await loadInvite(inviteStore, token, new Date());
   if (!view) notFound();
-  return <InvitePage view={view} inviteKey={{ token }} />;
+  const panel = await panelByLink(inviteStore, checkInStore, token, new Date());
+  return <InvitePage view={view} inviteKey={{ token }} checkIns={panel && <CheckIns panel={panel} postAs={{ token }} zone={view.zone} refresh />} />;
 }

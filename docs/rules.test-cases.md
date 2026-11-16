@@ -152,3 +152,19 @@ Where the doc is silent, the reading used is marked *(reading)*.
 | KD-14c | Availability not confirmed; Mon morning and Wed evening free | Expires Thu 07:00 (Wed 19:00 + 12 h) |
 | KD-14d | Now = expiry, then one minute before | `LINK_EXPIRED`, then ok |
 | KD-14e | Clean-up (T23) on Sat 14 Nov 10:00 | Cut-off Thu 15 Oct 23:00 (30 × 24 h back crosses the clock change, so 23:00 daylight time): links that expired then or earlier (= playdates over for 30 days) are removed *(reading: "over" = the playdate's end)* |
+
+## KD-18 Check-ins (Q27, 2026-11-16)
+Playdate confirmed for Mon 10:00–12:00; check-ins are We're here, Running late, All good, Heading home, with an optional note.
+
+| Id | Input | Expected |
+| --- | --- | --- |
+| KD-18a | The organizer, Mon 9:30 (30 minutes before) | Accepted |
+| KD-18b | The organizer, Mon 9:29 | `CHECKIN_CLOSED` |
+| KD-18c | The organizer, Mon 12:59, then Mon 13:00 (1 hour after the end) | Accepted, then `CHECKIN_CLOSED` |
+| KD-18d | Playdate still collecting | `CHECKIN_CLOSED` |
+| KD-18e | Playdate cancelled | `CHECKIN_CLOSED` |
+| KD-18f | A friend who said yes, note "  ten   minutes " | Accepted, note "ten minutes" |
+| KD-18g | A friend who said no; a friend with no answer | `CHECKIN_NOT_COMING` |
+| KD-18h | Availability: a pick 11:00–12:30, then 12:00–13:00 | Accepted (overlaps the confirmed time), then `CHECKIN_NOT_COMING` *(reading: "coming" = a yes, or a pick that overlaps the confirmed time)* |
+| KD-18i | Note of 80 characters, 81, blank | Accepted, `CHECKIN_INVALID`, accepted with no note |
+| KD-18j | A check-in kind not in the list | `CHECKIN_INVALID` |

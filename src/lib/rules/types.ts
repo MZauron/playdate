@@ -19,6 +19,9 @@ export const ERROR_CODES = [
   "STALE_TIME", // KD-07, KD-10
   "CONFIRM_NEEDS_YES", // KD-09
   "CONFIRM_NEEDS_TIME", // KD-09
+  "CHECKIN_CLOSED", // KD-18 (not confirmed, cancelled, or outside the check-in window)
+  "CHECKIN_NOT_COMING", // KD-18 (only parents who are coming, and the organizer)
+  "CHECKIN_INVALID", // KD-18 (not one of the check-ins, or the note is too long)
 ] as const;
 
 export type ErrorCode = (typeof ERROR_CODES)[number];

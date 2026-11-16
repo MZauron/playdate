@@ -109,6 +109,7 @@ Error codes are stable strings; the UI maps them to copy in `src/lib/i18n/en-CA.
 | KD-15 | Cancel (Q1 default): organizer only, with a confirmation; status cancelled; invites show "Cancelled"; Kindred users get a push if installed (Q11); text friends get a short text through a Share button. | — |
 | KD-16 | Time zone: the organizer's browser zone at creation (`playdates.timezone`); all times stored as `timestamptz`; shown in each viewer's own zone with the zone named only if it differs. | — |
 | KD-17 | Privacy: invitees see only the organizer's first name, their own child's first name in the title, the place, the message and other invitees' first names in Everyone's picks. Never phone numbers, groups, other friends, saved places, children's ages. | — |
+| KD-18 | Check-ins (Q27, owner's answer 2026-11-16; T35): during a confirmed playdate, from 30 minutes before its start to 1 hour after its end, the organizer and parents who are coming (a yes, or a pick that overlaps the confirmed time) can post We're here 📍, Running 10 min late, All good, having fun 🎉 or Heading home 👋, with an optional note of up to 80 characters. No photos. Shown newest first, by first name, under **How it's going** on the organizer's page (live) and every invite page of that playdate. The server sends nothing; the poster can share it from their phone. Notes go 30 days after the playdate (T23). | `CHECKIN_CLOSED`, `CHECKIN_NOT_COMING`, `CHECKIN_INVALID` |
 
 ## Data access *(build decision)*
 Same rule as Lash and Aquatix: **clients never write to the database.**

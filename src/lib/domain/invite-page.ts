@@ -18,6 +18,8 @@ export const TOKEN_PATTERN = /^[A-Za-z0-9_-]{22}$/;
 // --- What the store returns for one token ------------------------------------------------------------------------------------
 export type StoredInvite = {
   inviteId: string;
+  /** The playdate's id: only for the server (check-ins, T35); it never reaches the page (toView). */
+  playdateId: string;
   label: InviteLabel;
   playdate: {
     title: string;

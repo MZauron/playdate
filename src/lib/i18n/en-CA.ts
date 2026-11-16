@@ -370,6 +370,7 @@ export const enCA = {
           "Friends answer without an account. Kindred keeps their answer and any note for that playdate.",
           "30 days after a playdate, its links and notes are removed.",
           "Your Invite to Kindred link makes you friends with whoever joins through it and says yes. Stop my old links turns them all off.",
+          "During a playdate, check-ins and their notes are seen by the families of that playdate only. Notes are removed 30 days after it.",
         ],
       },
       {
@@ -423,6 +424,27 @@ export const enCA = {
     notFoundNote: "Ask your friend for a new one.",
     backHome: "Go to Home",
     befriended: "You're friends on Kindred now.",
+  },
+  /** T35 (KD-18, Q27): check-ins during the playdate. */
+  checkIns: {
+    title: "How it's going",
+    kinds: { here: "We're here 📍", late: "Running 10 min late", all_good: "All good, having fun 🎉", heading_home: "Heading home 👋" },
+    hint: "Tap one to let the other families know.",
+    noteLabel: "Add a note (optional)",
+    notePlaceholder: "e.g. By the big slide",
+    empty: "No check-ins yet.",
+    posted: "✓ Posted. The other families see it on their page.",
+    share: "Share it too",
+    shared: "✓ Shared",
+    copied: "✓ Copied: paste it in a message",
+    you: "You",
+    errors: {
+      CHECKIN_CLOSED: "Check-ins are open from 30 minutes before the playdate until an hour after it.",
+      CHECKIN_NOT_COMING: "Only families who are coming can check in.",
+      CHECKIN_INVALID: "Keep the note to 80 characters.",
+      NOT_FOUND: "This playdate isn't there any more.",
+      TOO_MANY_CHECKINS: "That's a lot of check-ins at once. Please wait a few minutes.",
+    } as Record<string, string>,
   },
   /** T27: the organizer's look at the invite page. */
   preview: {

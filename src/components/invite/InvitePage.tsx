@@ -21,7 +21,20 @@ export function directionsHref(placeName: string, placeAddress: string | null): 
  * the organizer looking at their own playdate: the same page with a banner on top, the answer buttons shown but disabled, and the
  * organizer's own calendar file.
  */
-export function InvitePage({ view, inviteKey, embedded = false, preview }: { view: InviteView; inviteKey: InviteKey; embedded?: boolean; preview?: { playdateId: string } }) {
+export function InvitePage({
+  view,
+  inviteKey,
+  embedded = false,
+  preview,
+  checkIns,
+}: {
+  view: InviteView;
+  inviteKey: InviteKey;
+  embedded?: boolean;
+  preview?: { playdateId: string };
+  /** T35: How it's going, under the confirmed details. */
+  checkIns?: React.ReactNode;
+}) {
   // Signed in (T15), the page sits inside the app's own column and tabs; through a link it has its own shell.
   const InviteShell = embedded ? EmbeddedShell : LinkShell;
   const calendarHref = preview
@@ -127,6 +140,8 @@ export function InvitePage({ view, inviteKey, embedded = false, preview }: { vie
           {t.addToCalendar}
         </a>
       )}
+
+      {checkIns}
 
       {view.state === "cancelled" ? (
         <StatusLine tone="danger">{t.cancelled}</StatusLine>

@@ -52,6 +52,7 @@ export function LiveAnswers({ playdateId, supabaseUrl, anonKey }: { playdateId: 
         .on("postgres_changes", { event: "*", schema: "public", table: "answers" }, refresh)
         .on("postgres_changes", { event: "*", schema: "public", table: "invites", filter: `playdate_id=eq.${playdateId}` }, refresh)
         .on("postgres_changes", { event: "*", schema: "public", table: "playdates", filter: `id=eq.${playdateId}` }, refresh)
+        .on("postgres_changes", { event: "INSERT", schema: "public", table: "check_ins", filter: `playdate_id=eq.${playdateId}` }, refresh) // T35
         .subscribe((status) => {
           setLive(status === "SUBSCRIBED");
           if (status === "SUBSCRIBED") for (const ms of CATCH_UP_AFTER_JOIN_MS) catchUps.push(setTimeout(() => router.refresh(), ms));
