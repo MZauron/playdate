@@ -27,7 +27,7 @@ const p = (patch: Partial<OrganizerPlaydate> = {}): OrganizerPlaydate => ({
   message: "Park?",
   timeVersion: 1,
   slots: [],
-  invites: [{ id: "i1", friendId: "f1", parentName: "Dev Patel", label: "Arjun's dad", channel: "text", phoneE164: "+14165550111", answer: { kind: "yes", reason: null, note: null, answeredAt: NOW } }],
+  invites: [{ id: "i1", friendId: "f1", parentName: "Dev Patel", label: "Arjun's dad", channel: "text", answer: { kind: "yes", reason: null, note: null, answeredAt: NOW } }],
   ...patch,
 });
 const render = (pd: OrganizerPlaydate) => {
@@ -50,19 +50,18 @@ describe("PlaydatePage", () => {
   it("confirmed: ✓ Update sent with a Text button per family, and no Confirm button", () => {
     const html = render(p({ status: "confirmed", finalStartAt: at("2026-11-16", 10, 0, ZONE), finalEndAt: at("2026-11-16", 12, 0, ZONE), confirmedAt: NOW }));
     expect(html).toContain("✓ Update sent");
-    expect(html).toContain("Text Dev");
-    expect(html).toContain("sms:+14165550111?&amp;body=");
+    expect(html).toContain("Share with Dev");
+    expect(html).not.toMatch(/sms:|\+1\d{10}/);
     expect(html).toContain('href="/playdates/aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa/calendar.ics"');
     expect(html).not.toContain("Confirm and send update");
   });
 });
 
 describe("PlaydatePage once cancelled (KD-15)", () => {
-  it("says so, offers a Text button per family, and no Confirm, Edit or Cancel", () => {
+  it("says so, offers a Share button per family (the text itself is tested in playdate-page.test), and no Confirm, Edit or Cancel", () => {
     const html = render(p({ status: "cancelled" }));
     expect(html).toContain("This playdate was cancelled.");
-    expect(html).toContain("Sorry, our playdate on Mon, Nov 16 is cancelled.".replace(/'/g, "&#x27;").split(" ").map(encodeURIComponent).join("%20"));
-    expect(html).toContain("Text Dev");
+    expect(html).toContain("Share with Dev");
     expect(html).not.toContain("Confirm and send update");
     expect(html).not.toContain("Edit playdate");
     expect(html).not.toContain(">Cancel playdate<");

@@ -16,9 +16,9 @@ async function parent(firstName: string): Promise<string> {
 }
 async function friendWithKindred(ownerId: string, kindredUserId: string): Promise<string> {
   const rows = await q<{ id: string }>(
-    `insert into friends (owner_id, parent_name, child_first_name, label, phone_e164, phone_hash, kindred_user_id)
-     values ($1, 'Priya Shah', 'Noor', 'Noor''s parent', $2, $3, $4) returning id`,
-    [ownerId, `+1416555${Math.floor(1000 + Math.random() * 8999)}`, `h-${randomUUID()}`, kindredUserId],
+    `insert into friends (owner_id, parent_name, child_first_name, label, phone_hash, kindred_user_id)
+     values ($1, 'Priya Shah', 'Noor', 'Noor''s parent', $2, $3) returning id`,
+    [ownerId, `h-${randomUUID()}`, kindredUserId],
   );
   return rows[0]!.id;
 }

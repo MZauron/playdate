@@ -6,19 +6,19 @@ import { LeaveDialog } from "./LeaveDialog";
 import { SentView } from "./SentView";
 
 const texts = [
-  { friendId: "a", name: "Dev", label: "Arjun's dad", channel: "text" as const, href: "sms:+14165550111?&body=Park%3F%0A%0Ahttps%3A%2F%2Fkindred.test%2Fr%2Fabc" },
-  { friendId: "b", name: "Maya", label: "Lily's parent", channel: "app" as const, href: "sms:+14165550177?&body=x" },
+  { friendId: "a", name: "Dev", label: "Arjun's dad", channel: "text" as const, body: "Park?\n\nhttps://kindred.test/r/abc" },
+  { friendId: "b", name: "Maya", label: "Lily's parent", channel: "app" as const, body: "x" },
 ];
 
 describe("SentView (Q3)", () => {
-  it("shows one Text button per family, linking to Messages; only the next one is coral", () => {
+  it("shows one Share button per family, with no number and no sms: link; only the next one is coral (Q26)", () => {
     const html = renderToStaticMarkup(<SentView texts={texts} playdateId="p1" />);
     expect(html).toContain("Your invite is ready");
-    expect(html).toContain(`href="${texts[0]!.href.replace("&", "&amp;")}"`);
-    expect(html).toContain("Text Dev");
-    expect(html).toContain("Text Maya");
+    expect(html).not.toMatch(/sms:|\+1\d{10}/);
+    expect(html).toContain("Share with Dev");
+    expect(html).toContain("Share with Maya");
     expect(html.match(/bg-accent/g)).toHaveLength(1);
-    expect(html.indexOf("bg-accent")).toBeLessThan(html.indexOf("Text Dev"));
+    expect(html.indexOf("bg-accent")).toBeLessThan(html.indexOf("Share with Dev"));
     expect(html).toContain("has Kindred");
     expect(html).toContain("gets a text");
   });

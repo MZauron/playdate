@@ -4,8 +4,8 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { markTexted, parseSaved, readRaw, saveTexts } from "./saved-texts";
 
 const texts = [
-  { key: "f1", name: "Dev", label: "Arjun's dad", channel: "text" as const, href: "sms:+14165550111?&body=x" },
-  { key: "f2", name: "Maya", label: "Lily's parent", channel: "app" as const, href: "sms:+14165550177?&body=y" },
+  { key: "f1", name: "Dev", label: "Arjun's dad", channel: "text" as const, body: "x" },
+  { key: "f2", name: "Maya", label: "Lily's parent", channel: "app" as const, body: "y" },
 ];
 
 class MemoryStorage {

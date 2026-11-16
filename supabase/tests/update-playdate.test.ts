@@ -18,9 +18,9 @@ async function parent(firstName: string): Promise<string> {
 }
 async function friend(ownerId: string, child: string): Promise<string> {
   const rows = await q<{ id: string }>(
-    `insert into friends (owner_id, parent_name, child_first_name, label, phone_e164, phone_hash)
-     values ($1, $2, $3, $4, $5, $6) returning id`,
-    [ownerId, `${child} Parent`, child, `${child}'s parent`, `+1416555${Math.floor(1000 + Math.random() * 8999)}`, `h-${randomUUID()}`],
+    `insert into friends (owner_id, parent_name, child_first_name, label, phone_hash)
+     values ($1, $2, $3, $4, $5) returning id`,
+    [ownerId, `${child} Parent`, child, `${child}'s parent`, `h-${randomUUID()}`],
   );
   return rows[0]!.id;
 }
@@ -71,7 +71,7 @@ describe.skipIf(!apiEnabled)("Send update against the database", () => {
     const org = { id: alex, firstName: "Alex", childFirstName: "Mia" };
     const sent = await sendInvite({ store: playdates.playdateStore, limiter: open, linkBase: "https://kindred.test", places: fakePlaces }, org, { friendIds: [f1!, f2!], ...base }, NOW);
     if (!sent.ok) throw new Error(JSON.stringify(sent.errors));
-    const token = decodeURIComponent(sent.texts[0]!.href).split("/r/")[1]!;
+    const token = sent.texts[0]!.body.split("/r/")[1]!;
     await answer(token, 1);
     expect(await confirmPlaydate(pages.playdatePageStore, alex, sent.playdateId, NOW)).toEqual({ ok: true });
     return { alex, org, f1: f1!, f2: f2!, f3: f3!, id: sent.playdateId, token };

@@ -29,7 +29,6 @@ export const friendStore: FriendStore = {
         parent_name: input.parentName,
         child_first_name: input.childFirstName,
         label: input.label,
-        phone_e164: input.phoneE164,
         phone_hash: input.phoneHash,
         kindred_user_id: input.kindredUserId,
       })

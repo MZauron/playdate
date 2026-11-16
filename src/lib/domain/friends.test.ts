@@ -36,7 +36,7 @@ describe("addFriend: normalizing and hashing", () => {
       const { deps, of } = setup();
       const result = await addFriend(deps, ALEX, { ...dev, phone: typed });
       expect(result.ok, typed).toBe(true);
-      expect(of(ALEX)[0]).toMatchObject({ phoneE164: "+14165550111", phoneHash: phoneHash(KEY, "+14165550111") });
+      expect(of(ALEX)[0]).toMatchObject({ phoneHash: phoneHash(KEY, "+14165550111") });
     }
   });
   it("never puts the number or the hash in what a screen gets back", async () => {

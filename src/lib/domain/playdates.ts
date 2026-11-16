@@ -10,7 +10,7 @@ import { checkPlan, playdateTitle, type PlanTime } from "@/lib/rules/plan";
 import { at } from "@/lib/rules/time";
 import type { DaySlot, ErrorCode, FreeSlot, InviteChannel, Zone } from "@/lib/rules/types";
 import { inviteLink, newInviteToken } from "./invite-token";
-import { smsHref } from "./text-message";
+import { textBody } from "./text-message";
 
 export const NAME_MAX = 40;
 export const PLACE_NAME_MAX = 80;
@@ -91,13 +91,12 @@ export function parseSlots(values: readonly string[]): FreeSlot[] {
 }
 
 // --- The store the service talks to (src/lib/db/playdates.ts is the real one) ----------------------------------------------------
-/** One of the organizer's friends, as Send needs it. The number stays on the server except inside the organizer's own Text link. */
+/** One of the organizer's friends, as Send needs it. No phone number: Kindred keeps none (Q26). */
 export type InviteeFriend = {
   id: string;
   parentName: string;
   childFirstName: string | null;
   label: string;
-  phoneE164: string;
   kindredUserId: string | null;
 };
 
@@ -139,7 +138,8 @@ export type PlanErrorCode = ErrorCode | "NAME_REQUIRED" | "PLACE_NAME_REQUIRED" 
 export type PlanError = { code: PlanErrorCode; field?: string };
 
 /** One "Text Aisha" button: opens the organizer's Messages with that friend's number, the message and that friend's link (Q3). */
-export type TextToSend = { friendId: string; name: string; label: string; channel: InviteChannel; href: string };
+/** One family's text: who it is for (first name and label, never a number) and the text itself, shared from the organizer's phone. */
+export type TextToSend = { friendId: string; name: string; label: string; channel: InviteChannel; body: string };
 
 export type SendResult = { ok: true; playdateId: string; texts: TextToSend[] } | { ok: false; errors: PlanError[]; retryAfterSeconds?: number };
 
@@ -277,7 +277,7 @@ export async function sendInvite(deps: SendDeps, organizer: Organizer, input: Pl
     name: firstWord(friend.parentName),
     label: friend.label,
     channel: (friend.kindredUserId ? "app" : "text") as InviteChannel,
-    href: smsHref(friend.phoneE164, plan.message, inviteLink(deps.linkBase, token)),
+    body: textBody(plan.message, inviteLink(deps.linkBase, token)),
   }));
   return { ok: true, playdateId, texts };
 }

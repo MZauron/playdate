@@ -17,9 +17,9 @@ async function parent(firstName: string): Promise<string> {
 }
 async function friend(ownerId: string, child: string): Promise<string> {
   const rows = await q<{ id: string }>(
-    `insert into friends (owner_id, parent_name, child_first_name, label, phone_e164, phone_hash)
-     values ($1, $2, $3, $4, $5, $6) returning id`,
-    [ownerId, `${child}dad Parent`, child, `${child}'s parent`, `+1416555${Math.floor(1000 + Math.random() * 8999)}`, `h-${randomUUID()}`],
+    `insert into friends (owner_id, parent_name, child_first_name, label, phone_hash)
+     values ($1, $2, $3, $4, $5) returning id`,
+    [ownerId, `${child}dad Parent`, child, `${child}'s parent`, `h-${randomUUID()}`],
   );
   return rows[0]!.id;
 }
@@ -57,7 +57,7 @@ describe.skipIf(!apiEnabled)("playdate page repository", () => {
       NOW,
     );
     if (!result.ok) throw new Error(JSON.stringify(result.errors));
-    return { alex, playdateId: result.playdateId, token: decodeURIComponent(result.texts[0]!.href).split("/r/")[1]! };
+    return { alex, playdateId: result.playdateId, token: result.texts[0]!.body.split("/r/")[1]! };
   }
   const answer = (token: string, kind: "yes" | "no") =>
     invitePage.answerInvite(

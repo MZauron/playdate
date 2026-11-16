@@ -70,7 +70,7 @@ export const enCA = {
     parentNameLabel: "Parent's name",
     childNameLabel: "Child's first name",
     phoneLabel: "Phone number",
-    phoneHint: "We only use it to check if they're on Kindred, and for the texts you send.",
+    phoneHint: "Only used to check if they're on Kindred. Kindred doesn't keep it.",
     chooseContacts: "Choose from contacts",
     pasteNumber: "Paste a number",
     pasteFailed: "Couldn't read the clipboard. Please type the number.",
@@ -148,14 +148,16 @@ export const enCA = {
     editTitle: "Edit playdate",
     sendUpdate: "Send update",
     updateTitle: "Your update is ready",
-    updateNote: "Text each family from your phone. Families you just added get the invite with their own link.",
+    updateNote: "Share it with each family from your phone. Families you just added get the invite with their own link.",
     nothingChanged: "Nothing changed, so there's nothing to send.",
     backToPlaydate: "Back to the playdate",
     fixAbove: "Something above needs a look before this can go.",
     sentTitle: "Your invite is ready",
-    sentNote: "Text each family from your phone. Your message and their own link are already filled in.",
-    textButton: (name: string) => `Text ${name}`,
-    texted: (name: string) => `✓ Texted ${name}`,
+    sentNote: "Share it with each family from your phone: pick them in Messages, WhatsApp or anywhere else. Your message and their own link are already filled in.",
+    /** Q26 (T33): the phone's share sheet; the parent picks the person from their own contacts. */
+    textButton: (name: string) => `Share with ${name}`,
+    texted: (name: string) => `✓ Shared with ${name}`,
+    copied: (name: string) => `✓ Copied: paste it to ${name}`,
     backHome: "Back to Home",
     leaveTitle: "Leave this playdate?",
     leaveNote: "What you've entered so far will be lost.",
@@ -304,7 +306,7 @@ export const enCA = {
     cancelledNote: "Let each family know from your phone:",
     confirmed: "Confirmed",
     updateSent: "✓ Update sent",
-    updateNote: "Families who open their link now see it's on. Text each one the news from your phone:",
+    updateNote: "Families who open their link now see it's on. Share the news with each one from your phone:",
     cancelled: "This playdate was cancelled.",
     errors: {
       CONFIRM_NEEDS_YES: "You can confirm once at least one family says yes.",
@@ -333,14 +335,14 @@ export const enCA = {
   privacy: {
     title: "Privacy",
     intro: "Kindred helps you plan playdates with families you already know. Here's what it keeps, who sees it, and how to delete it.",
-    updated: "Last updated November 15, 2026.",
+    updated: "Last updated November 16, 2026.",
     sections: [
       {
         title: "What Kindred keeps",
         lines: [
           "Your first name and phone number, to sign you in.",
           "Your children's first names and ages. Ages are used only to suggest places.",
-          "The friends you add: their name, their child's first name and their phone number, so you can text them an invite.",
+          "The friends you add: their name and their child's first name. A friend's phone number is only used once, to check if they already use Kindred, and is not kept.",
           "Your groups, saved places and favourite places.",
           "Your playdates, and the answers friends give.",
         ],
@@ -357,7 +359,7 @@ export const enCA = {
         title: "What Kindred doesn't do",
         lines: [
           "It never reads your address book. Only the contacts you choose are checked, to see who already uses Kindred.",
-          "It never texts your friends. Invites and updates go from your own phone, when you tap Text.",
+          "It never texts your friends. Invites and updates go from your own phone, when you tap Share.",
           "No public profiles, no strangers, no feed.",
         ],
       },
@@ -518,7 +520,7 @@ export const enCA = {
     confirmed: "Confirmed",
     noTime: "Time to be decided",
     noPlace: "Place to be decided",
-    majorityNotice: (name: string, range: string) => `Text ${name}: most families picked ${range}`,
+    majorityNotice: (name: string, range: string) => `Tell ${name}: most families picked ${range}`,
     /** T15: invites from other Kindred parents. */
     invitedBy: (organizer: string, child: string | null) => (child ? `${organizer} invited ${child}` : `${organizer} invited you`),
     pickATime: "Pick a time that works",

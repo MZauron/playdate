@@ -69,14 +69,14 @@ describe("homeNotices (Q2 default)", () => {
     timeVersion: 1,
     slots: [],
     invites: [
-      { id: "dev", friendId: "f1", parentName: "Dev Patel", label: "Arjun's dad", channel: "text", phoneE164: "+14165550111", answer: { kind: "pick", reason: null, note: null, answeredAt: NOW, pick: a }, majorityNoticeAt: null },
-      { id: "maya", friendId: "f2", parentName: "Maya Chen", label: "Lily's parent", channel: "text", phoneE164: "+14165550177", answer: { kind: "pick", reason: null, note: null, answeredAt: NOW, pick: a }, majorityNoticeAt: null },
-      { id: "aisha", friendId: "f3", parentName: "Aisha Khan", label: "Omar's mom", channel: "text", phoneE164: "+14165550199", answer: { kind: "pick", reason: null, note: null, answeredAt: NOW, pick: aishaPick }, majorityNoticeAt: NOW },
+      { id: "dev", friendId: "f1", parentName: "Dev Patel", label: "Arjun's dad", channel: "text", answer: { kind: "pick", reason: null, note: null, answeredAt: NOW, pick: a }, majorityNoticeAt: null },
+      { id: "maya", friendId: "f2", parentName: "Maya Chen", label: "Lily's parent", channel: "text", answer: { kind: "pick", reason: null, note: null, answeredAt: NOW, pick: a }, majorityNoticeAt: null },
+      { id: "aisha", friendId: "f3", parentName: "Aisha Khan", label: "Omar's mom", channel: "text", answer: { kind: "pick", reason: null, note: null, answeredAt: NOW, pick: aishaPick }, majorityNoticeAt: NOW },
     ],
   });
   it("gives a Text button with the doc's sentence for each stamped friend whose pick still differs", () => {
-    expect(homeNotices(pd()).map((n) => ({ name: n.name, href: decodeURIComponent(n.href) }))).toEqual([
-      { name: "Aisha", href: "sms:+14165550199?&body=Most families picked Mon, Nov 16, 9:00 AM to 12:00 PM. Does that work for you?" },
+    expect(homeNotices(pd()).map((n) => ({ name: n.name, body: n.body }))).toEqual([
+      { name: "Aisha", body: "Most families picked Mon, Nov 16, 9:00 AM to 12:00 PM. Does that work for you?" },
     ]);
   });
   it("goes away once that friend switched to the Most picked range, or the playdate is confirmed", () => {

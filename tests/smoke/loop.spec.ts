@@ -15,6 +15,14 @@ function dayAhead(days: number): string {
 }
 
 test("sign up, invite a friend by text link, the friend answers, the organizer sees it live and confirms", async ({ page, browser }, testInfo) => {
+  // Q26: the Share buttons open the phone's share sheet. Here the "sheet" keeps what was shared, so the test can read it.
+  await page.addInitScript(() => {
+    const shared: string[] = [];
+    Object.assign(window, { __shared: shared });
+    Object.defineProperty(navigator, "share", { configurable: true, value: async (data: { text?: string }) => void shared.push(data.text ?? "") });
+  });
+  const lastShared = () => page.evaluate(() => (window as unknown as { __shared: string[] }).__shared.at(-1) ?? "");
+
   // 1. Sign in with the smoke test number (fixed code, nothing sent) and finish Setup.
   await page.goto("/");
   await expect(page).toHaveURL(/\/sign-in$/);
@@ -51,9 +59,10 @@ test("sign up, invite a friend by text link, the friend answers, the organizer s
   await page.getByRole("button", { name: "Send invite" }).click();
 
   await expect(page.getByRole("heading", { name: "Your invite is ready" })).toBeVisible();
-  const href = await page.getByRole("link", { name: "Text Dee" }).getAttribute("href");
-  expect(href).toMatch(/^sms:\+14165550177\?&body=/);
-  const body = decodeURIComponent(href!.split("body=")[1]!);
+  await expect(page.locator("body")).not.toContainText("555"); // no friend's number anywhere (Q26)
+  await page.getByRole("button", { name: "Share with Dee" }).click();
+  await expect(page.getByRole("button", { name: "✓ Shared with Dee" })).toBeVisible();
+  const body = await lastShared();
   expect(body.startsWith("Park on the weekend?\n\n")).toBe(true); // the message exactly as typed, then the link (KD-05)
   const token = body.match(/\/r\/([A-Za-z0-9_-]{22})$/)?.[1];
   expect(token).toBeTruthy();
@@ -81,13 +90,13 @@ test("sign up, invite a friend by text link, the friend answers, the organizer s
   await friend.getByRole("button", { name: "We're in!" }).click();
   await expect(friend.getByText("Thanks! Your answer is in")).toBeVisible();
 
-  // 5. The organizer sees it without reloading, confirms, and gets the Text buttons for the news.
+  // 5. The organizer sees it without reloading, confirms, and gets the Share buttons for the news.
   await expect(page.getByText("1 of 1 answered")).toBeVisible({ timeout: 20_000 });
   await expect(page.getByText("1 family can come: Dee")).toBeVisible();
   await page.getByRole("button", { name: "Confirm and send update" }).click();
   await expect(page.getByRole("heading", { name: "✓ Update sent" })).toBeVisible();
-  const news = await page.getByRole("link", { name: "Text Dee" }).getAttribute("href");
-  expect(decodeURIComponent(news!)).toContain("It's on! 🎉 See you");
+  await page.getByRole("button", { name: "Share with Dee" }).click();
+  expect(await lastShared()).toContain("It's on! 🎉 See you");
 
   // 6. The friend's page now says it's on.
   await friend.reload();

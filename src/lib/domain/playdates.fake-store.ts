@@ -11,7 +11,7 @@ export function createFakePlaydateStore(friends: (InviteeFriend & { ownerId: str
     async friendsForInvite(ownerId, ids) {
       return friends
         .filter((f) => f.ownerId === ownerId && ids.includes(f.id))
-        .map((f) => ({ id: f.id, parentName: f.parentName, childFirstName: f.childFirstName, label: f.label, phoneE164: f.phoneE164, kindredUserId: f.kindredUserId }));
+        .map((f) => ({ id: f.id, parentName: f.parentName, childFirstName: f.childFirstName, label: f.label, kindredUserId: f.kindredUserId }));
     },
     async createPlaydate(playdate) {
       const id = randomUUID();

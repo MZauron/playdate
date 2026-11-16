@@ -20,9 +20,9 @@ async function parent(firstName = "Alex"): Promise<string> {
 }
 async function friend(ownerId: string, child: string, kindredUserId: string | null = null): Promise<string> {
   const rows = await q<{ id: string }>(
-    `insert into friends (owner_id, parent_name, child_first_name, label, phone_e164, phone_hash, kindred_user_id)
-     values ($1, $2, $3, $4, $5, $6, $7) returning id`,
-    [ownerId, `${child} Parent`, child, `${child}'s parent`, `+1416555${Math.floor(1000 + Math.random() * 8999)}`, `h-${randomUUID()}`, kindredUserId],
+    `insert into friends (owner_id, parent_name, child_first_name, label, phone_hash, kindred_user_id)
+     values ($1, $2, $3, $4, $5, $6) returning id`,
+    [ownerId, `${child} Parent`, child, `${child}'s parent`, `h-${randomUUID()}`, kindredUserId],
   );
   return rows[0]!.id;
 }
@@ -123,7 +123,7 @@ describe.skipIf(!apiEnabled)("playdates repository", () => {
       { friend_id: dev, channel: "text", invitee_user_id: null },
       { friend_id: lily, channel: "app", invitee_user_id: maya },
     ]);
-    const tokens = result.texts.map((t) => decodeURIComponent(t.href).split("/r/")[1]!);
+    const tokens = result.texts.map((t) => t.body.split("/r/")[1]!);
     expect(tokens.every((t) => /^[A-Za-z0-9_-]{22}$/.test(t))).toBe(true);
     expect(invites.map((i) => i.token_hash).sort()).toEqual(tokens.map(hashToken).sort());
     const anywhere = await q("select 1 from invites where token_hash = any($1)", [tokens]);

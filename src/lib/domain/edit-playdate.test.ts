@@ -18,23 +18,21 @@ const F2 = "f2f2f2f2-f2f2-4f2f-8f2f-f2f2f2f2f2f2";
 const F3 = "f3f3f3f3-f3f3-4f3f-8f3f-f3f3f3f3f3f3";
 const organizer = { id: ALEX, firstName: "Alex", childFirstName: "Mia" };
 
-const friend = (id: string, parentName: string, child: string, phone: string): InviteeFriend & { ownerId: string } => ({
+const friend = (id: string, parentName: string, child: string): InviteeFriend & { ownerId: string } => ({
   ownerId: ALEX,
   id,
   parentName,
   childFirstName: child,
   label: `${child}'s parent`,
-  phoneE164: phone,
   kindredUserId: null,
 });
-const FRIENDS = [friend(F1, "Dev Patel", "Arjun", "+14165550111"), friend(F2, "Maya Chen", "Lily", "+14165550177"), friend(F3, "Sam Lee", "Zoe", "+14165550199")];
+const FRIENDS = [friend(F1, "Dev Patel", "Arjun"), friend(F2, "Maya Chen", "Lily"), friend(F3, "Sam Lee", "Zoe")];
 const invite = (f: (typeof FRIENDS)[number], answer: OrganizerInvite["answer"] = null): OrganizerInvite => ({
   id: `invite-${f.id}`,
   friendId: f.id,
   parentName: f.parentName,
   label: f.label,
   channel: "text",
-  phoneE164: f.phoneE164,
   answer,
 });
 const yes = { kind: "yes" as const, reason: null, note: null, answeredAt: NOW };
@@ -144,9 +142,9 @@ describe("sendUpdate (KD-10)", () => {
     expect(u.add).toEqual([{ friendId: F3, inviteeUserId: null, channel: "text", tokenHash: hashToken(tokens[0]!) }]);
     expect(JSON.stringify(u)).not.toContain(tokens[0]!);
     if (!result.ok || !result.changed) throw new Error("expected a change");
-    expect(result.texts.map((t) => [t.name, decodeURIComponent(t.href)])).toEqual([
-      ["Dev", "sms:+14165550111?&body=Our playdate has an update: Mon, Nov 16, 10:00 AM to 12:00 PM at High Park. The link above has the details."],
-      ["Sam", `sms:+14165550199?&body=Park?\n\nhttps://kindred.test/r/${tokens[0]}`],
+    expect(result.texts.map((t) => [t.name, t.body])).toEqual([
+      ["Dev", "Our playdate has an update: Mon, Nov 16, 10:00 AM to 12:00 PM at High Park. The link above has the details."],
+      ["Sam", `Park?\n\nhttps://kindred.test/r/${tokens[0]}`],
     ]);
   });
 
@@ -160,8 +158,8 @@ describe("sendUpdate (KD-10)", () => {
     const { deps } = world(playdate({ status: "collecting", finalStartAt: null, finalEndAt: null, confirmedAt: null }));
     const result = await sendUpdate(deps, organizer, ID, form({ day: "2026-11-18" }), NOW);
     if (!result.ok || !result.changed) throw new Error("expected a change");
-    expect(decodeURIComponent(result.texts[0]!.href)).toBe(
-      "sms:+14165550111?&body=New time for our playdate: Wed, Nov 18, 10:00 AM to 12:00 PM at High Park. Please answer again with the link above.",
+    expect(result.texts[0]!.body).toBe(
+      "New time for our playdate: Wed, Nov 18, 10:00 AM to 12:00 PM at High Park. Please answer again with the link above.",
     );
   });
 
@@ -213,7 +211,7 @@ describe("sendUpdate with Share availability (KD-10b, c, i)", () => {
     const result = await sendUpdate(deps, organizer, ID, availForm(["2026-11-16|morning", "2026-11-17|evening", "2026-11-18|afternoon"]), NOW);
     expect(applied[0]).toMatchObject({ timeVersion: 2, deleteAnswers: true, label: "new_time" });
     if (!result.ok || !result.changed) throw new Error("expected a change");
-    expect(decodeURIComponent(result.texts[0]!.href)).toBe("sms:+14165550111?&body=New times to pick from for our playdate at High Park. Please answer again with the link above.");
+    expect(result.texts[0]!.body).toBe("New times to pick from for our playdate at High Park. Please answer again with the link above.");
   });
   it("KD-10i: the same slots in another order are not a time change", async () => {
     const { deps, applied } = world(avail());
@@ -230,7 +228,7 @@ describe("Send update with a place found by search (T17)", () => {
     const result = await sendUpdate(deps, organizer, ID, form({ placeId: "fake-high-park" }), NOW);
     expect(result).toMatchObject({ ok: true, changed: true, kind: "updated" });
     expect(applied[0]).toMatchObject({ placeProviderId: "fake-high-park", placeName: null, placeAddress: null, status: "confirmed", label: "updated" });
-    if (result.ok && result.changed) expect(decodeURIComponent(result.texts[0]!.href)).toContain("High Park");
+    if (result.ok && result.changed) expect(result.texts[0]!.body).toContain("High Park");
   });
   it("the same searched place again changes nothing; the edit form brings it back as the selected place", async () => {
     const p = playdate({ placeName: "High Park", placeAddress: "1873 Bloor St W, Toronto, ON", searchedPlace: park });

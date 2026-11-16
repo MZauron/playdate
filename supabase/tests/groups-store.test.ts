@@ -16,8 +16,8 @@ async function parent(): Promise<string> {
 }
 async function friend(ownerId: string, name: string): Promise<string> {
   const rows = await q<{ id: string }>(
-    "insert into friends (owner_id, parent_name, child_first_name, label, phone_e164, phone_hash) values ($1, $2, 'Kid', $3, $4, $5) returning id",
-    [ownerId, name, `${name}'s family`, `+1416555${Math.floor(1000 + Math.random() * 8999)}`, `h-${randomUUID()}`],
+    "insert into friends (owner_id, parent_name, child_first_name, label, phone_hash) values ($1, $2, 'Kid', $3, $4) returning id",
+    [ownerId, name, `${name}'s family`, `h-${randomUUID()}`],
   );
   return rows[0]!.id;
 }

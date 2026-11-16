@@ -8,7 +8,6 @@ import { sameRange } from "@/lib/rules/time";
 import type { InviteChannel, Range, Zone } from "@/lib/rules/types";
 import { familyPicks, type OrganizerPlaydate } from "./playdate-page";
 import { firstWord } from "./playdates";
-import { smsBodyHref } from "./text-message";
 
 /** One collecting availability playdate as the tick sees it: each invite's channel, notice stamp and current pick. */
 export type TickPlaydate = {
@@ -35,7 +34,7 @@ export async function runMajorityNotices(store: TickStore, now: Date): Promise<{
   return { stamped: ids.length ? await store.stampMajorityNotice(ids, now) : 0 };
 }
 
-export type MajorityNotice = { inviteId: string; playdateId: string; name: string; rangeText: string; href: string };
+export type MajorityNotice = { inviteId: string; playdateId: string; name: string; rangeText: string; body: string };
 
 /** "Mon, Nov 16, 9:00 AM to 12:00 PM" */
 const rangeText = (r: Range, zone: Zone) => `${formatShortDay(r.start, zone)}, ${formatTimeRange(r.start, r.end, zone)}`;
@@ -52,5 +51,5 @@ export function homeNotices(p: OrganizerPlaydate): MajorityNotice[] {
   const words = rangeText(top.range, p.timezone);
   return p.invites
     .filter((i) => i.channel === "text" && i.majorityNoticeAt && !(i.answer?.pick && sameRange(i.answer.pick, top.range)))
-    .map((i) => ({ inviteId: i.id, playdateId: p.id, name: firstWord(i.parentName), rangeText: words, href: smsBodyHref(i.phoneE164, enCA.majorityText(words)) }));
+    .map((i) => ({ inviteId: i.id, playdateId: p.id, name: firstWord(i.parentName), rangeText: words, body: enCA.majorityText(words) }));
 }

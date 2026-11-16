@@ -20,9 +20,9 @@ const organizer = { id: ALEX, firstName: "Alex", childFirstName: "Mia" };
 
 function world() {
   const fake = createFakePlaydateStore([
-    { ownerId: ALEX, id: DEV, parentName: "Dev Patel", childFirstName: "Arjun", label: "Arjun's dad", phoneE164: "+14165550111", kindredUserId: null },
-    { ownerId: ALEX, id: MAYA, parentName: "Maya Chen", childFirstName: "Lily", label: "Lily's parent", phoneE164: "+14165550177", kindredUserId: MAYA_ACCOUNT },
-    { ownerId: SAM, id: SAMS_FRIEND, parentName: "Zoe's mom", childFirstName: "Zoe", label: "Zoe's mom", phoneE164: "+14165550199", kindredUserId: null },
+    { ownerId: ALEX, id: DEV, parentName: "Dev Patel", childFirstName: "Arjun", label: "Arjun's dad", kindredUserId: null },
+    { ownerId: ALEX, id: MAYA, parentName: "Maya Chen", childFirstName: "Lily", label: "Lily's parent", kindredUserId: MAYA_ACCOUNT },
+    { ownerId: SAM, id: SAMS_FRIEND, parentName: "Zoe's mom", childFirstName: "Zoe", label: "Zoe's mom", kindredUserId: null },
   ]);
   let n = 0;
   const tokens: string[] = [];
@@ -142,9 +142,9 @@ describe("sendInvite", () => {
     const stored = JSON.stringify(fake.playdates);
     for (const token of tokens) expect(stored).not.toContain(token);
     expect(fake.playdates[0]!.invites.map((i) => i.tokenHash)).toEqual(tokens.map(hashToken));
-    expect(result.texts.map((t) => decodeURIComponent(t.href))).toEqual([
-      `sms:+14165550111?&body=Park at 10?\n\nhttps://kindred.test/r/${tokens[0]}`,
-      `sms:+14165550177?&body=Park at 10?\n\nhttps://kindred.test/r/${tokens[1]}`,
+    expect(result.texts.map((t) => t.body)).toEqual([
+      `Park at 10?\n\nhttps://kindred.test/r/${tokens[0]}`,
+      `Park at 10?\n\nhttps://kindred.test/r/${tokens[1]}`,
     ]);
   });
 
@@ -153,7 +153,7 @@ describe("sendInvite", () => {
     const result = await sendInvite(deps, organizer, plan({ message: "  Park at 10?  " }), NOW);
     if (!result.ok) throw new Error("expected ok");
     expect(fake.playdates[0]!.message).toBe("  Park at 10?  ");
-    expect(decodeURIComponent(result.texts[0]!.href)).toContain("body=  Park at 10?  \n\n");
+    expect(result.texts[0]!.body.startsWith("  Park at 10?  \n\n")).toBe(true);
   });
 
   it("gives a Text button per friend, by first name, Kindred friends too (Q11 default: no push yet)", async () => {

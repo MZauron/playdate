@@ -25,7 +25,7 @@ One Next.js app on Railway, one Supabase project per environment, the same stack
 flowchart TB
   subgraph Phones
     PAR["Parent using Kindred<br/>phone browser, or added to Home Screen"]
-    MSG["Organizer's own Messages app<br/>(opened by an sms: link)"]
+    MSG["Organizer's own Messages app<br/>(opened by the share sheet)"]
     FR["Friend without Kindred<br/>any phone browser"]
   end
   subgraph Railway["Kindred · Next.js on Railway"]
@@ -40,19 +40,19 @@ flowchart TB
   PUSH[Web Push · Q11]
   PAR --> APP --> SRV
   PAR -- "Realtime (read only, RLS)" --> DB
-  APP -- "Text Aisha" --> MSG
+  APP -- "Share with Aisha" --> MSG
   MSG -. "link" .-> FR --> PAGE --> SRV
   SRV --> DB & AI & PL & PUSH
   CRON --> SRV
 ```
 - **One place for the rules:** `src/lib/rules` (pure TypeScript). Pages, server actions, the invite page and the cron job all call it. The database only accepts writes from the server (service role) and still guards the invariants with constraints (`docs/schema.test.sql`).
-- **Texts come from the organizer's own number.** Kindred never sends invite texts from a server. After sending, the app shows a **Text Aisha** button per friend without Kindred; it opens an `sms:` link with that friend's number, the parent's message and that friend's link, and the organizer taps Send in Messages. No SMS provider is needed for invites; only the sign-in code uses one (Supabase phone sign-in, Q10).
+- **Texts come from the organizer's own number.** Kindred never sends invite texts from a server. After sending, the app shows a **Share with Aisha** button per friend; it opens the phone's share sheet with the parent's message and that friend's link, the organizer picks Aisha from their own contacts (Messages, WhatsApp…) and taps Send (Q26, owner's answer 2026-11-16). Kindred keeps no friend's phone number: a number typed when adding a friend only makes the keyed hash that says whether they use Kindred. No SMS provider is needed for invites; only the sign-in code uses one (Supabase phone sign-in, Q10).
 
 ### What the web platform changes from the doc
 | The doc (native app) | Here | Notes |
 | --- | --- | --- |
 | Pick friends from the phone's contacts | **Add a friend:** "Choose from contacts" where the browser supports the Contact Picker (Android Chrome); everywhere else, name, child's name and number typed in, with "Paste a number" | iPhone browsers have no contact picker (Q15). Only chosen contacts leave the phone either way. |
-| The phone's Messages app opens addressed to the friend | Same, through an `sms:` link, one **Text …** button per friend | Each friend has their own link, so one tap per friend (Q3). |
+| The phone's Messages app opens addressed to the friend | The phone's share sheet, one **Share with …** button per friend; the parent picks the person from their own contacts | Each friend has their own link, so one tap per friend (Q3); no stored number (Q26). |
 | Push notifications | Web Push for parents who added Kindred to their Home Screen; otherwise updates show in the app | iPhone needs iOS 16.4+ and Home Screen install (Q11). |
 | Add to calendar | `.ics` download on the invite page and in the app | Works on every phone. |
 | App Store / TestFlight | A URL; "Add to Home Screen" prompt after the first playdate | A native wrapper can come later if parents ask (Q15). |
@@ -106,7 +106,7 @@ Error codes are stable strings; the UI maps them to copy in `src/lib/i18n/en-CA.
 | KD-12 | Majority notice (text friends): when ≥ 2 families picked the same range and a text friend's pick differs, that friend gets ONE text, once ever per invite ("Most families picked Mon, Nov 16, 9:00 AM to 12:00 PM. Does that work for you?" + link). Who sends it is Q2. | — |
 | KD-13 | Home is **one list**, soonest first (Q24, owner's answer 2026-11-15; it replaced the doc's Needs you / Upcoming / Waiting for answers sections). The parent's own playdates and the invites they received sit together; each has one status line. **Needs you** (coral): a collecting playdate where every friend answered, an availability playdate with ≥ 1 pick, or a confirmed playdate where someone changed to Can't make it. **Confirmed:** confirmed and not over. **Waiting:** "2 of 3 families answered". Over or cancelled playdates leave Home. Order: by start; a playdate with no time yet by its last free time. | — |
 | KD-14 | Invite links: one per invite, a 128-bit random token (base64url, 22 chars), only its sha256 stored. A link shows that one playdate only. It expires at the playdate's end (final end, else set end, else the end of the last free slot) + 12 hours; an expired link shows "This playdate is over". | `LINK_EXPIRED` |
-| KD-15 | Cancel (Q1 default): organizer only, with a confirmation; status cancelled; invites show "Cancelled"; Kindred users get a push if installed (Q11); text friends get a short text through a Text button. | — |
+| KD-15 | Cancel (Q1 default): organizer only, with a confirmation; status cancelled; invites show "Cancelled"; Kindred users get a push if installed (Q11); text friends get a short text through a Share button. | — |
 | KD-16 | Time zone: the organizer's browser zone at creation (`playdates.timezone`); all times stored as `timestamptz`; shown in each viewer's own zone with the zone named only if it differs. | — |
 | KD-17 | Privacy: invitees see only the organizer's first name, their own child's first name in the title, the place, the message and other invitees' first names in Everyone's picks. Never phone numbers, groups, other friends, saved places, children's ages. | — |
 
@@ -123,10 +123,10 @@ Same rule as Lash and Aquatix: **clients never write to the database.**
 ## Notifications and texts
 | Moment | Friends with Kindred | Friends without Kindred (text, from the organizer's phone) |
 | --- | --- | --- |
-| Invite sent | Invite on their Home (+ Web Push if installed, Q11) | Organizer taps **Text Aisha**: Messages opens with the message + link |
+| Invite sent | Invite on their Home (+ Web Push if installed, Q11) | Organizer taps **Share with Aisha**: the share sheet opens with the message + link |
 | Another parent picks a time | Shown under Already suggested / Everyone's picks | Nothing, unless KD-12 applies |
 | Most families pick a different time (≥ 2) | Shown in Everyone's picks | One text, once only (KD-12, Q2) |
-| Organizer confirms | "It's on!" bubble and Confirmed card (+ push) | Text with the final date, time and place (Text button) |
+| Organizer confirms | "It's on!" bubble and Confirmed card (+ push) | Text with the final date, time and place (Share button) |
 | Organizer edits and sends an update | Updated / New time label (+ push) | Text with the update + link; new invitees get the invite |
 | Organizer cancels | Cancelled (+ push) (Q1) | Short text (Q1) |
 

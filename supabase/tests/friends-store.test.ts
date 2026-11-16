@@ -50,8 +50,11 @@ describe.skipIf(!apiEnabled)("friends repository", () => {
     const sam = await parent();
     const number = "+14165550123";
     expect((await add(alex, "(416) 555-0123")).ok).toBe(true);
-    const row = await q<{ phone_e164: string; phone_hash: string }>("select phone_e164, phone_hash from friends where owner_id = $1", [alex]);
-    expect(row).toEqual([{ phone_e164: number, phone_hash: phoneHash(key, number) }]);
+    // Q26: only the keyed hash is stored; the number itself has no column any more.
+    const row = await q<Record<string, unknown>>("select * from friends where owner_id = $1", [alex]);
+    expect(row).toHaveLength(1);
+    expect(row[0]!.phone_hash).toBe(phoneHash(key, number));
+    expect(JSON.stringify(row)).not.toContain(number.slice(2));
     expect(await add(alex, "416-555-0123")).toMatchObject({ ok: false, code: "DUPLICATE", existingLabel: "Arjun's parent" });
     expect((await add(sam, "416-555-0123")).ok).toBe(true);
   });
@@ -81,7 +84,7 @@ describe.skipIf(!apiEnabled)("friends repository", () => {
     const alex = await parent(phoneHash(key, "+14165550126"));
     expect(await add(alex, "416 555 0126")).toMatchObject({ ok: false, code: "OWN_NUMBER" });
     // Even a row that slipped in (an older friend whose number later became the owner's own) is left a text friend, not matched to self.
-    await q("insert into friends (owner_id, parent_name, label, phone_e164, phone_hash) values ($1, 'Me', 'Me', '+14165550126', $2)", [alex, phoneHash(key, "+14165550126")]);
+    await q("insert into friends (owner_id, parent_name, label, phone_hash) values ($1, 'Me', 'Me', $2)", [alex, phoneHash(key, "+14165550126")]);
     await expect(repo.listFriends(alex)).resolves.toHaveLength(1);
     expect(await q("select kindred_user_id from friends where owner_id = $1", [alex])).toEqual([{ kindred_user_id: null }]);
   });

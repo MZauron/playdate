@@ -99,7 +99,7 @@ describe.skipIf(!enabled)("schema checks (docs/schema.test.sql)", () => {
     });
     it("no direct answer writes", async () => expect(await failsAs(alex(), "update answers set kind = 'yes'")).toBe(DENIED));
     it("clients never add friends", async () => {
-      const sql = `insert into friends (owner_id, parent_name, label, phone_e164, phone_hash) values ('${w.alex}', 'x', 'x', '+14165550111', 'hq')`;
+      const sql = `insert into friends (owner_id, parent_name, label, phone_hash) values ('${w.alex}', 'x', 'x', 'hq')`;
       expect(await failsAs(alex(), sql)).toBe(DENIED);
     });
     it("clients never write children, even their own", async () => {

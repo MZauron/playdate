@@ -82,13 +82,13 @@ isOneToOne: false
                   ]
                 },"friends": {
                   Row: {
-                    "child_first_name": string | null,"created_at": string,"id": string,"kindred_user_id": string | null,"label": string,"owner_id": string,"parent_name": string,"phone_e164": string,"phone_hash": string
+                    "child_first_name": string | null,"created_at": string,"id": string,"kindred_user_id": string | null,"label": string,"owner_id": string,"parent_name": string,"phone_hash": string
                   }
                   Insert: {
-                    "child_first_name"?: string | null,"created_at"?: string,"id"?: string,"kindred_user_id"?: string | null,"label": string,"owner_id": string,"parent_name": string,"phone_e164": string,"phone_hash": string
+                    "child_first_name"?: string | null,"created_at"?: string,"id"?: string,"kindred_user_id"?: string | null,"label": string,"owner_id": string,"parent_name": string,"phone_hash": string
                   }
                   Update: {
-                    "child_first_name"?: string | null,"created_at"?: string,"id"?: string,"kindred_user_id"?: string | null,"label"?: string,"owner_id"?: string,"parent_name"?: string,"phone_e164"?: string,"phone_hash"?: string
+                    "child_first_name"?: string | null,"created_at"?: string,"id"?: string,"kindred_user_id"?: string | null,"label"?: string,"owner_id"?: string,"parent_name"?: string,"phone_hash"?: string
                   }
                   Relationships: [
                     {

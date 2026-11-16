@@ -31,7 +31,10 @@ export function parseSaved(raw: string | null, now = Date.now()): SavedTexts | n
   try {
     const saved = JSON.parse(raw) as SavedTexts;
     if (!Array.isArray(saved.texts) || typeof saved.savedAt !== "number" || now - saved.savedAt > KEEP_MS) return null;
-    return { ...saved, texted: Array.isArray(saved.texted) ? saved.texted : [] };
+    // Texts saved before T33 held an sms: link with a number and no body: they are dropped, not shown.
+    const texts = saved.texts.filter((t) => typeof t?.body === "string");
+    if (!texts.length) return null;
+    return { ...saved, texts, texted: Array.isArray(saved.texted) ? saved.texted : [] };
   } catch {
     return null;
   }
