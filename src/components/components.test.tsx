@@ -101,18 +101,18 @@ describe("Toast", () => {
 });
 
 describe("BottomTabs", () => {
-  it("has Home, Groups, Ask and Explore, each at least 44 px, linking to its screen", () => {
+  it("has Home, Friends and Places (T32, Q25), each at least 44 px, linking to its screen", () => {
     const markup = html(<BottomTabs active="home" />);
-    for (const [label, href] of [["Home", "/"], ["Groups", "/groups"], ["Ask", "/ask"], ["Explore", "/explore"]]) {
+    for (const [label, href] of [["Home", "/"], ["Friends", "/friends"], ["Places", "/places"]]) {
       expect(markup).toContain(`href="${href}"`);
       expect(markup).toContain(`>${label}<`);
     }
-    expect(markup.match(/min-h-14/g)).toHaveLength(4);
+    expect(markup.match(/min-h-14/g)).toHaveLength(3);
   });
   it("marks only the active tab", () => {
-    const markup = html(<BottomTabs active="ask" />);
+    const markup = html(<BottomTabs active="places" />);
     expect(markup.match(/aria-current="page"/g)).toHaveLength(1);
-    expect(markup).toMatch(/href="\/ask"[^>]*aria-current="page"|aria-current="page"[^>]*href="\/ask"/);
+    expect(markup).toMatch(/href="\/places"[^>]*aria-current="page"|aria-current="page"[^>]*href="\/places"/);
   });
   it("marks none when the screen is not a tab", () => {
     expect(html(<BottomTabs active={null} />)).not.toContain("aria-current");

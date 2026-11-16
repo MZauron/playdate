@@ -21,7 +21,7 @@ export async function heartAction(placeId: unknown, on: unknown): Promise<{ ok: 
 export async function renamePlaceAction(id: unknown, name: unknown): Promise<SavedPlaceResult> {
   const { user } = await requireParent();
   const result = await renameSavedPlace(savedPlaceStore, user.id, id, name);
-  if (result.ok) revalidatePath("/explore");
+  if (result.ok) revalidatePath("/places");
   return result;
 }
 
@@ -29,6 +29,6 @@ export async function renamePlaceAction(id: unknown, name: unknown): Promise<Sav
 export async function removePlaceAction(id: unknown): Promise<SavedPlaceResult> {
   const { user } = await requireParent();
   const result = await removeSavedPlace(savedPlaceStore, user.id, id);
-  if (result.ok) revalidatePath("/explore");
+  if (result.ok) revalidatePath("/places");
   return result;
 }

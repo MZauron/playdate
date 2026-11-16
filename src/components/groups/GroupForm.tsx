@@ -1,7 +1,7 @@
 "use client";
 
 import { useActionState, useState } from "react";
-import { saveGroupAction, type GroupFormState } from "@/app/(app)/groups/actions";
+import { saveGroupAction, type GroupFormState } from "@/app/(app)/friends/groups/actions";
 import { Button } from "@/components/Button";
 import { cx } from "@/components/cx";
 import { Field } from "@/components/Field";

@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useTransition } from "react";
-import { removePlaceAction, renamePlaceAction } from "@/app/(app)/explore/actions";
+import { removePlaceAction, renamePlaceAction } from "@/app/(app)/places/actions";
 import { Button } from "@/components/Button";
 import { Card } from "@/components/Card";
 import { Field } from "@/components/Field";

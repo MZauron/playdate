@@ -42,6 +42,6 @@ Q1, Q4, Q5, Q7, Q8, Q9 and Q14 come from the design doc's own "Open questions"; 
 
 ## Product ideas from the doc (not blocking)
 - [ ] **Q5 Answer-by deadline for groups** ("Please answer by Thursday") with one reminder? Default: not in v1.
-- [ ] **Q7 Should Ask and Explore become one tab?** Both help parents find places. Default: two tabs, as designed. Q25 (feedback round 1) proposes merging them into Places.
+- [x] **Q7 Should Ask and Explore become one tab?** **Answered (owner, 2026-11-15, with Q25): yes, one Places tab (T32).** Both help parents find places. Default: two tabs, as designed. Q25 (feedback round 1) proposes merging them into Places.
 - [ ] **Q9 Should Home show the Friends row again** (faces of contacts already on Kindred)? It was removed to keep Home calm. Default: no.
 - [x] **Q14 A place to manage saved places and favourites** **Answered (owner, 2026-11-15, via T30 in bundle E): saved places get Rename and Remove under Places; favourites keep the heart.** (rename, delete)? Default: later; the heart and the ✓ toggle are enough for v1.

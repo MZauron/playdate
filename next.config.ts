@@ -10,6 +10,15 @@ const nextConfig: NextConfig = {
   // `next dev` serves its scripts to localhost only. To try the app from a phone on the same Wi-Fi, list the laptop's address in
   // DEV_ORIGINS (in .env.local, comma-separated, e.g. 192.168.1.146). Development only; production ignores it.
   allowedDevOrigins: (process.env.DEV_ORIGINS ?? "").split(",").map((host) => host.trim()).filter(Boolean),
+  // T32 (Q25): Groups moved under Friends, and Ask and Explore became Places. Old links (bookmarks, the Home Screen) still land.
+  async redirects() {
+    return [
+      { source: "/groups", destination: "/friends", permanent: false },
+      { source: "/groups/:path*", destination: "/friends/groups/:path*", permanent: false },
+      { source: "/ask", destination: "/places", permanent: false },
+      { source: "/explore", destination: "/places", permanent: false },
+    ];
+  },
   // Every response carries the security headers (no framing by other sites, no MIME sniffing, HTTPS only in production).
   async headers() {
     return [

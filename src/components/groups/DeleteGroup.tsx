@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { deleteGroupAction } from "@/app/(app)/groups/actions";
+import { deleteGroupAction } from "@/app/(app)/friends/groups/actions";
 import { Button } from "@/components/Button";
 import { enCA } from "@/lib/i18n/en-CA";
 
