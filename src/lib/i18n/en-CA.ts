@@ -479,16 +479,21 @@ export const enCA = {
     },
     planFor: (childName: string) => `Plan playdates for ${childName}.`,
     planCard: "Plan a playdate",
-    sections: {
-      needsYou: "Needs you",
-      upcoming: "Upcoming",
-      waiting: "Waiting for answers",
-    },
+    /** Under the Plan card when nothing is on Home yet (Q24). */
+    emptyNote: "Pick a friend, a time and a place. They answer from a text.",
+    listTitle: "Your playdates",
     answered: (answered: number, total: number) => `${answered} of ${total} ${total === 1 ? "family" : "families"} answered`,
+    /** KD-13 needs you: what to look at on the playdate page. */
+    needsYou: {
+      all_answered: "Everyone answered",
+      times_picked: (families: number) => `${families === 1 ? "1 family" : `${families} families`} picked a time`,
+      changed_to_no: "Someone can't make it now",
+    },
+    confirmed: "Confirmed",
+    noTime: "Time to be decided",
     noPlace: "Place to be decided",
     majorityNotice: (name: string, range: string) => `Text ${name}: most families picked ${range}`,
     /** T15: invites from other Kindred parents. */
-    invitesTitle: "Invites",
     invitedBy: (organizer: string, child: string | null) => (child ? `${organizer} invited ${child}` : `${organizer} invited you`),
     pickATime: "Pick a time that works",
     myAnswer: {

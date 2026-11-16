@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { answeredCount, checkAnswer, checkPick, friendStatus, type AnswerTarget } from "./answers";
-import { homeSection } from "./home";
+import { homeStatus } from "./home";
 import { MON, NOW, WED, ZONE, range, t } from "./test-fixtures";
 import { slotRange } from "./time";
 import type { Decision, FreeSlot } from "./types";
@@ -25,7 +25,7 @@ describe("KD-01 nothing confirms itself", () => {
     const d = checkAnswer(setTime, { kind: "yes", timeVersion: 1 }, NOW);
     expect(d.ok && Object.keys(d.value)).not.toContain("status");
     const answers = [1, 2, 3].map(() => ({ kind: "yes" as const, answeredAt: NOW }));
-    expect(homeSection({ status: "collecting", mode: "set_time", end: t(MON, 12), confirmedAt: null, inviteCount: 3, answers }, NOW)).toBe("needs_you");
+    expect(homeStatus({ status: "collecting", mode: "set_time", end: t(MON, 12), confirmedAt: null, inviteCount: 3, answers }, NOW)).toEqual({ kind: "needs_you", why: "all_answered" });
   });
 });
 
