@@ -1,6 +1,7 @@
 import { notFound, redirect } from "next/navigation";
 import { PlanForm } from "@/components/plan/PlanForm";
 import { requireParent } from "@/lib/auth/require-parent";
+import { listFavouritePlaces } from "@/lib/db/favourites";
 import { listFriends } from "@/lib/db/friends";
 import { playdatePageStore } from "@/lib/db/playdate-page";
 import { listTypedPlaces } from "@/lib/db/playdates";
@@ -17,6 +18,6 @@ export default async function EditPlaydateRoute({ params }: { params: Promise<{ 
   const playdate = await playdatePageStore.getForOrganizer(user.id, id);
   if (!playdate) notFound();
   if (playdate.status === "cancelled") redirect(`/playdates/${id}`);
-  const [friends, places] = await Promise.all([listFriends(user.id), listTypedPlaces(user.id)]);
-  return <PlanForm friends={friends} savedPlaces={places} firstName={profile.firstName} edit={{ playdateId: id, zone: playdate.timezone, initial: editFormValues(playdate) }} />;
+  const [friends, places, favourites] = await Promise.all([listFriends(user.id), listTypedPlaces(user.id), listFavouritePlaces(user.id)]);
+  return <PlanForm friends={friends} savedPlaces={places} favourites={favourites} firstName={profile.firstName} edit={{ playdateId: id, zone: playdate.timezone, initial: editFormValues(playdate) }} />;
 }

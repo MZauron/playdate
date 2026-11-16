@@ -145,7 +145,7 @@ describe.skipIf(!apiEnabled)("playdates repository", () => {
     const dev = await friend(alex, "Arjun");
     await send(alex, [dev], { placeName: "Riverdale Park", placeAddress: "373 Broadview Ave", savePlace: true, yourName: "Alexandra" });
     await repo.playdateStore.saveTypedPlace(alex, "riverdale park", "Somewhere else");
-    expect(await repo.listTypedPlaces(alex)).toEqual([{ name: "Riverdale Park", address: "373 Broadview Ave" }]);
+    expect(await repo.listTypedPlaces(alex)).toEqual([{ id: expect.any(String), name: "Riverdale Park", address: "373 Broadview Ave" }]);
     expect(await q("select first_name from profiles where id = $1", [alex])).toEqual([{ first_name: "Alexandra" }]);
   });
 
