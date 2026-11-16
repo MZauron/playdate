@@ -33,8 +33,15 @@ Q1, Q4, Q5, Q7, Q8, Q9 and Q14 come from the design doc's own "Open questions"; 
 - [ ] **Q11 Notifications for parents who use Kindred.** The doc says app users get in-app updates. A web app can push only when added to the Home Screen (iPhone: iOS 16.4+). Default: Web Push for a new invite, confirmation, update and cancellation (never for other parents' answers) when the parent has turned it on; for a Kindred friend without push, the organizer gets a Text button for them too, so nobody misses an invite.
 - [ ] **Q13 Privacy text and children's data.** Kindred stores children's first names and ages. Default: a plain privacy page and a consent line at Setup before the beta, reviewed against PIPEDA (Canada). Who reviews it?
 
+## Feedback round 1 (2026-11-15, from the first tester)
+- [ ] **Q24 Home as one list.** The tester found Needs you, Upcoming and Waiting for answers too many separate boxes. Default: one list, soonest first, with one status line per card (coral when it needs you); this replaces KD-13's sections (T29).
+- [ ] **Q25 Which tabs.** The tester wants Friends in the tab bar, with groups made there. Default: Home · Friends · Places; groups move inside Friends, and Ask and Explore become one Places tab (answers Q7) (T32).
+- [ ] **Q26 Not storing friends' phone numbers.** The tester doesn't want Kindred to keep phone numbers, and asks how to add friends from the phone's contacts. iPhone browsers can't open the contacts list (Q15), and today every text needs the stored number (Q12). Default if approved: share each invite through the phone's share sheet, where the parent picks the person from their own contacts; Kindred keeps only the keyed hash for "has Kindred" and drops the number; plus an Invite to Kindred link that makes two parents friends without a number (T33, T34). Cost: one more tap per friend, and Kindred can't show a friend's number on another phone.
+- [ ] **Q27 Check-ins during a playdate.** The tester wants parents to tell the others how it's going, with taps. Default: parents who are coming (organizer included) can post a few fixed check-ins plus an optional note of up to 80 characters, from 30 minutes before the start to 1 hour after the end; no photos of children; shown on the playdate page and the invite pages; never sent by the server (T35).
+- [ ] **Q28 Links for friends away from the home Wi-Fi.** Today links only work on the laptop's Wi-Fi. Default: finish staging (T04), which Add to Home Screen and push (T20) need anyway; a temporary tunnel only if staging has to wait (T28).
+
 ## Product ideas from the doc (not blocking)
 - [ ] **Q5 Answer-by deadline for groups** ("Please answer by Thursday") with one reminder? Default: not in v1.
-- [ ] **Q7 Should Ask and Explore become one tab?** Both help parents find places. Default: two tabs, as designed.
+- [ ] **Q7 Should Ask and Explore become one tab?** Both help parents find places. Default: two tabs, as designed. Q25 (feedback round 1) proposes merging them into Places.
 - [ ] **Q9 Should Home show the Friends row again** (faces of contacts already on Kindred)? It was removed to keep Home calm. Default: no.
 - [ ] **Q14 A place to manage saved places and favourites** (rename, delete)? Default: later; the heart and the ✓ toggle are enough for v1.
