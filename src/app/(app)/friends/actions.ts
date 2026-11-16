@@ -3,7 +3,9 @@
 import { revalidatePath } from "next/cache";
 import { env } from "@/env";
 import { requireParent } from "@/lib/auth/require-parent";
+import { friendLinkStore } from "@/lib/db/friend-links";
 import { friendStore } from "@/lib/db/friends";
+import { friendLinkLimiter, newFriendLink } from "@/lib/domain/friend-links";
 import { addFriend, friendsLimiter, parseAddFriendForm, removeFriend, renameFriend, type FriendFailure } from "@/lib/domain/friends";
 import { enCA } from "@/lib/i18n/en-CA";
 
@@ -44,4 +46,18 @@ export async function removeFriendAction(_previous: FriendRowState, form: FormDa
   revalidatePath("/friends");
   revalidatePath("/plan");
   return { done: true };
+}
+
+/** T34: a new Invite to Kindred link for the signed-in parent (one per share). Only its hash is kept; the link goes to their phone. */
+export async function newFriendLinkAction(): Promise<{ url?: string; error?: string }> {
+  const { user } = await requireParent();
+  const result = await newFriendLink({ store: friendLinkStore, limiter: friendLinkLimiter, linkBase: env.PUBLIC_LINK_BASE }, user.id);
+  return result.ok ? { url: result.url } : { error: enCA.friendLink.tooMany };
+}
+
+/** T34: Stop my old links. Every Invite to Kindred link this parent shared stops working. */
+export async function stopFriendLinksAction(): Promise<{ ok: boolean }> {
+  const { user } = await requireParent();
+  await friendLinkStore.removeLinks(user.id);
+  return { ok: true };
 }

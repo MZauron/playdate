@@ -1,4 +1,8 @@
 import Link from "next/link";
+import { redirect } from "next/navigation";
+import { pendingFriendLink } from "@/lib/auth/friend-link-cookie";
+import { friendLinkStore } from "@/lib/db/friend-links";
+import { loadFriendLink } from "@/lib/domain/friend-links";
 import { signOutAction } from "@/app/(app)/actions";
 import { HomeView } from "@/components/home/HomeView";
 import { enCA } from "@/lib/i18n/en-CA";
@@ -16,6 +20,12 @@ export const dynamic = "force-dynamic";
 // received from other Kindred parents (T15), soonest first.
 export default async function HomePage({ searchParams }: { searchParams: Promise<{ welcome?: string }> }) {
   const { user, profile } = await requireParent();
+  // T34: a parent who came through a friend's Invite to Kindred link goes back to it once signed in and set up, to say yes there.
+  const pendingLink = await pendingFriendLink();
+  if (pendingLink) {
+    const owner = await loadFriendLink(friendLinkStore, pendingLink);
+    if (owner && owner.ownerId !== user.id) redirect(`/f/${pendingLink}`);
+  }
   const { welcome } = await searchParams;
   const now = new Date();
   return (
