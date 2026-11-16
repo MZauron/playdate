@@ -50,7 +50,7 @@ export function PlanForm({
 }: {
   friends: Friend[];
   savedPlaces: SavedPlace[];
-  /** T18: the parent's hearted places, as chips under Where. */
+  /** T18: the parent's hearted places, as ♥ chips under Your places (T30). */
   favourites?: Place[];
   firstName: string;
   edit?: EditPlaydate;
@@ -75,7 +75,9 @@ export function PlanForm({
   const [finding, setFinding] = useState<false | "search" | "ask">(false);
   const [placeName, setPlaceName] = useState(initial?.placeName ?? prefill?.placeName ?? "");
   const [placeAddress, setPlaceAddress] = useState(initial?.placeAddress ?? prefill?.placeAddress ?? "");
-  const [savePlace, setSavePlace] = useState(false);
+  // T30: a typed place shows its fields once the parent taps Type a place or one of their saved places, and is saved by default.
+  const [typing, setTyping] = useState(!!(initial?.placeName || prefill?.placeName));
+  const [savePlace, setSavePlace] = useState(true);
   const [yourName, setYourName] = useState(firstName);
   const [message, setMessage] = useState(initial?.message ?? "");
   const [leaving, setLeaving] = useState(false);
@@ -116,7 +118,16 @@ export function PlanForm({
     touch("invitees");
     setSelected((list) => (list.includes(id) ? list.filter((x) => x !== id) : [...list, id]));
   };
-  const suggestions = savedPlaces.filter((p) => p.name !== placeName && p.name.toLowerCase().startsWith(placeName.trim().toLowerCase())).slice(0, 4);
+  // Already one of their saved places (same name, any case): nothing to save again.
+  const alreadySaved = savedPlaces.some((p) => p.name.toLowerCase() === placeName.trim().toLowerCase());
+  const chooseTyped = (saved: SavedPlace) => {
+    touch("placeName");
+    touch("placeAddress");
+    setPlace(null);
+    setTyping(true);
+    setPlaceName(saved.name);
+    setPlaceAddress(saved.address);
+  };
 
   // Select on a search or Ask Kindred result: that place goes on the plan.
   const selectButton = (found: Place) => (
@@ -146,10 +157,10 @@ export function PlanForm({
     form.set("zone", zone());
     if (edit) form.set("playdateId", edit.playdateId);
     if (place) form.set("placeId", place.id);
-    else {
+    else if (typing) {
       form.set("placeName", placeName);
       form.set("placeAddress", placeAddress);
-      if (savePlace) form.set("savePlace", "1");
+      if (savePlace && placeAddress.trim() && !alreadySaved) form.set("savePlace", "1");
     }
     form.set("yourName", yourName);
     form.set("message", message);
@@ -259,54 +270,126 @@ export function PlanForm({
 
       <NumberedStep number={3} done={!!place || !!placeName.trim()} title={t.whereTitle}>
         <div className="mt-2 flex flex-col gap-3">
-          {place && !finding ? (
-            <PlaceCard place={place}>
-              <Button compact onClick={() => setFinding("search")}>
-                {enCA.places.change}
-              </Button>
-              <Button
-                compact
-                variant="destructive"
-                onClick={() => {
-                  touch("place");
-                  setPlace(null);
-                }}
-              >
-                {enCA.places.remove}
-              </Button>
-            </PlaceCard>
-          ) : finding === "search" ? (
+          {finding === "search" ? (
             <FindPlace action={selectButton} onClose={() => setFinding(false)} />
           ) : finding === "ask" ? (
             <AskKindred action={selectButton} onClose={() => setFinding(false)} />
           ) : (
-            <div className="flex flex-wrap items-center gap-x-4 gap-y-2">
-              <Button compact onClick={() => setFinding("search")}>
-                {enCA.places.findPlace}
-              </Button>
-              <button type="button" onClick={() => setFinding("ask")} className="inline-flex min-h-11 items-center text-[15px] font-semibold text-purple">
-                {enCA.places.orAsk}
-              </button>
-            </div>
-          )}
-          {!finding && favourites.length > 0 && (
-            <div className="flex flex-col gap-1.5">
-              <p className="text-label font-semibold uppercase tracking-wider text-muted">{enCA.places.favouritesLabel}</p>
-              <div className="flex flex-wrap gap-2">
-                {favourites.map((f) => (
-                  <Chip
-                    key={f.id}
-                    selected={place?.id === f.id}
+            <>
+              {/* T30: the parent's own places first, one tap each: typed places they saved, then their favourites (♥). */}
+              {(savedPlaces.length > 0 || favourites.length > 0) && (
+                <div className="flex flex-col gap-1.5">
+                  <p className="text-label font-semibold uppercase tracking-wider text-muted">{enCA.places.yourPlaces}</p>
+                  <div className="flex flex-wrap gap-2">
+                    {savedPlaces.map((saved) => (
+                      <Chip key={`saved-${saved.name}`} selected={!place && typing && placeName === saved.name && placeAddress === saved.address} onClick={() => chooseTyped(saved)}>
+                        {saved.name}
+                      </Chip>
+                    ))}
+                    {favourites.map((f) => (
+                      <Chip
+                        key={f.id}
+                        selected={place?.id === f.id}
+                        onClick={() => {
+                          touch("place");
+                          setPlace(f);
+                        }}
+                      >
+                        {enCA.places.favouriteChip(f.name)}
+                      </Chip>
+                    ))}
+                  </div>
+                </div>
+              )}
+              {place ? (
+                <PlaceCard place={place}>
+                  <Button compact onClick={() => setFinding("search")}>
+                    {enCA.places.change}
+                  </Button>
+                  <Button
+                    compact
+                    variant="destructive"
                     onClick={() => {
                       touch("place");
-                      setPlace(f);
+                      setPlace(null);
                     }}
                   >
-                    {f.name}
-                  </Chip>
-                ))}
-              </div>
-            </div>
+                    {enCA.places.remove}
+                  </Button>
+                </PlaceCard>
+              ) : typing ? (
+                // A typed place (name + address); saved for next time unless the parent turns it off (T30).
+                <Card className="flex flex-col gap-4">
+                  <Field
+                    id="place-name"
+                    label={t.placeNameLabel}
+                    placeholder={t.placeNamePlaceholder}
+                    value={placeName}
+                    onChange={(e) => {
+                      touch("placeName");
+                      setPlaceName(e.target.value);
+                    }}
+                    error={errors.placeName}
+                    maxLength={80}
+                    autoComplete="off"
+                  />
+                  <Field
+                    id="place-address"
+                    label={t.placeAddressLabel}
+                    value={placeAddress}
+                    onChange={(e) => {
+                      touch("placeAddress");
+                      setPlaceAddress(e.target.value);
+                    }}
+                    error={errors.placeAddress}
+                    maxLength={200}
+                    autoComplete="off"
+                  />
+                  <div className="flex flex-wrap items-center justify-between gap-2">
+                    {placeAddress.trim() && !alreadySaved ? (
+                      <button
+                        type="button"
+                        aria-pressed={savePlace}
+                        onClick={() => setSavePlace((on) => !on)}
+                        className={cx("flex min-h-11 w-fit items-center gap-2 text-[15px] font-semibold", savePlace ? "text-primary" : "text-ink")}
+                      >
+                        <span aria-hidden="true" className="text-xl leading-none">
+                          {savePlace ? "★" : "☆"}
+                        </span>
+                        {t.savePlace}
+                      </button>
+                    ) : (
+                      <span />
+                    )}
+                    <Button
+                      compact
+                      variant="secondary"
+                      onClick={() => {
+                        touch("placeName");
+                        touch("placeAddress");
+                        setTyping(false);
+                        setPlaceName("");
+                        setPlaceAddress("");
+                      }}
+                    >
+                      {enCA.places.clearPlace}
+                    </Button>
+                  </div>
+                </Card>
+              ) : (
+                <div className="flex flex-wrap items-center gap-x-4 gap-y-2">
+                  <Button compact onClick={() => setFinding("search")}>
+                    {enCA.places.findPlace}
+                  </Button>
+                  <Button compact onClick={() => setTyping(true)}>
+                    {enCA.places.typePlace}
+                  </Button>
+                  <button type="button" onClick={() => setFinding("ask")} className="inline-flex min-h-11 items-center text-[15px] font-semibold text-purple">
+                    {enCA.places.orAsk}
+                  </button>
+                </div>
+              )}
+            </>
           )}
           {errors.place && <ErrorLine>{errors.place}</ErrorLine>}
         </div>
@@ -316,74 +399,6 @@ export function PlanForm({
         <h2 id="details-title" className="text-lg font-semibold">
           {t.detailsTitle}
         </h2>
-        {/* A typed place (name + address), only when no place was found by search (DESIGN.md "Screens"). */}
-        {!place && (
-          <Card className="flex flex-col gap-4">
-            <div>
-              <Field
-                id="place-name"
-                label={t.placeNameLabel}
-                placeholder={t.placeNamePlaceholder}
-                value={placeName}
-                onChange={(e) => {
-                  touch("placeName");
-                  setPlaceName(e.target.value);
-                }}
-                error={errors.placeName}
-                maxLength={80}
-                autoComplete="off"
-              />
-              {suggestions.length > 0 && (
-                <div className="mt-2">
-                  <p className="mb-1.5 text-label font-semibold uppercase tracking-wider text-muted">{t.savedPlaces}</p>
-                  <div className="flex flex-wrap gap-2">
-                    {suggestions.map((place) => (
-                      <button
-                        key={place.name}
-                        type="button"
-                        onClick={() => {
-                          touch("placeName");
-                          touch("placeAddress");
-                          setPlaceName(place.name);
-                          setPlaceAddress(place.address);
-                        }}
-                        className="inline-flex min-h-11 items-center rounded-full bg-primary-tint px-4 text-[15px] font-medium text-primary"
-                      >
-                        {place.name}
-                      </button>
-                    ))}
-                  </div>
-                </div>
-              )}
-            </div>
-            <Field
-              id="place-address"
-              label={t.placeAddressLabel}
-              value={placeAddress}
-              onChange={(e) => {
-                touch("placeAddress");
-                setPlaceAddress(e.target.value);
-              }}
-              error={errors.placeAddress}
-              maxLength={200}
-              autoComplete="off"
-            />
-            <button
-              type="button"
-              aria-pressed={savePlace}
-              onClick={() => {
-                touch("placeAddress");
-                setSavePlace((on) => !on);
-              }}
-              className={cx("flex min-h-11 w-fit items-center gap-2 text-[15px] font-semibold", savePlace ? "text-primary" : "text-ink")}
-            >
-              <span aria-hidden="true" className="text-xl leading-none">
-                {savePlace ? "★" : "☆"}
-              </span>
-              {t.savePlace}
-            </button>
-          </Card>
-        )}
         <Field
           id="your-name"
           label={t.yourNameLabel}
