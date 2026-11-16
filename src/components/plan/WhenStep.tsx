@@ -57,16 +57,24 @@ export function WhenStep({ value, onChange, serverError, zone: fixedZone }: { va
           <div className="flex flex-col gap-3">
             <p className="text-[15px] text-muted">{t.availabilityHint}</p>
             {today && <AvailabilityGrid today={today} value={value.slots} onChange={(slots) => set({ slots })} />}
-            <Button
-              onClick={() => {
-                const check = checkSlots(value.slots, zoneOf(), new Date());
-                if (!check.ok) return setError(errorFor(check.errors[0]?.code));
-                setError(null);
-                set({ done: true });
-              }}
-            >
-              {t.done}
-            </Button>
+            {/* T31: how many times are ticked and Done stay in view above the tabs while the parent scrolls the days. */}
+            <div className="sticky bottom-[calc(4.5rem+env(safe-area-inset-bottom))] z-10 -ml-11 flex items-center justify-between gap-3 rounded-card bg-card px-4 py-2 shadow-card">
+              <p className="text-[15px] font-semibold" aria-live="polite">
+                {t.freeTimes(value.slots.length)}
+              </p>
+              <Button
+                compact
+                variant="secondary"
+                onClick={() => {
+                  const check = checkSlots(value.slots, zoneOf(), new Date());
+                  if (!check.ok) return setError(errorFor(check.errors[0]?.code));
+                  setError(null);
+                  set({ done: true });
+                }}
+              >
+                {t.done}
+              </Button>
+            </div>
           </div>
         )
       ) : range ? (

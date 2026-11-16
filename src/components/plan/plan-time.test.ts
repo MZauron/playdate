@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { at } from "@/lib/rules/time";
-import { addDays, checkSlots, checkWhen, clockLabel, dayHeading, dayLabel, endForNewStart, slotValues, timeOptions, weekFrom, whenRange, whenSummary } from "./plan-time";
+import { addDays, applyShortcut, checkSlots, pickerDays, shortcutSlots, checkWhen, clockLabel, dayHeading, dayLabel, endForNewStart, slotValues, timeOptions, weekFrom, whenRange, whenSummary } from "./plan-time";
 
 const ZONE = "America/Toronto";
 const NOW = at("2026-11-14", 10, 0, ZONE);
@@ -60,5 +60,30 @@ describe("the Share availability grid (T12)", () => {
       { day: "2026-11-16", slot: "evening" },
       { day: "2026-11-17", slot: "morning" },
     ]);
+  });
+});
+
+describe("the faster picker (T31)", () => {
+  // NOW is Sat 14 Nov 2026 in these tests.
+  const TODAY = "2026-11-14";
+  it("offers today and the next 13 days", () => {
+    const days = pickerDays(TODAY);
+    expect(days).toHaveLength(14);
+    expect([days[0], days[13]]).toEqual(["2026-11-14", "2026-11-27"]);
+  });
+  it("shortcuts stand for the weekend mornings or afternoons shown, and this week's weekday afternoons", () => {
+    expect(shortcutSlots("weekend_mornings", TODAY)).toEqual(["2026-11-14|morning", "2026-11-15|morning", "2026-11-21|morning", "2026-11-22|morning"]);
+    expect(shortcutSlots("weekend_afternoons", TODAY)).toEqual(["2026-11-14|afternoon", "2026-11-15|afternoon", "2026-11-21|afternoon", "2026-11-22|afternoon"]);
+    expect(shortcutSlots("weekday_afternoons", TODAY)).toEqual(["2026-11-16", "2026-11-17", "2026-11-18", "2026-11-19", "2026-11-20"].map((d) => `${d}|afternoon`));
+  });
+  it("a shortcut adds what is missing, and a second tap takes all of it off, leaving other times alone", () => {
+    const once = applyShortcut(["2026-11-16|evening", "2026-11-21|morning"], "weekend_mornings", TODAY);
+    expect([...once].sort()).toEqual(["2026-11-14|morning", "2026-11-15|morning", "2026-11-16|evening", "2026-11-21|morning", "2026-11-22|morning"]);
+    expect(applyShortcut(once, "weekend_mornings", TODAY)).toEqual(["2026-11-16|evening"]);
+  });
+  it("five free times take two taps: a shortcut and one more", () => {
+    const value = [...applyShortcut([], "weekend_mornings", TODAY), "2026-11-18|afternoon"];
+    expect(value).toHaveLength(5);
+    expect(checkSlots(value, ZONE, NOW).ok).toBe(true); // the grid and the shortcuts give the rule the same values
   });
 });

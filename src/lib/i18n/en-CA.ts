@@ -107,8 +107,12 @@ export const enCA = {
     pickTime: "Pick date and time",
     shareAvailability: "Share availability",
     availabilityHint: "Tap the times you're free. Friends will pick one.",
-    previousWeek: "Previous week",
-    nextWeek: "Next week",
+    // T31: the faster picker.
+    shortcutsLabel: "Quick picks",
+    shortcuts: { weekend_mornings: "Weekend mornings", weekend_afternoons: "Weekend afternoons", weekday_afternoons: "Weekday afternoons" },
+    thisWeek: "This week",
+    nextWeekTitle: "Next week",
+    today: "Today",
     slotNames: { morning: "Morning", afternoon: "Afternoon", evening: "Evening" },
     /** Q8 default hours, written the doc's way: "9–12", "1–4", "4–7". */
     slotHours: (start: number, end: number) => `${start % 12 || 12}–${end % 12 || 12}`,
