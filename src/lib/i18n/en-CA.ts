@@ -558,25 +558,33 @@ export const enCA = {
       afternoon: "Good afternoon",
       evening: "Good evening",
     },
-    planFor: (childName: string) => `Plan playdates for ${childName}.`,
+    planFor: (childNames: string) => `Plan playdates for ${childNames}.`,
     planCard: "Plan a playdate",
     /** Under the Plan card when nothing is on Home yet (Q24). */
     emptyNote: "Pick a friend, a time and a place. They answer from a text.",
     listTitle: "Your playdates",
-    answered: (answered: number, total: number) => `${answered} of ${total} ${total === 1 ? "family" : "families"} answered`,
-    /** KD-13 needs you: what to look at on the playdate page. */
+    /** T37: the coral pill beside Your playdates once the list has something (the Plan card shows only when it is empty). */
+    planAnother: "Plan another",
+    /** T37 (Q29): the tag at the top of each card. */
+    tag: { confirmed: "✓ Confirmed", pending: "Pending" },
+    sharedAvailability: "Shared availability",
+    /** KD-13 needs you: the note under the card, and what tapping it is for. */
     needsYou: {
-      all_answered: "Everyone answered",
-      times_picked: (families: number) => `${families === 1 ? "1 family" : `${families} families`} picked a time`,
-      changed_to_no: "Someone can't make it now",
+      all_answered: "✓ Everyone answered · tap to confirm",
+      times_picked: (families: number) => `${families === 1 ? "1 family" : `${families} families`} picked a time · tap to choose`,
+      changed_to_no: "Someone can't make it now · tap to see",
     },
-    confirmed: "Confirmed",
+    /** T37 (Q29): one chip per family, first names only (KD-17); the words after the name are for screen readers. */
+    hostChip: (name: string, isYou: boolean) => (isYou ? `Host: ${name} (you)` : `Host: ${name}`),
+    youChip: "You",
+    chipState: { yes: "coming", pick: "picked a time", no: "can't make it", waiting: "waiting" },
     noTime: "Time to be decided",
-    noPlace: "Place to be decided",
+    noPlace: "Place not set yet",
     majorityNotice: (name: string, range: string) => `Tell ${name}: most families picked ${range}`,
     /** T15: invites from other Kindred parents. */
     invitedBy: (organizer: string, child: string | null) => (child ? `${organizer} invited ${child}` : `${organizer} invited you`),
     pickATime: "Pick a time that works",
+    waitingForYou: "Waiting for your answer · tap to answer",
     myAnswer: {
       waiting: "Waiting for your answer",
       yes: "You're in",
@@ -658,6 +666,11 @@ export function formatTimeRange(start: Date, end: Date, zone: string): string {
 export function formatLongDay(date: Date, zone: string): string {
   const p = parts(date, zone, { weekday: "long", month: "long", day: "numeric" });
   return `${part(p, "weekday")}, ${part(p, "month")} ${part(p, "day")}`;
+}
+
+/** "Saturday": the clock line on a Home card (T37). */
+export function formatWeekday(date: Date, zone: string): string {
+  return part(parts(date, zone, { weekday: "long" }), "weekday");
 }
 
 /** "Mon, Nov 16" */

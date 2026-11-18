@@ -20,8 +20,8 @@ export type HomePlaydate = {
   inviteCount: number;
   /** Current answers (this `time_version`), one per answered invite. */
   answers: readonly { kind: AnswerKind; answeredAt: Date }[];
-  /** First letters of the invited friends' names, for the little circles. */
-  friendInitials: readonly string[];
+  /** T37: one chip per invited family, in invite order: the parent's first name and their current answer (null = waiting). */
+  families: readonly { name: string; answer: AnswerKind | null }[];
 };
 
 export type HomeItem = { kind: "playdate"; playdate: HomePlaydate; status: HomeStatus } | { kind: "invite"; invite: HomeInvite };

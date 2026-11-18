@@ -54,7 +54,7 @@ Before every commit: `npm run lint && npm run typecheck && npm test`.
 - Texts come from the organizer's own phone: the app shows a "Share with Aisha" button per friend that opens the phone's share sheet with the message and that friend's link; the parent picks Aisha from their own contacts (Q26). Kindred keeps no friend's phone number, only its keyed hash. The server never sends invite or update texts.
 - DB changes: a new numbered migration (never edit an applied one), plus a test for every constraint, privilege or policy.
 - Integrations (AI, places, push): interface in `index.ts`, `live.ts`, `fake.ts`, chosen by env (`AI_MODE`, `PLACES_MODE`, `PUSH_MODE` = `fake|live`). Tests and phone sessions use fakes. Every AI feature has a non-AI fallback.
-- UI: mobile-first (works at 375 px), follow DESIGN.md "Visual design" (teal brand, coral for the ONE main action per screen, 44 px touch targets, status lines not badges). Copy is short, warm and plain; buttons say what happens.
+- UI: mobile-first (works at 375 px), follow DESIGN.md "Visual design" (teal brand, coral for the ONE main action per screen, 44 px touch targets, status lines on detail pages; tags and family chips on Home cards, Q29). Copy is short, warm and plain; buttons say what happens.
 - Logging: ids and codes only. Phones masked to the last 4. Never log messages, codes, tokens, contacts or children's names.
 - Commits: small, imperative, English. One branch + PR per task; the Railway PR environment must boot before merge. Justify any new dependency in the PR description.
 

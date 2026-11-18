@@ -7,7 +7,12 @@
   --color-accent: #e2583a;
   --color-accent-tint: #fdeee9;
   --color-success: #18794e;
+  --color-success-tint: #effcf5;
   --color-danger: #c4321f;
+  --color-danger-tint: #fdf1f2;
+  /* T37: the Pending tag (darker than the mock-up's #B4651F so 11.5 px text passes AA on its tint). */
+  --color-warn: #985316;
+  --color-warn-tint: #fdf3e7;
   --color-purple: #6c5ce7;
   --color-page: #f5f6f8;
   --color-card: #ffffff;
