@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { groupPicks, majorityNotices, type NoticePick } from "./picks";
+import { groupPicks, majorityNotices, preselectedPick, type NoticePick } from "./picks";
 import { MON, NOW, range } from "./test-fixtures";
 
 const morning = range(MON, [9, 0], [12, 0]);
@@ -30,6 +30,30 @@ describe("KD-11 everyone's picks", () => {
   });
   it("KD-11c no picks", () => {
     expect(groupPicks([])).toEqual([]);
+  });
+});
+
+describe("KD-11 the time already chosen on the organizer's page (T44)", () => {
+  const nineToTen = range(MON, [9, 0], [10, 0]);
+  it("KD-11d most families wins, even over an earlier time", () => {
+    const groups = groupPicks([
+      { inviteId: "I1", firstName: "Dev", range: nineToTen },
+      { inviteId: "I2", firstName: "Maya", range: early },
+      { inviteId: "I3", firstName: "Aisha", range: early },
+    ]);
+    expect(preselectedPick(groups)).toMatchObject({ range: early, firstNames: ["Maya", "Aisha"], families: 2 });
+  });
+  it("KD-11e a tie goes to the earliest start, then the earliest end", () => {
+    const nineToEleven = range(MON, [9, 0], [11, 0]);
+    const groups = groupPicks([
+      { inviteId: "I1", firstName: "Dev", range: early },
+      { inviteId: "I2", firstName: "Maya", range: nineToEleven },
+      { inviteId: "I3", firstName: "Aisha", range: nineToTen },
+    ]);
+    expect(preselectedPick(groups)?.firstNames).toEqual(["Aisha"]);
+  });
+  it("KD-11f nothing is chosen with no picks", () => {
+    expect(preselectedPick(groupPicks([]))).toBeNull();
   });
 });
 

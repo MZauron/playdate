@@ -23,6 +23,14 @@ export function groupPicks(picks: readonly FamilyPick[]): PickGroup[] {
   return groups.map((g, i) => ({ ...g, families: g.firstNames.length, mostPicked: i === 0 }));
 }
 
+/**
+ * T44 (KD-09 unchanged): the time already chosen on the organizer's page, the one most families can make, ties to the earliest;
+ * that is KD-11's order, so it is the first group. Null with no picks. Confirming it still goes through checkConfirm.
+ */
+export function preselectedPick<T extends { range: Range }>(groups: readonly T[]): T | null {
+  return groups[0] ?? null;
+}
+
 export type NoticePick = FamilyPick & { channel: InviteChannel; majorityNoticeAt: Date | null };
 
 /**

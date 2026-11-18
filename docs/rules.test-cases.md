@@ -125,6 +125,9 @@ Where the doc is silent, the reading used is marked *(reading)*.
 | KD-11a | Dev Mon 9–12, Maya Mon 9–12, Aisha Mon 13–14 | 1st: Mon 9–12, Dev, Maya, 2 families, Most picked. 2nd: Mon 13–14, Aisha, 1 family |
 | KD-11b | Dev Mon 13–14, Maya Mon 9–10 (one each) | Mon 9–10 first (earliest) and Most picked |
 | KD-11c | No picks | No groups |
+| KD-11d | Dev Mon 9–10; Maya and Aisha Mon 13–14 | Already chosen on the organizer's page (T44): Mon 13–14 (most families beats earlier) |
+| KD-11e | Dev Mon 13–14, Maya Mon 9–11, Aisha Mon 9–10 (one each) | Already chosen: Mon 9–10 (earliest start, then earliest end) |
+| KD-11f | No picks | Nothing chosen; the button stays off |
 
 ## KD-12 Majority notice
 | Id | Input | Expected |

@@ -93,7 +93,7 @@ test("sign up, invite a friend by text link, the friend answers, the organizer s
   // 5. The organizer sees it without reloading, confirms, and gets the Share buttons for the news.
   await expect(page.getByText("1 of 1 answered")).toBeVisible({ timeout: 20_000 });
   await expect(page.getByText("1 family can come: Dee")).toBeVisible();
-  await page.getByRole("button", { name: "Confirm and send update" }).click();
+  await page.getByRole("button", { name: /^Confirm · / }).click();
   await expect(page.getByRole("heading", { name: "✓ Update sent" })).toBeVisible();
   await page.getByRole("button", { name: "Share with Dee" }).click();
   expect(await lastShared()).toContain("It's on! 🎉 See you");
