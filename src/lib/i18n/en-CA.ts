@@ -97,6 +97,8 @@ export const enCA = {
   },
   plan: {
     title: "Plan a playdate",
+    /** T38: Plan again from Home's Recent playdates. */
+    againNote: (day: string) => `Same families and place as ${day}. Check the new time, then send.`,
     back: "Back",
     whoTitle: "Who's invited",
     friendsLabel: "Your friends",
@@ -580,6 +582,9 @@ export const enCA = {
     chipState: { yes: "coming", pick: "picked a time", no: "can't make it", waiting: "waiting" },
     noTime: "Time to be decided",
     noPlace: "Place not set yet",
+    /** T38: the organizer's last confirmed playdates that are over. */
+    recentTitle: "Recent playdates",
+    planAgain: "Plan again",
     majorityNotice: (name: string, range: string) => `Tell ${name}: most families picked ${range}`,
     /** T15: invites from other Kindred parents. */
     invitedBy: (organizer: string, child: string | null) => (child ? `${organizer} invited ${child}` : `${organizer} invited you`),

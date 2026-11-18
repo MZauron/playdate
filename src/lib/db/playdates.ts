@@ -162,6 +162,60 @@ export async function listHomePlaydates(organizerId: string, now: Date): Promise
   });
 }
 
+/** T38: one of the organizer's past confirmed playdates on Home, under Recent playdates. */
+export type RecentPlaydate = { id: string; title: string; timezone: string; start: Date; end: Date; placeName: string | null };
+
+/** T38: THIS organizer's confirmed playdates that are over, newest first (cancelled ones never; they are never confirmed). */
+export async function listRecentPlaydates(organizerId: string, now: Date, limit = 2): Promise<RecentPlaydate[]> {
+  const { data, error } = await adminClient()
+    .from("playdates")
+    .select("id, title, timezone, final_start_at, final_end_at, place_name, place_address, place_provider_id")
+    .eq("organizer_id", organizerId)
+    .eq("status", "confirmed")
+    .lt("final_end_at", now.toISOString())
+    .order("final_start_at", { ascending: false })
+    .limit(limit);
+  if (error) throw new Error(`listRecentPlaydates failed: ${error.code}`);
+  return Promise.all(
+    (data ?? []).map(async (row) => ({
+      id: row.id,
+      title: row.title,
+      timezone: row.timezone,
+      start: new Date(row.final_start_at!),
+      end: new Date(row.final_end_at!),
+      placeName: (await shownPlace(row)).placeName,
+    })),
+  );
+}
+
+/** T38: one of THIS organizer's playdates for Plan again, with the friends it invited; null when it isn't theirs or was cancelled. */
+export async function playdateToPlanAgain(
+  organizerId: string,
+  playdateId: string,
+): Promise<{ last: import("@/lib/domain/groups").LastPlaydate; friendIds: string[] } | null> {
+  const { data, error } = await adminClient()
+    .from("playdates")
+    .select("id, title, mode, status, timezone, start_at, end_at, final_start_at, final_end_at, place_name, place_address, place_provider_id, invites(friend_id)")
+    .eq("organizer_id", organizerId)
+    .eq("id", playdateId)
+    .neq("status", "cancelled")
+    .maybeSingle();
+  if (error) throw new Error(`playdateToPlanAgain failed: ${error.code}`);
+  if (!data) return null;
+  return {
+    last: {
+      id: data.id,
+      title: data.title,
+      mode: data.mode,
+      timezone: data.timezone,
+      start: date(data.final_start_at) ?? date(data.start_at),
+      end: date(data.final_end_at) ?? date(data.end_at),
+      ...(await shownPlace(data)),
+    },
+    friendIds: data.invites.flatMap((i) => (i.friend_id ? [i.friend_id] : [])),
+  };
+}
+
 /** The children's first names of THIS owner's friends among these ids, for the built-in message ideas. */
 export async function friendsChildren(ownerId: string, friendIds: readonly string[]): Promise<string[]> {
   const friends = await playdateStore.friendsForInvite(ownerId, friendIds);

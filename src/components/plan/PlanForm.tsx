@@ -37,7 +37,17 @@ export type EditPlaydate = {
 
 /** The planning screen (T08): 1 Who's invited, 2 When, Details, Send. The server decides on Send; nothing here is trusted. */
 /** T19: a new plan started from a group (its families) or from Plan again (also the same place, next week). */
-export type PlanPrefill = { friendIds: string[]; day?: string; start?: string; end?: string; place?: Place | null; placeName?: string; placeAddress?: string };
+export type PlanPrefill = {
+  friendIds: string[];
+  day?: string;
+  start?: string;
+  end?: string;
+  place?: Place | null;
+  placeName?: string;
+  placeAddress?: string;
+  /** T38: one line above the steps, e.g. "Same families and place as Sat, Nov 7. Check the new time, then send." */
+  note?: string;
+};
 
 export function PlanForm({
   friends,
@@ -180,6 +190,7 @@ export function PlanForm({
           ← {t.back}
         </button>
         <h1 className="text-title font-bold leading-tight">{edit ? t.editTitle : t.title}</h1>
+        {prefill?.note && <p className="mt-2 rounded-button bg-primary-tint px-3.5 py-2.5 text-[15px] font-medium text-primary">{prefill.note}</p>}
       </header>
 
       <NumberedStep number={1} done={selected.length > 0} title={t.whoTitle}>

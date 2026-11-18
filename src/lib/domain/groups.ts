@@ -74,15 +74,19 @@ export type LastPlaydate = {
 /**
  * The Plan screen filled in for "Plan again: same place, next week": the same place and, when the last playdate had a time (a set
  * time, or the confirmed final time), the same clock times one week later on its own clock. The message stays empty: Kindred never
- * writes it (KD-05).
+ * writes it (KD-05). With `today` (YYYY-MM-DD, T38), a day that is not after today moves on a week at a time until it is.
  */
-export function planAgainValues(last: LastPlaydate): { day: string; start: string; end: string; place: Place | null; placeName: string; placeAddress: string } {
+export function planAgainValues(
+  last: LastPlaydate,
+  today?: string,
+): { day: string; start: string; end: string; place: Place | null; placeName: string; placeAddress: string } {
   const zone = last.timezone;
   const day = (d: Date) => new Intl.DateTimeFormat("en-CA", { timeZone: zone, year: "numeric", month: "2-digit", day: "2-digit" }).format(d);
   const clock = (d: Date) => new Intl.DateTimeFormat("en-CA", { timeZone: zone, hour: "2-digit", minute: "2-digit", hourCycle: "h23" }).format(d);
   const nextWeek = (dayText: string) => {
     const d = new Date(`${dayText}T00:00:00Z`);
-    d.setUTCDate(d.getUTCDate() + 7);
+    do d.setUTCDate(d.getUTCDate() + 7);
+    while (today && d.toISOString().slice(0, 10) <= today);
     return d.toISOString().slice(0, 10);
   };
   const timed = !!(last.start && last.end);
@@ -94,4 +98,18 @@ export function planAgainValues(last: LastPlaydate): { day: string; start: strin
     placeName: last.searchedPlace ? "" : (last.placeName ?? ""),
     placeAddress: last.searchedPlace ? "" : (last.placeAddress ?? ""),
   };
+}
+
+/**
+ * T38, Plan again from Home's Recent playdates: the same families (only those still in the parent's friends list), the same place,
+ * and the same weekday and clock times in the next week after today. Never the message (KD-05).
+ */
+export function planAgainPrefill(
+  last: LastPlaydate,
+  invitedFriendIds: readonly string[],
+  currentFriendIds: readonly string[],
+  today: string,
+): { friendIds: string[]; day: string; start: string; end: string; place: Place | null; placeName: string; placeAddress: string } {
+  const current = new Set(currentFriendIds);
+  return { friendIds: invitedFriendIds.filter((id) => current.has(id)), ...planAgainValues(last, today) };
 }

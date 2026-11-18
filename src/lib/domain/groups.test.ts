@@ -1,7 +1,7 @@
 // Groups (T19) through the service with an in-memory store, and "Plan again: same place, next week".
 import { describe, expect, it } from "vitest";
 import { at } from "@/lib/rules/time";
-import { deleteGroup, parseGroupForm, planAgainValues, removeMember, saveGroup, type GroupStore } from "./groups";
+import { deleteGroup, parseGroupForm, planAgainPrefill, planAgainValues, removeMember, saveGroup, type GroupStore } from "./groups";
 
 const ALEX = "11111111-1111-4111-8111-111111111111";
 const DEV = "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa";
@@ -79,5 +79,17 @@ describe("planAgainValues (Plan again: same place, next week)", () => {
   it("uses a confirmed availability playdate's final time, and only the place when there was no time", () => {
     expect(planAgainValues({ ...last, mode: "availability" })).toMatchObject({ day: "2026-11-23", start: "10:00" });
     expect(planAgainValues({ ...last, mode: "availability", start: null, end: null })).toEqual({ day: "", start: "", end: "", place: null, placeName: "High Park", placeAddress: "1873 Bloor St W" });
+  });
+});
+
+describe("planAgainPrefill (T38, Plan again from Recent playdates)", () => {
+  const ZONE = "America/Toronto";
+  const last = { id: "p", title: "Playdate", mode: "set_time" as const, timezone: ZONE, start: at("2026-10-31", 14, 0, ZONE), end: at("2026-10-31", 16, 0, ZONE), placeName: "High Park", placeAddress: null, searchedPlace: null };
+  it("moves to the same weekday in the first week after today, same clock times and place", () => {
+    expect(planAgainPrefill(last, [DEV], [DEV], "2026-11-18")).toEqual({ friendIds: [DEV], day: "2026-11-21", start: "14:00", end: "16:00", place: null, placeName: "High Park", placeAddress: "" });
+    expect(planAgainPrefill(last, [DEV], [DEV], "2026-11-21").day).toBe("2026-11-28"); // never today
+  });
+  it("leaves out families no longer in the parent's friends list", () => {
+    expect(planAgainPrefill(last, [DEV, MAYA], [MAYA, SAMS_FRIEND], "2026-11-18").friendIds).toEqual([MAYA]);
   });
 });

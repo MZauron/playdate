@@ -5,6 +5,7 @@ import { dayPartOf, enCA, formatDateTile, formatLongDay, formatTimeRange, format
 import Link from "next/link";
 import type { MajorityNotice } from "@/lib/domain/majority";
 import type { HomeInvite } from "@/lib/db/invites";
+import type { RecentPlaydate } from "@/lib/db/playdates";
 import type { HomeStatus } from "@/lib/rules/home";
 import type { AnswerKind } from "@/lib/rules/types";
 import { homeList, type HomePlaydate } from "./home-data";
@@ -23,13 +24,15 @@ export type HomeViewProps = {
   notices?: readonly MajorityNotice[];
   /** T15: invites from other Kindred parents, opened at /invites/[id]. */
   invites?: readonly HomeInvite[];
+  /** T38: the parent's last confirmed playdates that are over, each with Plan again. */
+  recent?: readonly RecentPlaydate[];
   now: Date;
   /** The zone for the banner's date and greeting. */
   zone: string;
 };
 
 // T37 (Q29): Home in the tester's mock-up look. What is on Home and its order are still KD-13 (src/lib/rules/home.ts).
-export function HomeView({ firstName, welcome = false, childName, childNames, playdates, notices = [], invites = [], now, zone }: HomeViewProps) {
+export function HomeView({ firstName, welcome = false, childName, childNames, playdates, notices = [], invites = [], recent = [], now, zone }: HomeViewProps) {
   const items = homeList(playdates, invites, now);
   const greeting = welcome && firstName ? enCA.home.welcome(firstName) : enCA.home.greeting[dayPartOf(now, zone)];
   const kids = childNames?.length ? childNames : childName ? [childName] : [];
@@ -97,6 +100,34 @@ export function HomeView({ firstName, welcome = false, childName, childNames, pl
               ),
             )}
           </ul>
+        </section>
+      )}
+
+      {recent.length > 0 && (
+        <section aria-labelledby="home-recent-title">
+          <h2 id="home-recent-title" className="mb-2 px-1 text-label font-bold uppercase tracking-wider text-muted">
+            {enCA.home.recentTitle}
+          </h2>
+          <Card className="px-4 py-1">
+            <ul>
+              {recent.map((r) => (
+                <li key={r.id} className="flex items-center gap-3 border-page py-3 [&+&]:border-t">
+                  <DateTile start={r.start} zone={r.timezone} />
+                  <span className="min-w-0 flex-1">
+                    <span className="block truncate font-bold tracking-tight">{r.title.replace(/^Playdate:\s*/, "")}</span>
+                    {r.placeName && <span className="block truncate text-[14px]">{r.placeName}</span>}
+                    <span className="block text-[14px] text-muted">{formatTimeRange(r.start, r.end, r.timezone)}</span>
+                  </span>
+                  <Link
+                    href={`/plan?again=${r.id}`}
+                    className="flex min-h-11 shrink-0 items-center rounded-full bg-primary-tint px-3.5 text-[14px] font-bold text-primary focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
+                  >
+                    {enCA.home.planAgain}
+                  </Link>
+                </li>
+              ))}
+            </ul>
+          </Card>
         </section>
       )}
     </div>
