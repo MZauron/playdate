@@ -34,6 +34,7 @@ export default async function HomePage({ searchParams }: { searchParams: Promise
       firstName={profile.firstName}
       welcome={welcome === "1"}
       childName={profile.children[0]?.firstName} // Q4 default: the first child
+      childNames={profile.children.map((c) => c.firstName)}
       playdates={await listHomePlaydates(user.id, now)}
       notices={(await listOpenAvailability(user.id, now)).flatMap(homeNotices)}
       invites={await listInvitesForUser(user.id, now)}

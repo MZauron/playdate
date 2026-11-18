@@ -157,8 +157,8 @@ describe.skipIf(!apiEnabled)("playdates repository", () => {
     if (!result.ok) throw new Error("expected ok");
     const now = new Date("2030-11-01T12:00:00Z");
     const home = await repo.listHomePlaydates(alex, now);
-    expect(home.map(({ id, title, inviteCount, friendInitials, answers, start }) => ({ id, title, inviteCount, friendInitials, answers, start }))).toEqual([
-      { id: result.playdateId, title: "Playdate: Mia & Arjun", inviteCount: 1, friendInitials: ["A"], answers: [], start: new Date("2030-11-18T15:00:00Z") },
+    expect(home.map(({ id, title, inviteCount, families, answers, start }) => ({ id, title, inviteCount, families, answers, start }))).toEqual([
+      { id: result.playdateId, title: "Playdate: Mia & Arjun", inviteCount: 1, families: [{ name: "Arjun", answer: null }], answers: [], start: new Date("2030-11-18T15:00:00Z") },
     ]);
     expect(await repo.listHomePlaydates(sam, now)).toEqual([]);
     expect(await repo.listHomePlaydates(alex, new Date("2030-11-20T12:00:00Z"))).toEqual([]); // links expired: over

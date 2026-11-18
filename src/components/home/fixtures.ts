@@ -5,7 +5,18 @@ import type { HomePlaydate } from "./home-data";
 export const ZONE = "America/Toronto";
 export const NOW = at("2026-11-14", 10, 0, ZONE);
 
-const base = { timezone: ZONE, confirmedAt: null, placeName: null, answers: [], inviteCount: 3, friendInitials: ["D", "M", "A"] } as const;
+const base = {
+  timezone: ZONE,
+  confirmedAt: null,
+  placeName: null,
+  answers: [],
+  inviteCount: 3,
+  families: [
+    { name: "Dev", answer: null },
+    { name: "Maya", answer: null },
+    { name: "Aisha", answer: null },
+  ],
+} as const;
 
 /** Everyone answered, still collecting: Needs you. */
 export const needsYou: HomePlaydate = {
@@ -21,6 +32,11 @@ export const needsYou: HomePlaydate = {
     { kind: "yes", answeredAt: at("2026-11-13", 9, 5, ZONE) },
     { kind: "no", answeredAt: at("2026-11-13", 9, 10, ZONE) },
   ],
+  families: [
+    { name: "Dev", answer: "yes" },
+    { name: "Maya", answer: "yes" },
+    { name: "Aisha", answer: "no" },
+  ],
 };
 
 /** Confirmed and not over: Upcoming. */
@@ -35,7 +51,7 @@ export const upcoming: HomePlaydate = {
   confirmedAt: at("2026-11-13", 18, 0, ZONE),
   placeName: "Riverdale Park",
   inviteCount: 1,
-  friendInitials: ["M"],
+  families: [{ name: "Maya", answer: "yes" }],
   answers: [{ kind: "yes", answeredAt: at("2026-11-13", 9, 0, ZONE) }],
 };
 
@@ -54,6 +70,11 @@ export const waiting: HomePlaydate = {
   answers: [
     { kind: "yes", answeredAt: at("2026-11-13", 9, 0, ZONE) },
     { kind: "yes", answeredAt: at("2026-11-13", 9, 5, ZONE) },
+  ],
+  families: [
+    { name: "Dev", answer: "yes" },
+    { name: "Maya", answer: "yes" },
+    { name: "Aisha", answer: null },
   ],
 };
 

@@ -153,7 +153,10 @@ export async function listHomePlaydates(organizerId: string, now: Date): Promise
         placeName,
         inviteCount: row.invites.length,
         answers: answers.map((a) => ({ kind: a.kind, answeredAt: new Date(a.answered_at) })),
-        friendInitials: row.invites.map((i) => (i.friends?.parent_name.trim()[0] ?? "?").toUpperCase()),
+        families: row.invites.map((i) => ({
+          name: i.friends?.parent_name.trim().split(/\s+/)[0] || "?",
+          answer: i.answers && i.answers.time_version === row.time_version ? i.answers.kind : null,
+        })),
       },
     ];
   });
