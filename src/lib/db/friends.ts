@@ -5,7 +5,7 @@ import { adminClient } from "./admin";
 import { shownPlace } from "./shown-place";
 
 const COLUMNS = "id, parent_name, child_first_name, label, kindred_user_id";
-type Row = { id: string; parent_name: string; child_first_name: string | null; label: string; kindred_user_id: string | null };
+type Row = { id: string; parent_name: string; child_first_name: string | null; label: string; kindred_user_id: string | null; friend_children?: { child_id: string }[] };
 
 const toFriend = (row: Row): Friend => ({
   id: row.id,
@@ -13,7 +13,10 @@ const toFriend = (row: Row): Friend => ({
   childFirstName: row.child_first_name,
   label: row.label,
   hasKindred: row.kindred_user_id !== null,
+  ...(row.friend_children ? { childIds: row.friend_children.map((c) => c.child_id) } : {}),
 });
+/** T42: the friend's columns and which of the owner's children they know. */
+const WITH_KIDS = `${COLUMNS}, friend_children(child_id)`;
 
 export const friendStore: FriendStore = {
   async findProfileIdByHash(phoneHash) {
@@ -77,14 +80,14 @@ export async function refreshKindredMatches(ownerId: string): Promise<void> {
 /** The owner's friends, oldest first. */
 export async function listFriends(ownerId: string): Promise<Friend[]> {
   await refreshKindredMatches(ownerId);
-  const { data, error } = await adminClient().from("friends").select(COLUMNS).eq("owner_id", ownerId).order("created_at").order("id");
+  const { data, error } = await adminClient().from("friends").select(WITH_KIDS).eq("owner_id", ownerId).order("created_at").order("id");
   if (error) throw new Error(`listFriends failed: ${error.code}`);
   return (data ?? []).map(toFriend);
 }
 
 /** T40: one of THIS owner's friends, or null (another parent's friend id finds nothing). */
 export async function getFriend(ownerId: string, friendId: string): Promise<Friend | null> {
-  const { data, error } = await adminClient().from("friends").select(COLUMNS).eq("owner_id", ownerId).eq("id", friendId).maybeSingle();
+  const { data, error } = await adminClient().from("friends").select(WITH_KIDS).eq("owner_id", ownerId).eq("id", friendId).maybeSingle();
   if (error) throw new Error(`getFriend failed: ${error.code}`);
   return data ? toFriend(data) : null;
 }
@@ -146,4 +149,11 @@ export async function playdatesWithFriend(ownerId: string, friendId: string, now
     .sort((a, b) => time(b) - time(a))
     .slice(0, 5);
   return { open, past };
+}
+
+/** T42: which of THIS owner's children their friend knows (migration 0016); only their own friend and children are written. */
+export async function setFriendChildren(ownerId: string, friendId: string, childIds: readonly string[]): Promise<boolean> {
+  const { data, error } = await adminClient().rpc("set_friend_children", { p_owner_id: ownerId, p_friend_id: friendId, p_child_ids: [...childIds] });
+  if (error) throw new Error(`setFriendChildren failed: ${error.code}`);
+  return (data ?? 0) > 0;
 }

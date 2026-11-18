@@ -105,6 +105,31 @@ isOneToOne: false
       referencedColumns: ["id"]
     }
                   ]
+                },"friend_children": {
+                  Row: {
+                    "child_id": string,"friend_id": string
+                  }
+                  Insert: {
+                    "child_id": string,"friend_id": string
+                  }
+                  Update: {
+                    "child_id"?: string,"friend_id"?: string
+                  }
+                  Relationships: [
+                    {
+      foreignKeyName: "friend_children_child_id_fkey"
+      columns: ["child_id"]
+isOneToOne: false
+      referencedRelation: "children"
+      referencedColumns: ["id"]
+    },{
+      foreignKeyName: "friend_children_friend_id_fkey"
+      columns: ["friend_id"]
+isOneToOne: false
+      referencedRelation: "friends"
+      referencedColumns: ["id"]
+    }
+                  ]
                 },"friend_links": {
                   Row: {
                     "created_at": string,"id": string,"owner_id": string,"token_hash": string
@@ -341,6 +366,9 @@ isOneToOne: false
                            },
 "save_group":
 { Args: { "p_friend_ids": (string)[],"p_group_id": string,"p_name": string,"p_owner_id": string }; Returns: string
+                           },
+"set_friend_children":
+{ Args: { "p_child_ids": (string)[],"p_friend_id": string,"p_owner_id": string }; Returns: number
                            },
 "set_playdate_children":
 { Args: { "p_child_ids": (string)[],"p_organizer_id": string,"p_playdate_id": string }; Returns: number

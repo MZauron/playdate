@@ -4,7 +4,8 @@ import { revalidatePath } from "next/cache";
 import { env } from "@/env";
 import { requireParent } from "@/lib/auth/require-parent";
 import { friendLinkStore } from "@/lib/db/friend-links";
-import { friendStore } from "@/lib/db/friends";
+import { friendStore, setFriendChildren } from "@/lib/db/friends";
+import { z } from "zod";
 import { friendLinkLimiter, newFriendLink } from "@/lib/domain/friend-links";
 import { addFriend, friendsLimiter, parseAddFriendForm, removeFriend, renameFriend, type FriendFailure } from "@/lib/domain/friends";
 import { enCA } from "@/lib/i18n/en-CA";
@@ -59,5 +60,17 @@ export async function newFriendLinkAction(): Promise<{ url?: string; error?: str
 export async function stopFriendLinksAction(): Promise<{ ok: boolean }> {
   const { user } = await requireParent();
   await friendLinkStore.removeLinks(user.id);
+  return { ok: true };
+}
+
+/** T42: which of the signed-in parent's children this friend knows. Ids that aren't theirs are dropped by the database function. */
+export async function setFriendKidsAction(friendId: string, childIds: string[]): Promise<{ ok: boolean }> {
+  const { user, profile } = await requireParent();
+  const ids = z.array(z.uuid()).max(8).safeParse(childIds);
+  if (!z.uuid().safeParse(friendId).success || !ids.success) return { ok: false };
+  const own = new Set(profile.children.map((c) => c.id));
+  await setFriendChildren(user.id, friendId, ids.data.filter((id) => own.has(id)));
+  revalidatePath("/friends");
+  revalidatePath("/plan");
   return { ok: true };
 }

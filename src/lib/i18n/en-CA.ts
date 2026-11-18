@@ -105,7 +105,15 @@ export const enCA = {
       waiting: "Waiting for answers",
       planAgain: "Plan again",
       manage: "In your list",
+      /** T42 (Q30): only for a parent with two or more children. */
+      friendsWith: "Friends with",
+      friendsWithNote: (firstName: string) => `Which of your kids is ${firstName}'s family friends with?`,
+      saveFailed: "Couldn't save that. Please try again.",
     },
+    /** T42: the Friends tab's switch for a parent with two or more children. */
+    kidSwitch: "Whose friends",
+    allKids: "All",
+    noneForKid: (child: string) => `No friends linked to ${child} yet.`,
   },
   plan: {
     title: "Plan a playdate",
@@ -116,6 +124,8 @@ export const enCA = {
     /** T41 (Q30): only for a parent with two or more children. */
     forKidsTitle: "Who's this playdate for?",
     allMyKids: "All my kids",
+    /** T42: friends of the children this playdate isn't for, folded away. */
+    showAllFriends: (n: number) => `Show all friends (${n} more)`,
     friendsLabel: "Your friends",
     groupsLabel: "Your groups",
     noFriends: "No friends yet. Add a family you'd like to invite.",

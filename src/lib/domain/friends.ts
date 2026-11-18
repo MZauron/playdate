@@ -15,7 +15,10 @@ export type Friend = {
   label: string;
   /** True when the number belongs to a Kindred parent: they get the invite in the app. Otherwise they get a text. */
   hasKindred: boolean;
+  /** T42: which of the owner's children this family knows, as stored (empty = not set; see `knownKids`). */
+  childIds?: string[];
 };
+
 
 /** Q17 default: "Arjun's parent" (not "dad" or "mom": nobody told us which). The owner can rename it. */
 export function defaultLabel(childFirstName: string): string {
