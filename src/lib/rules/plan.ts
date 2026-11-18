@@ -76,11 +76,22 @@ export function checkPlan(input: PlanInput, now: Date): Decision<{ time: PlanTim
 }
 
 /**
- * KD-06: "Playdate: " + the organizer's child + each invited family's child, joined "A, B & C".
- * Callers pass one first name per family (the first child, Q4 default).
+ * KD-06 (T41, Q30): who the playdate is for, among the organizer's own children (ids in their order). With one child it is that
+ * child; with several the parent chooses one, some or all. Ids that aren't the organizer's are ignored.
  */
-export function playdateTitle(organizerChild: string, inviteeChildren: readonly string[]): string {
-  const names = [organizerChild, ...inviteeChildren];
+export function checkChildren(ownChildIds: readonly string[], chosenIds: readonly string[]): Decision<string[]> {
+  if (ownChildIds.length === 1) return allow([...ownChildIds]);
+  const chosen = new Set(chosenIds);
+  const kept = ownChildIds.filter((id) => chosen.has(id));
+  return kept.length ? allow(kept) : deny({ code: "NO_CHILD", field: "children" });
+}
+
+/**
+ * KD-06: "Playdate: " + the organizer's chosen children (T41) + each invited family's child, joined "A, B & C".
+ * Callers pass one first name per invited family (their first child, Q4 default).
+ */
+export function playdateTitle(organizerChildren: string | readonly string[], inviteeChildren: readonly string[]): string {
+  const names = [...(typeof organizerChildren === "string" ? [organizerChildren] : organizerChildren), ...inviteeChildren];
   const last = names.pop();
   const joined = names.length ? `${names.join(", ")} & ${last}` : (last ?? "");
   return `Playdate: ${joined}`;

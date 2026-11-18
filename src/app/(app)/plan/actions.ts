@@ -24,7 +24,7 @@ export async function sendInviteAction(_previous: SendInviteState, form: FormDat
   const { user, profile } = await requireParent(); // the organizer is the signed-in parent, whatever the form says
   const result = await sendInvite(
     { store: playdateStore, places: places(), limiter: playdatesLimiter, linkBase: env.PUBLIC_LINK_BASE },
-    { id: user.id, firstName: profile.firstName, childFirstName: profile.children[0]?.firstName ?? "" }, // Q4 default: the first child
+    { id: user.id, firstName: profile.firstName, childFirstName: profile.children[0]?.firstName ?? "", children: profile.children }, // T41: who it is for
     parsePlanForm(form),
     new Date(),
   );

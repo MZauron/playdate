@@ -271,3 +271,27 @@ describe("a place found by search (T17, Q6 default)", () => {
     expect(parsePlanForm(form).placeId).toBe("fake-high-park");
   });
 });
+
+describe("sendInvite: who the playdate is for (T41, KD-06f–i)", () => {
+  const MIA_ID = "c1111111-1111-4111-8111-111111111111";
+  const ETHAN_ID = "c2222222-2222-4222-8222-222222222222";
+  const twoKids = { ...organizer, children: [{ id: MIA_ID, firstName: "Mia" }, { id: ETHAN_ID, firstName: "Ethan" }] };
+  it("asks a parent with two children to choose, and writes nothing until they do", async () => {
+    const { fake, deps } = world();
+    const result = await sendInvite(deps, twoKids, plan(), NOW);
+    expect(result).toMatchObject({ ok: false, errors: [{ code: "NO_CHILD", field: "children" }] });
+    expect(fake.playdates).toHaveLength(0);
+  });
+  it("puts the chosen children first in the title and stores them", async () => {
+    const { fake, deps } = world();
+    const result = await sendInvite(deps, twoKids, plan({ childIds: [ETHAN_ID, MIA_ID, "someone-elses"] }), NOW);
+    expect(result.ok).toBe(true);
+    expect(fake.playdates[0]).toMatchObject({ title: "Playdate: Mia, Ethan, Arjun & Lily", childIds: [MIA_ID, ETHAN_ID] });
+  });
+  it("a parent with one child needs to choose nothing", async () => {
+    const { fake, deps } = world();
+    await sendInvite(deps, { ...organizer, children: [{ id: MIA_ID, firstName: "Mia" }] }, plan(), NOW);
+    expect(fake.playdates[0]).toMatchObject({ title: "Playdate: Mia, Arjun & Lily", childIds: [MIA_ID] });
+  });
+});
+

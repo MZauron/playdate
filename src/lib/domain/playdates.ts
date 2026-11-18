@@ -6,7 +6,7 @@ import { createRateLimiter, type RateLimiter } from "@/platform/rate-limit";
 import { PLACE_ID_PATTERN, type Places } from "@/lib/integrations/places/types";
 import { DEFAULT_ZONE } from "@/lib/rules/config";
 import { linkExpiresAt } from "@/lib/rules/links";
-import { checkPlan, playdateTitle, type PlanTime } from "@/lib/rules/plan";
+import { checkChildren, checkPlan, playdateTitle, type PlanTime } from "@/lib/rules/plan";
 import { at } from "@/lib/rules/time";
 import type { DaySlot, ErrorCode, FreeSlot, InviteChannel, Zone } from "@/lib/rules/types";
 import { inviteLink, newInviteToken } from "./invite-token";
@@ -21,6 +21,8 @@ export const MAX_INVITEES = 50;
 // --- What the form posts ------------------------------------------------------------------------------------------------------
 export type PlanFormInput = {
   friendIds: string[];
+  /** T41: which of the organizer's children it is for (ids; only their own count, KD-06). */
+  childIds?: string[];
   mode: string;
   day: string;
   startTime: string;
@@ -42,6 +44,7 @@ export function parsePlanForm(form: FormData): PlanFormInput {
   const text = (name: string) => String(form.get(name) ?? "");
   return {
     friendIds: form.getAll("friendId").map(String),
+    childIds: form.getAll("childId").map(String),
     mode: text("mode"),
     day: text("day"),
     startTime: text("startTime"),
@@ -120,6 +123,8 @@ export type NewPlaydate = {
   message: string;
   linksExpireAt: Date;
   invites: NewInvite[];
+  /** T41: the organizer's children it is for. */
+  childIds: string[];
 };
 
 export type PlaydateStore = {
@@ -155,7 +160,20 @@ export type SendDeps = {
   newToken?: () => { token: string; tokenHash: string };
 };
 
-export type Organizer = { id: string; firstName: string; childFirstName: string };
+/** `children` (T41): the organizer's own children, in their order; without it the title uses `childFirstName` alone. */
+export type Organizer = { id: string; firstName: string; childFirstName: string; children?: readonly { id: string; firstName: string }[] };
+
+/** KD-06 (T41): the organizer's children this plan is for, and their names for the title. */
+export function chosenChildren(organizer: Organizer, childIds: readonly string[] | undefined): { ok: true; ids: string[]; names: string[] } | { ok: false; errors: PlanError[] } {
+  if (!organizer.children?.length) return { ok: true, ids: [], names: organizer.childFirstName ? [organizer.childFirstName] : [] };
+  const decision = checkChildren(
+    organizer.children.map((c) => c.id),
+    childIds ?? [],
+  );
+  if (!decision.ok) return { ok: false, errors: decision.errors };
+  const names = new Map(organizer.children.map((c) => [c.id, c.firstName]));
+  return { ok: true, ids: decision.value, names: decision.value.map((id) => names.get(id)!) };
+}
 
 const isId = (id: string) => z.uuid().safeParse(id).success;
 
@@ -233,7 +251,8 @@ export async function sendInvite(deps: SendDeps, organizer: Organizer, input: Pl
   const friends = ids.length ? await deps.store.friendsForInvite(organizer.id, ids) : [];
 
   const checked = checkPlanForm(input, friends.length, zone, now);
-  if (!checked.ok) return { ok: false, errors: checked.errors };
+  const kids = chosenChildren(organizer, input.childIds);
+  if (!checked.ok || !kids.ok) return { ok: false, errors: [...(kids.ok ? [] : kids.errors), ...(checked.ok ? [] : checked.errors)] };
   const { plan, yourName, placeName, placeAddress, placeProviderId } = checked;
   const place = await checkSelectedPlace(deps.places, placeProviderId);
   if (!place.ok) return place;
@@ -248,8 +267,9 @@ export async function sendInvite(deps: SendDeps, organizer: Organizer, input: Pl
 
   const playdateId = await deps.store.createPlaydate({
     organizerId: organizer.id,
-    // KD-06: one child per family, the first (Q4 default); every friend added since T07 has a child's name.
-    title: playdateTitle(organizer.childFirstName, friends.map((f) => f.childFirstName).filter((n): n is string => !!n)),
+    // KD-06: the organizer's chosen children (T41), then one child per invited family, the first (Q4 default).
+    title: playdateTitle(kids.names, friends.map((f) => f.childFirstName).filter((n): n is string => !!n)),
+    childIds: kids.ids,
     mode: time.mode,
     timezone: zone,
     startAt: time.start,

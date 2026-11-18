@@ -12,6 +12,7 @@ export const ERROR_CODES = [
   "MESSAGE_REQUIRED", // KD-05
   "MESSAGE_TOO_LONG", // KD-05 (over 1000 characters)
   "NO_INVITEES", // KD-06
+  "NO_CHILD", // KD-06 (T41, Q30)
   "INVALID_ANSWER", // KD-07 (answer kind does not fit the mode, missing reason, note on a yes, note too long)
   "PLAYDATE_STARTED", // KD-07
   "PLAYDATE_CANCELLED", // KD-07, KD-09

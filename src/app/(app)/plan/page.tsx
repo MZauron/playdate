@@ -39,6 +39,7 @@ export default async function PlanPage({ searchParams }: { searchParams: Promise
       friends={friends}
       savedPlaces={places}
       firstName={profile.firstName}
+      kids={profile.children}
       groups={groups}
       favourites={favourites}
       prefill={

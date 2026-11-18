@@ -18,7 +18,7 @@ export async function sendUpdateAction(_previous: SendInviteState, form: FormDat
   const playdateId = String(form.get("playdateId") ?? "");
   const result = await sendUpdate(
     { pages: playdatePageStore, places: places(), playdates: playdateStore, apply: applyPlaydateUpdate, limiter: updatesLimiter, linkBase: env.PUBLIC_LINK_BASE },
-    { id: user.id, firstName: profile.firstName, childFirstName: profile.children[0]?.firstName ?? "" }, // Q4 default: the first child
+    { id: user.id, firstName: profile.firstName, childFirstName: profile.children[0]?.firstName ?? "", children: profile.children }, // T41: who it is for
     playdateId,
     parsePlanForm(form),
     new Date(),

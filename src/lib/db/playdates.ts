@@ -48,6 +48,7 @@ export const playdateStore: PlaydateStore = {
       p_invites: p.invites.map((i) => ({ friend_id: i.friendId, invitee_user_id: i.inviteeUserId, channel: i.channel, token_hash: i.tokenHash })),
     });
     if (error || !data) throw new Error(`createPlaydate failed: ${error?.code}`);
+    if (p.childIds.length) await setPlaydateChildren(p.organizerId, data, p.childIds);
     return data;
   },
 
@@ -249,4 +250,15 @@ export const applyPlaydateUpdate: import("@/lib/domain/edit-playdate").ApplyUpda
     p_label: u.label as "updated" | "new_time",
   });
   if (error) throw new Error(`applyPlaydateUpdate failed: ${error.code}`);
+  if (u.childIds) await setPlaydateChildren(organizerId, playdateId, u.childIds);
 };
+
+/**
+ * T41: which of the organizer's children the playdate is for (migration 0015). Only their own children on their own playdate are
+ * written. A separate call after the playdate's own write: the title already names the children, so a failure here loses only the
+ * choice Edit playdate starts from.
+ */
+async function setPlaydateChildren(organizerId: string, playdateId: string, childIds: readonly string[]): Promise<void> {
+  const { error } = await adminClient().rpc("set_playdate_children", { p_playdate_id: playdateId, p_organizer_id: organizerId, p_child_ids: [...childIds] });
+  if (error) throw new Error(`setPlaydateChildren failed: ${error.code}`);
+}

@@ -113,6 +113,9 @@ export const enCA = {
     againNote: (day: string) => `Same families and place as ${day}. Check the new time, then send.`,
     back: "Back",
     whoTitle: "Who's invited",
+    /** T41 (Q30): only for a parent with two or more children. */
+    forKidsTitle: "Who's this playdate for?",
+    allMyKids: "All my kids",
     friendsLabel: "Your friends",
     groupsLabel: "Your groups",
     noFriends: "No friends yet. Add a family you'd like to invite.",
@@ -186,6 +189,7 @@ export const enCA = {
       MESSAGE_REQUIRED: "Please write a short message to the parents.",
       MESSAGE_TOO_LONG: "That message is a bit long. Please keep it under 1,000 characters.",
       NO_INVITEES: "Choose at least one family to invite.",
+      NO_CHILD: "Choose who this playdate is for.",
       NAME_REQUIRED: "Please add your first name.",
       PLACE_NAME_REQUIRED: "Please add the name of the place.",
       ADDRESS_REQUIRED: "Add the address to save this place.",

@@ -65,6 +65,10 @@ Where the doc is silent, the reading used is marked *(reading)*.
 | KD-06c | Mia; Arjun, Lily | "Playdate: Mia, Arjun & Lily" |
 | KD-06d | Mia; Arjun, Lily, Zoe | "Playdate: Mia, Arjun, Lily & Zoe" |
 | KD-06e | No mode, blank message, no friends | All three errors at once: `NO_TIME`, `MESSAGE_REQUIRED`, `NO_INVITEES` |
+| KD-06f | Mia and Ethan chosen; Arjun | "Playdate: Mia, Ethan & Arjun" (T41, Q30) |
+| KD-06g | One child (Mia), nothing chosen | the playdate is for Mia |
+| KD-06h | Mia and Ethan, nothing chosen | `NO_CHILD` |
+| KD-06i | Mia, Ethan, Leo; Leo, another parent's child, Mia chosen | Mia and Leo, in the parent's order; only another parent's child chosen: `NO_CHILD` |
 
 ## KD-07 Answers
 | Id | Input | Expected |
