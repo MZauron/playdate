@@ -23,7 +23,7 @@ export default async function FriendLinkPage({ params }: { params: Promise<{ tok
   if (!owner) {
     return (
       <InviteShell>
-        <h1 className="text-title font-bold leading-tight">{t.notFoundTitle}</h1>
+        <h1 className="text-title font-extrabold tracking-tight leading-tight">{t.notFoundTitle}</h1>
         <p className="text-muted">{t.notFoundNote}</p>
         <form action={forgetAction}>
           <Button type="submit" fullWidth>

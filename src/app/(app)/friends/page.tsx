@@ -23,7 +23,7 @@ export default async function FriendsPage({ searchParams }: { searchParams: Prom
   const [friends, groups] = await Promise.all([listFriends(user.id), listGroups(user.id)]); // only this parent's
   return (
     <div className="flex flex-col gap-6 pt-6 pb-6">
-      <h1 className="text-title font-bold leading-tight">{enCA.friends.tabTitle}</h1>
+      <h1 className="text-title font-extrabold tracking-tight leading-tight">{enCA.friends.tabTitle}</h1>
       {befriended === "1" && (
         <StatusLine tone="success" role="status">
           {enCA.friendLink.befriended}
@@ -31,7 +31,7 @@ export default async function FriendsPage({ searchParams }: { searchParams: Prom
       )}
 
       <section aria-labelledby="friends-groups" className="flex flex-col gap-3">
-        <h2 id="friends-groups" className="text-lg font-semibold">
+        <h2 id="friends-groups" className="px-1 text-label font-bold uppercase tracking-wider text-muted">
           {g.title}
         </h2>
         {groups.length === 0 ? (
@@ -59,7 +59,7 @@ export default async function FriendsPage({ searchParams }: { searchParams: Prom
       </section>
 
       <section aria-labelledby="friends-list" className="flex flex-col gap-3">
-        <h2 id="friends-list" className="text-lg font-semibold">
+        <h2 id="friends-list" className="px-1 text-label font-bold uppercase tracking-wider text-muted">
           {enCA.friends.title}
         </h2>
         {friends.length === 0 ? (
@@ -68,7 +68,7 @@ export default async function FriendsPage({ searchParams }: { searchParams: Prom
           <Card className="px-4 py-1">
             <ul>
               {friends.map((friend) => (
-                <li key={friend.id} className="border-page [&+&]:border-t">
+                <li key={friend.id} className="border-line [&+&]:border-t">
                   <FriendListRow friend={friend} />
                 </li>
               ))}
@@ -80,7 +80,7 @@ export default async function FriendsPage({ searchParams }: { searchParams: Prom
 
       {/* T34 (Q26): friends on Kindred without typing a number. */}
       <section aria-labelledby="friends-invite" className="flex flex-col gap-3">
-        <h2 id="friends-invite" className="text-lg font-semibold">
+        <h2 id="friends-invite" className="px-1 text-label font-bold uppercase tracking-wider text-muted">
           {enCA.friendLink.title}
         </h2>
         <InviteToKindred />

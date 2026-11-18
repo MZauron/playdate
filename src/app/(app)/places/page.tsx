@@ -19,9 +19,9 @@ export default async function PlacesPage() {
   const [favourites, saved, popular] = await Promise.all([listFavouritePlaces(user.id), listTypedPlaces(user.id), listPopularPlaces(user.id)]);
   return (
     <section className="flex flex-col gap-6 pt-6 pb-6">
-      <h1 className="text-title font-bold leading-tight">{t.title}</h1>
+      <h1 className="text-title font-extrabold tracking-tight leading-tight">{t.title}</h1>
       <section aria-labelledby="places-ask" className="flex flex-col gap-3">
-        <h2 id="places-ask" className="text-lg font-semibold">
+        <h2 id="places-ask" className="px-1 text-label font-bold uppercase tracking-wider text-muted">
           {enCA.ask.title}
         </h2>
         <p className="text-[15px] text-muted">{enCA.ask.intro}</p>
@@ -29,14 +29,14 @@ export default async function PlacesPage() {
       </section>
       <Places title={t.favourites} places={favourites} empty={t.noFavourites} />
       <section aria-labelledby="explore-saved" className="flex flex-col gap-3">
-        <h2 id="explore-saved" className="text-lg font-semibold">
+        <h2 id="explore-saved" className="px-1 text-label font-bold uppercase tracking-wider text-muted">
           {t.saved}
         </h2>
         <SavedPlaces places={saved} />
       </section>
       <Places title={t.popular} places={popular} empty={t.noPopular} />
       <section aria-labelledby="explore-search" className="flex flex-col gap-3">
-        <h2 id="explore-search" className="text-lg font-semibold">
+        <h2 id="explore-search" className="px-1 text-label font-bold uppercase tracking-wider text-muted">
           {t.search}
         </h2>
         <SearchPlaces />
@@ -49,7 +49,7 @@ function Places({ title, places, empty }: { title: string; places: PlaceForParen
   const id = `explore-${title.toLowerCase().replace(/\W+/g, "-")}`;
   return (
     <section aria-labelledby={id} className="flex flex-col gap-3">
-      <h2 id={id} className="text-lg font-semibold">
+      <h2 id={id} className="px-1 text-label font-bold uppercase tracking-wider text-muted">
         {title}
       </h2>
       {places.length === 0 ? (

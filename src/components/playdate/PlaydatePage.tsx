@@ -44,7 +44,7 @@ export function PlaydatePage({
         <Link href="/" className="-ml-2 flex min-h-11 w-fit items-center px-2 text-[15px] font-semibold text-primary">
           ← {t.back}
         </Link>
-        <h1 className="text-title font-bold leading-tight">{p.title}</h1>
+        <h1 className="text-title font-extrabold tracking-tight leading-tight">{p.title}</h1>
         {view.cancelled && <StatusLine tone="danger">{t.cancelled}</StatusLine>}
       </header>
 
@@ -64,7 +64,7 @@ export function PlaydatePage({
           <TextButtons texts={texts} />
           <a
             href={`/playdates/${p.id}/calendar.ics`}
-            className="inline-flex h-[50px] w-full items-center justify-center rounded-button bg-primary-tint px-5 text-base font-semibold text-primary"
+            className="inline-flex h-[52px] w-full items-center justify-center rounded-full bg-primary-tint px-5 text-base font-semibold text-primary"
           >
             {enCA.invite.addToCalendar}
           </a>
@@ -134,7 +134,7 @@ export function PlaydatePage({
               href={p.searchedPlace?.mapsUrl ?? directionsHref(p.placeName, p.placeAddress)}
               target="_blank"
               rel="noopener noreferrer"
-              className="inline-flex h-11 shrink-0 items-center rounded-button bg-primary-tint px-4 text-[15px] font-semibold text-primary"
+              className="inline-flex h-11 shrink-0 items-center rounded-full bg-primary-tint px-4 text-[15px] font-semibold text-primary"
             >
               {enCA.invite.directions}
             </a>
@@ -143,7 +143,7 @@ export function PlaydatePage({
       </NumberedStep>
 
       <section aria-labelledby="details-title" className="flex flex-col gap-2">
-        <h2 id="details-title" className="text-lg font-semibold">
+        <h2 id="details-title" className="px-1 text-label font-bold uppercase tracking-wider text-muted">
           {t.detailsTitle}
         </h2>
         <Card>

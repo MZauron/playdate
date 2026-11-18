@@ -264,7 +264,7 @@ function SlimCard({
         </span>
         <Chevron />
       </span>
-      <span className="mt-3 grid gap-1.5 border-t border-page pt-3 text-[14px]">
+      <span className="mt-3 grid gap-1.5 border-t border-line pt-3 text-[14px]">
         <span className="flex min-w-0 items-center gap-2">
           <ClockIcon />
           <span className="truncate">{when}</span>

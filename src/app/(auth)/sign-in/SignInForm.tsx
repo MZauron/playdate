@@ -18,7 +18,7 @@ type StepProps<S extends SignInState> = { state: S; action: (form: FormData) => 
 function PhoneStep({ state, action, pending }: StepProps<Extract<SignInState, { step: "phone" }>>) {
   return (
     <form action={action} className="flex flex-col gap-5">
-      <h1 className="text-title font-bold leading-tight">{enCA.signIn.title}</h1>
+      <h1 className="text-title font-extrabold tracking-tight leading-tight">{enCA.signIn.title}</h1>
       <input type="hidden" name="intent" value="send" />
       <Field
         id="phone"
@@ -50,7 +50,7 @@ function CodeStep({ state, action, pending }: StepProps<Extract<SignInState, { s
 
   return (
     <div className="flex flex-col gap-5">
-      <h1 className="text-title font-bold leading-tight">{enCA.signIn.codeTitle}</h1>
+      <h1 className="text-title font-extrabold tracking-tight leading-tight">{enCA.signIn.codeTitle}</h1>
       <form action={action} className="flex flex-col gap-5">
         <input type="hidden" name="intent" value="verify" />
         <input type="hidden" name="phoneE164" value={state.phone} />

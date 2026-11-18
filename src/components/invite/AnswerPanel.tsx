@@ -92,7 +92,7 @@ export function AnswerPanel({ inviteKey, timeVersion, answer, zone, availability
           </div>
         </fieldset>
         <div>
-          <label htmlFor="answer-note" className="mb-1.5 block text-[15px] font-semibold">
+          <label htmlFor="answer-note" className="mb-1.5 block text-[12px] font-bold uppercase tracking-wider text-muted">
             {t.noteLabel}
           </label>
           <textarea
@@ -102,7 +102,7 @@ export function AnswerPanel({ inviteKey, timeVersion, answer, zone, availability
             maxLength={NOTE_MAX_LENGTH}
             value={note}
             onChange={(e) => setNote(e.target.value)}
-            className="block w-full rounded-button bg-card px-4 py-3 text-base text-ink ring-1 ring-black/10 focus-visible:outline-2 focus-visible:outline-primary"
+            className="block w-full rounded-xl bg-card px-4 py-3 text-base text-ink ring-1 ring-border focus-visible:outline-2 focus-visible:outline-primary"
           />
         </div>
         {error}

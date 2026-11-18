@@ -42,7 +42,7 @@ export function CheckIns({ panel, postAs, zone, refresh = false }: { panel: Chec
   if (!canPost && panel.checkIns.length === 0) return null;
   return (
     <section aria-labelledby="checkins-title" className="flex flex-col gap-3">
-      <h2 id="checkins-title" className="text-lg font-semibold">
+      <h2 id="checkins-title" className="px-1 text-label font-bold uppercase tracking-wider text-muted">
         {t.title}
       </h2>
       {canPost && (
@@ -51,7 +51,7 @@ export function CheckIns({ panel, postAs, zone, refresh = false }: { panel: Chec
           {"token" in postAs && <input type="hidden" name="token" value={postAs.token} />}
           {"inviteId" in postAs && <input type="hidden" name="inviteId" value={postAs.inviteId} />}
           <p className="text-[15px] text-muted">{t.hint}</p>
-          <label htmlFor="checkin-note" className="-mb-2 text-[15px] font-semibold">
+          <label htmlFor="checkin-note" className="-mb-2 text-[12px] font-bold uppercase tracking-wider text-muted">
             {t.noteLabel}
           </label>
           <input
@@ -94,7 +94,7 @@ export function CheckIns({ panel, postAs, zone, refresh = false }: { panel: Chec
                   const result = await shareText(state.text!);
                   if (result !== "cancelled") setShared({ for: state.posted ?? 0, result: result === "copied" ? "copied" : "shared" });
                 }}
-                className="inline-flex min-h-11 items-center rounded-button bg-primary-tint px-4 text-[15px] font-semibold text-primary"
+                className="inline-flex min-h-11 items-center rounded-full bg-primary-tint px-4 text-[15px] font-semibold text-primary"
               >
                 {shared && shared.for === state.posted ? (shared.result === "copied" ? t.copied : t.shared) : t.share}
               </button>

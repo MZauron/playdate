@@ -1,9 +1,10 @@
 @import "tailwindcss";
 
-/* Colours and radii: docs/DESIGN.md "Visual design". */
+/* Colours and radii: docs/DESIGN.md "Visual design" (T36: the tester's mock-up, Q29). */
 @theme {
-  --color-primary: #0b6b66;
-  --color-primary-tint: #e6f2f1;
+  --color-primary: #35746e;
+  --color-primary-strong: #2b5d59;
+  --color-primary-tint: #edf5f2;
   --color-accent: #e2583a;
   --color-accent-tint: #fdeee9;
   --color-success: #18794e;
@@ -14,15 +15,20 @@
   --color-warn: #985316;
   --color-warn-tint: #fdf3e7;
   --color-purple: #6c5ce7;
-  --color-page: #f5f6f8;
+  --color-page: #f7f8f7;
+  /* T36: the mock-up's hairlines and grey fills. */
+  --color-border: #e6eaee;
+  --color-line: #edf0f3;
+  --color-fill: #f2f5f9;
   --color-card: #ffffff;
-  --color-ink: #0f1a1f;
+  --color-ink: #111729;
   --color-muted: #64707a;
 
-  --radius-card: 16px;
+  --radius-card: 20px;
   --radius-button: 14px;
 
-  --shadow-card: 0 1px 3px rgb(15 26 31 / 0.06), 0 4px 12px rgb(15 26 31 / 0.05);
+  /* T36 (Q29): cards are white with a 1 px hairline, no shadow, as in the mock-up. */
+  --shadow-card: 0 0 0 1px #e6eaee;
 
   --font-sans: system-ui, -apple-system, "SF Pro Text", "Segoe UI", Roboto, sans-serif;
 
@@ -31,6 +37,8 @@
 }
 
 body {
+  letter-spacing: -0.01em;
+  -webkit-font-smoothing: antialiased;
   background: var(--color-page);
   color: var(--color-ink);
   font-family: var(--font-sans);

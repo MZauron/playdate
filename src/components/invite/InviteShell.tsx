@@ -18,7 +18,7 @@ export function InviteShell({ children }: { children: React.ReactNode }) {
 export function InviteMessage({ title, note }: { title: string; note: string }) {
   return (
     <InviteShell>
-      <h1 className="text-title font-bold leading-tight">{title}</h1>
+      <h1 className="text-title font-extrabold tracking-tight leading-tight">{title}</h1>
       <p className="text-muted">{note}</p>
     </InviteShell>
   );

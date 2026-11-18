@@ -134,19 +134,20 @@ Same rule as Lash and Aquatix: **clients never write to the database.**
 The organizer learns about answers live on the playdate page and on Home, where the playdate's status line turns coral.
 
 ## Visual design
-Calm, warm, clean: white cards on a light grey page, one deep teal for the brand, one coral for the main action.
+The tester's mock-up (2026-11-17, Q29; T37 and T36): calm and airy. White cards with a hairline on a near-white page, a softer teal for the brand, one coral for the main action, pills for buttons.
 
 | Role | Colour | Used for |
 | --- | --- | --- |
-| Primary (teal) | `#0B6B66`, tint `#E6F2F1` | Brand, welcome banner, selected items, ticks, secondary buttons |
-| Accent (coral) | `#E2583A`, tint `#FDEEE9` | The one main action per screen, a friend's picked time |
-| Success (green) | `#18794E` | Coming, Responded, Confirmed, Update sent |
-| Danger (red) | `#C4321F` | Can't make it, Remove, Cancel playdate |
+| Primary (teal) | `#35746E`, strong `#2B5D59`, tint `#EDF5F2` | Brand, the Home banner, selected items, ticks, secondary buttons, the active tab |
+| Accent (coral) | `#E2583A`, tint `#FDEEE9` | The one main action per screen, a friend's picked time (kept a little deeper than the mock-up's `#DF6D52` for contrast on white text) |
+| Success (green) | `#18794E`, tint `#EFFCF5` | Coming, ✓ Confirmed tags, family chips, "tap to confirm" notes |
+| Danger (red) | `#C4321F`, tint `#FDF1F2` | Can't make it, Remove, Cancel playdate |
+| Warn (amber) | `#985316`, tint `#FDF3E7` | The Pending tag |
 | Purple | `#6C5CE7` | Message suggestions, Updated / New time labels |
-| Page / cards | `#F5F6F8` / `#FFFFFF` | Background and surfaces |
-| Text / muted | `#0F1A1F` / `#64707A` | Body text and secondary lines |
-- **Type:** the phone's system font (`system-ui`; SF Pro on iPhone). Titles 32 px bold; section labels 13 px uppercase, letter-spaced, muted; body 15–16 px; names semi-bold.
-- **Components:** cards 16 px corners + soft shadow, no borders · buttons 50 px tall, 14 px corners (coral main, teal-tint secondary, red outline destructive) · numbered steps (coral circle → teal tick) · pickers in a grey box, pop-over calendar, scrolling time list centred on the selection · availability grid (days across, Morning/Afternoon/Evening down; teal ticks for the organizer, teal "Free" boxes and orange picks for friends) · two-part switch (grey pill, active side white) · chips · status lines (coloured words) on detail pages; on Home cards, tags and one chip per family (Q29, T37) · toasts (dark rounded bar at the top).
+| Page / cards / lines | `#F7F8F7` / `#FFFFFF` / border `#E6EAEE`, line `#EDF0F3`, fill `#F2F5F9` | Background, surfaces, hairlines between rows |
+| Text / muted | `#111729` / `#64707A` | Body text and secondary lines |
+- **Type:** the phone's system font (`system-ui`; SF Pro on iPhone), letter-spacing −0.01em. Titles 28–32 px extra-bold, tight; section labels and field labels 12–13 px uppercase, letter-spaced, muted; body 15–16 px; names bold.
+- **Components:** cards 20 px corners with a 1 px hairline and no shadow; lists are one card with hairlines between rows (friends, recent playdates, playdates together) · buttons are 52 px pills (coral main, teal-tint secondary, red outline destructive); small actions (Plan again, Directions) are 44 px tinted pills · fields 48 px, 12 px corners, hairline · the tab bar floats: a white pill with an icon over each name, the active tab on the teal tint · round initials avatars in a colour picked from the name · numbered steps (coral circle → teal tick) · pickers in a grey box, pop-over calendar, scrolling time list centred on the selection · availability grid (as before) · two-part switch · chips · status lines (coloured words) on detail pages; on Home cards, tags and one chip per family · toasts (dark rounded bar at the top).
 - **Tone:** short, warm, plain, like a friend. Buttons say what happens ("Confirm and send update", "We're in!"). No jargon, no exclamation-heavy marketing, no generic text added to what parents write.
 
 ## Privacy and safety
