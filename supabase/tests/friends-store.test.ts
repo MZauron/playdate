@@ -41,7 +41,7 @@ describe.skipIf(!apiEnabled)("friends repository", () => {
     const list = await repo.listFriends(alex);
     expect(list).toHaveLength(1);
     expect(list[0]).toMatchObject({ parentName: "Dev Patel", childFirstName: "Arjun", label: "Arjun's parent", hasKindred: false });
-    expect(Object.keys(list[0]!).sort()).toEqual(["childFirstName", "hasKindred", "id", "label", "parentName"]);
+    expect(Object.keys(list[0]!).sort()).toEqual(["childFirstName", "childIds", "hasKindred", "id", "label", "parentName"]); // childIds: which of your kids they know (T42)
     expect(await repo.listFriends(sam)).toEqual([]);
   });
 
