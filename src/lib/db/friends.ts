@@ -2,6 +2,7 @@
 import "server-only";
 import type { Friend, FriendStore } from "@/lib/domain/friends";
 import { adminClient } from "./admin";
+import { shownPlace } from "./shown-place";
 
 const COLUMNS = "id, parent_name, child_first_name, label, kindred_user_id";
 type Row = { id: string; parent_name: string; child_first_name: string | null; label: string; kindred_user_id: string | null };
@@ -79,4 +80,70 @@ export async function listFriends(ownerId: string): Promise<Friend[]> {
   const { data, error } = await adminClient().from("friends").select(COLUMNS).eq("owner_id", ownerId).order("created_at").order("id");
   if (error) throw new Error(`listFriends failed: ${error.code}`);
   return (data ?? []).map(toFriend);
+}
+
+/** T40: one of THIS owner's friends, or null (another parent's friend id finds nothing). */
+export async function getFriend(ownerId: string, friendId: string): Promise<Friend | null> {
+  const { data, error } = await adminClient().from("friends").select(COLUMNS).eq("owner_id", ownerId).eq("id", friendId).maybeSingle();
+  if (error) throw new Error(`getFriend failed: ${error.code}`);
+  return data ? toFriend(data) : null;
+}
+
+/** T40: a playdate on a friend's page. */
+export type PlaydateTogether = { id: string; title: string; timezone: string; start: Date | null; end: Date | null; placeName: string | null; confirmed: boolean };
+
+/**
+ * T40: THIS owner's playdates with this friend. `open`: still on (links not expired, not cancelled), soonest first. `past`: confirmed
+ * and over, newest first, five at most.
+ */
+export async function playdatesWithFriend(ownerId: string, friendId: string, now: Date): Promise<{ open: PlaydateTogether[]; past: PlaydateTogether[] }> {
+  const { data, error } = await adminClient()
+    .from("invites")
+    .select("playdates(id, title, status, timezone, start_at, end_at, final_start_at, final_end_at, links_expire_at, place_name, place_address, place_provider_id)")
+    .eq("organizer_id", ownerId)
+    .eq("friend_id", friendId)
+    .overrideTypes<
+      {
+        playdates: {
+          id: string;
+          title: string;
+          status: string;
+          timezone: string;
+          start_at: string | null;
+          end_at: string | null;
+          final_start_at: string | null;
+          final_end_at: string | null;
+          links_expire_at: string;
+          place_name: string | null;
+          place_address: string | null;
+          place_provider_id: string | null;
+        } | null;
+      }[],
+      { merge: false }
+    >();
+  if (error) throw new Error(`playdatesWithFriend failed: ${error.code}`);
+  const rows = (data ?? []).flatMap((r) => (r.playdates && r.playdates.status !== "cancelled" ? [r.playdates] : []));
+  const at = (v: string | null) => (v ? new Date(v) : null);
+  const items = await Promise.all(
+    rows.map(async (row) => ({
+      expires: new Date(row.links_expire_at),
+      item: {
+        id: row.id,
+        title: row.title,
+        timezone: row.timezone,
+        start: at(row.final_start_at) ?? at(row.start_at),
+        end: at(row.final_end_at) ?? at(row.end_at),
+        placeName: (await shownPlace(row)).placeName,
+        confirmed: row.status === "confirmed",
+      },
+    })),
+  );
+  const time = (p: PlaydateTogether) => p.start?.getTime() ?? Number.POSITIVE_INFINITY;
+  const open = items.filter((i) => i.expires > now).map((i) => i.item).sort((a, b) => time(a) - time(b));
+  const past = items
+    .filter((i) => i.expires <= now && i.item.confirmed && i.item.end !== null && i.item.end < now)
+    .map((i) => i.item)
+    .sort((a, b) => time(b) - time(a))
+    .slice(0, 5);
+  return { open, past };
 }

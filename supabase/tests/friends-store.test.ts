@@ -123,4 +123,39 @@ describe.skipIf(!apiEnabled)("friends repository", () => {
     expect(await q("select id from invites where id = $1", [invite])).toEqual([]);
     expect(await q("select invite_id from answers where invite_id = $1", [invite])).toEqual([]);
   });
+
+  it("opens only the owner's own friend, and lists the playdates together: open soonest first, past confirmed ones newest first (T40)", async () => {
+    const alex = await parent();
+    const sam = await parent();
+    const [f] = await q<{ id: string }>(
+      "insert into friends (owner_id, parent_name, child_first_name, label, phone_hash) values ($1, 'Dev Patel', 'Arjun', 'Arjun''s dad', $2) returning id",
+      [alex, `h-${randomUUID()}`],
+    );
+    const friendId = f!.id;
+    expect((await repo.getFriend(alex, friendId))?.label).toBe("Arjun's dad");
+    expect(await repo.getFriend(sam, friendId)).toBeNull();
+
+    const playdate = async (start: string, status: "collecting" | "confirmed" | "cancelled", expires: string) => {
+      const s0 = new Date(start);
+      const e0 = new Date(s0.getTime() + 7_200_000);
+      const confirmed = status === "confirmed";
+      const [p] = await q<{ id: string }>(
+        `insert into playdates (organizer_id, title, mode, status, start_at, end_at, final_start_at, final_end_at, confirmed_at, cancelled_at, message, links_expire_at)
+         values ($1, 'Playdate: Mia & Arjun', 'set_time', $2::playdate_status, $3, $4, $5, $6, $7, $8, 'Park?', $9) returning id`,
+        [alex, status, s0, e0, confirmed ? s0 : null, confirmed ? e0 : null, confirmed ? s0 : null, status === "cancelled" ? s0 : null, expires],
+      );
+      await q("insert into invites (playdate_id, organizer_id, friend_id, channel, token_hash) values ($1, $2, $3, 'text', $4)", [p!.id, alex, friendId, `t-${randomUUID()}`]);
+      return p!.id;
+    };
+    const later = await playdate("2030-11-28T15:00:00Z", "collecting", "2030-11-29T05:00:00Z");
+    const sooner = await playdate("2030-11-21T15:00:00Z", "confirmed", "2030-11-22T05:00:00Z");
+    const pastOld = await playdate("2030-10-03T15:00:00Z", "confirmed", "2030-10-04T05:00:00Z");
+    const pastNew = await playdate("2030-10-17T15:00:00Z", "confirmed", "2030-10-18T05:00:00Z");
+    await playdate("2030-10-24T15:00:00Z", "collecting", "2030-10-25T05:00:00Z"); // over, never confirmed
+    await playdate("2030-11-25T15:00:00Z", "cancelled", "2030-11-26T05:00:00Z");
+    const together = await repo.playdatesWithFriend(alex, friendId, new Date("2030-11-01T12:00:00Z"));
+    expect(together.open.map((p) => p.id)).toEqual([sooner, later]);
+    expect(together.past.map((p) => p.id)).toEqual([pastNew, pastOld]);
+    expect(await repo.playdatesWithFriend(sam, friendId, new Date("2030-11-01T12:00:00Z"))).toEqual({ open: [], past: [] });
+  });
 });

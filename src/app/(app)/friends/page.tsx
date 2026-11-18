@@ -4,7 +4,7 @@ import { Card } from "@/components/Card";
 import { StatusLine } from "@/components/StatusLine";
 import { AddFriendForm } from "@/components/friends/AddFriendForm";
 import { InviteToKindred } from "@/components/friends/InviteToKindred";
-import { FriendRow } from "@/components/friends/FriendRow";
+import { FriendListRow } from "@/components/friends/FriendListRow";
 import { Initials } from "@/components/groups/Initials";
 import { requireParent } from "@/lib/auth/require-parent";
 import { listFriends } from "@/lib/db/friends";
@@ -65,13 +65,15 @@ export default async function FriendsPage({ searchParams }: { searchParams: Prom
         {friends.length === 0 ? (
           <p className="text-[15px] text-muted">{enCA.friends.empty}</p>
         ) : (
-          <ul className="flex flex-col gap-3">
-            {friends.map((friend) => (
-              <li key={friend.id}>
-                <FriendRow friend={friend} />
-              </li>
-            ))}
-          </ul>
+          <Card className="px-4 py-1">
+            <ul>
+              {friends.map((friend) => (
+                <li key={friend.id} className="border-page [&+&]:border-t">
+                  <FriendListRow friend={friend} />
+                </li>
+              ))}
+            </ul>
+          </Card>
         )}
         <AddFriendForm />
       </section>

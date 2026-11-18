@@ -94,6 +94,18 @@ export const enCA = {
       LABEL_REQUIRED: "Please give them a name of up to 40 characters.",
       NOT_FOUND: "That friend isn't in your list any more.",
     },
+    /** T40: a page for each friend. */
+    page: {
+      openLabel: (label: string) => `Open ${label}`,
+      textNote: "Invites go to their phone as a text from you.",
+      plan: (firstName: string) => `Plan a playdate with ${firstName}`,
+      together: "Playdates together",
+      none: "No playdates yet.",
+      confirmed: "Confirmed",
+      waiting: "Waiting for answers",
+      planAgain: "Plan again",
+      manage: "In your list",
+    },
   },
   plan: {
     title: "Plan a playdate",

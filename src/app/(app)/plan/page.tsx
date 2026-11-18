@@ -15,10 +15,11 @@ export const dynamic = "force-dynamic";
 // Plan a playdate (T08): Who's invited, When, Details, Send. Everything shown is this parent's own.
 // From a group (T19): ?group=<id> pre-selects its families; &again=<playdate id> also fills in the same place, next week.
 // From a place (T18, Plan a playdate here): ?place=<provider id> selects it, once the provider confirms it exists.
+// From a friend's page (T40): ?friend=<id> selects that friend, when they are one of this parent's.
 // From Home's Recent playdates (T38): ?again=<playdate id> alone fills in the same families, place, weekday and times, after today.
-export default async function PlanPage({ searchParams }: { searchParams: Promise<{ group?: string; again?: string; place?: string }> }) {
+export default async function PlanPage({ searchParams }: { searchParams: Promise<{ group?: string; again?: string; place?: string; friend?: string }> }) {
   const { user, profile } = await requireParent();
-  const { group: groupId, again, place: placeId } = await searchParams;
+  const { group: groupId, again, place: placeId, friend: friendId } = await searchParams;
   const isId = (v: string | undefined): v is string => !!v && z.uuid().safeParse(v).success;
   const [friends, places, groupList, group, favourites, chosen] = await Promise.all([
     listFriends(user.id),
@@ -50,7 +51,9 @@ export default async function PlanPage({ searchParams }: { searchParams: Promise
               }
             : chosen
               ? { friendIds: [], place: chosen }
-              : undefined
+              : friendId && friends.some((f) => f.id === friendId)
+                ? { friendIds: [friendId] }
+                : undefined
       }
     />
   );
