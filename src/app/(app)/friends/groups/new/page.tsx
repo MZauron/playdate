@@ -11,7 +11,7 @@ export default async function NewGroupPage() {
   const friends = await listFriends(user.id);
   return (
     <div className="flex flex-col gap-5 pb-6">
-      <h1 className="text-title font-bold leading-tight">{enCA.groups.create}</h1>
+      <h1 className="text-title font-extrabold tracking-tight leading-tight">{enCA.groups.create}</h1>
       <GroupForm friends={friends} />
     </div>
   );

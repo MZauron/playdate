@@ -1,6 +1,7 @@
 "use client";
 
-import { useActionState, useState } from "react";
+import { useRouter } from "next/navigation";
+import { useActionState, useEffect, useState } from "react";
 import { removeFriendAction, renameFriendAction, type FriendRowState } from "@/app/(app)/friends/actions";
 import { Button } from "@/components/Button";
 import { Card } from "@/components/Card";
@@ -12,7 +13,8 @@ import type { Friend } from "@/lib/domain/friends";
 type Mode = "view" | "rename" | "confirm-remove";
 
 /** One friend: their label, the parent's name, and whether they get the invite in the app or by text. Rename and Remove open in place. */
-export function FriendRow({ friend }: { friend: Friend }) {
+export function FriendRow({ friend, afterRemove }: { friend: Friend; afterRemove?: string }) {
+  const router = useRouter();
   const [mode, setMode] = useState<Mode>("view");
   const [renameState, rename, renaming] = useActionState<FriendRowState, FormData>(async (previous, form) => {
     const result = await renameFriendAction(previous, form);
@@ -20,6 +22,10 @@ export function FriendRow({ friend }: { friend: Friend }) {
     return result;
   }, {});
   const [removeState, remove, removing] = useActionState<FriendRowState, FormData>(removeFriendAction, {});
+  // T40: on the friend's own page, removing them goes back to the list.
+  useEffect(() => {
+    if (removeState.done && afterRemove) router.replace(afterRemove);
+  }, [removeState.done, afterRemove, router]);
 
   return (
     <Card>

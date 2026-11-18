@@ -2,6 +2,7 @@ import { renderToStaticMarkup as html } from "react-dom/server";
 import { describe, expect, it, vi } from "vitest";
 
 vi.mock("@/app/(app)/friends/actions", () => ({ addFriendAction: vi.fn(), renameFriendAction: vi.fn(), removeFriendAction: vi.fn() }));
+vi.mock("next/navigation", () => ({ useRouter: () => ({ replace: vi.fn(), push: vi.fn() }) }));
 
 const { AddFriendForm } = await import("./AddFriendForm");
 const { FriendRow } = await import("./FriendRow");
@@ -52,6 +53,37 @@ describe("AddFriendForm", () => {
   it("makes every box 48 px and every button at least 44 px", () => {
     expect(markup.match(/h-12/g)).toHaveLength(3);
     expect(markup).toContain("h-11"); // Paste a number
-    expect(markup).toContain("h-[50px]"); // Add friend
+    expect(markup).toContain("h-[52px]"); // Add friend
+  });
+});
+
+describe("A page for each friend (T40)", async () => {
+  const { FriendListRow } = await import("./FriendListRow");
+  const { FriendPage } = await import("./FriendPage");
+  const ZONE = "America/Toronto";
+  const open = [{ id: "p1", title: "Playdate: Mia & Arjun", timezone: ZONE, start: new Date("2026-11-21T15:00:00Z"), end: new Date("2026-11-21T17:00:00Z"), placeName: "High Park", confirmed: false }];
+  const past = [{ ...open[0]!, id: "p0", confirmed: true, start: new Date("2026-11-07T19:00:00Z"), end: new Date("2026-11-07T21:00:00Z"), placeName: "Riverdale Park" }];
+
+  it("lists each friend as a link to their page, with initials, label, name and has Kindred / gets a text", () => {
+    const markup = html(<FriendListRow friend={friend} />);
+    expect(markup).toContain(`href="/friends/${friend.id}"`);
+    expect(markup).toContain(">DP<");
+    expect(markup).toContain("Arjun&#x27;s dad");
+    expect(markup).toContain("Dev Patel · has Kindred");
+  });
+  it("shows the friend, a coral Plan a playdate with Dev, open playdates, past ones with Plan again, and Rename / Remove", () => {
+    const markup = html(<FriendPage friend={{ ...friend, hasKindred: false }} open={open} past={past} />);
+    expect(markup).toContain("Dev Patel");
+    expect(markup).toContain("gets a text");
+    expect(markup).toContain("Invites go to their phone as a text from you.");
+    expect(markup).toMatch(new RegExp(`href="/plan\\?friend=${friend.id}"[^>]*>Plan a playdate with Dev<|bg-accent[^"]*" href="/plan\\?friend=${friend.id}">Plan a playdate with Dev<`));
+    expect(markup).toContain('href="/playdates/p1"');
+    expect(markup).toContain("Waiting for answers · High Park");
+    expect(markup).toContain('href="/plan?again=p0"');
+    expect(markup).toContain("Rename");
+    expect(markup).not.toMatch(/\+1\d{10}/);
+  });
+  it("says so when there are no playdates together yet", () => {
+    expect(html(<FriendPage friend={friend} open={[]} past={[]} />)).toContain("No playdates yet.");
   });
 });

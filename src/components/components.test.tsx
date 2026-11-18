@@ -16,9 +16,9 @@ describe("Card", () => {
 });
 
 describe("Button", () => {
-  it("is 50 px tall with 14 px corners in each variant", () => {
+  it("is a 52 px tall pill in each variant (T36)", () => {
     for (const variant of ["main", "secondary", "destructive"] as const) {
-      expect(html(<Button variant={variant}>Go</Button>)).toMatch(/h-\[50px\][^"]*rounded-button|rounded-button[^"]*h-\[50px\]/);
+      expect(html(<Button variant={variant}>Go</Button>)).toMatch(/h-\[52px\][^"]*rounded-full|rounded-full[^"]*h-\[52px\]/);
     }
   });
   it("is coral for main, teal on its tint for secondary, a red outline for destructive", () => {
@@ -33,7 +33,7 @@ describe("Button", () => {
   it("ButtonLink is a link that looks the same", () => {
     const markup = html(<ButtonLink href="/plan" variant="main">Plan</ButtonLink>);
     expect(markup).toContain('href="/plan"');
-    expect(markup).toContain("h-[50px]");
+    expect(markup).toContain("h-[52px]");
   });
 });
 

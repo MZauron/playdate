@@ -43,7 +43,7 @@ export function AskKindred({ action, onClose }: { action: (place: PlaceForParent
           void ask();
         }}
       >
-        <label htmlFor="ask-words" className="text-[15px] font-semibold">
+        <label htmlFor="ask-words" className="text-[12px] font-bold uppercase tracking-wider text-muted">
           {t.label}
         </label>
         <textarea
@@ -53,7 +53,7 @@ export function AskKindred({ action, onClose }: { action: (place: PlaceForParent
           placeholder={t.placeholder}
           maxLength={200}
           rows={3}
-          className="block w-full rounded-button bg-card px-4 py-3 text-base text-ink ring-1 ring-black/10 placeholder:text-muted focus-visible:outline-2 focus-visible:outline-primary"
+          className="block w-full rounded-xl bg-card px-4 py-3 text-base text-ink ring-1 ring-border placeholder:text-muted focus-visible:outline-2 focus-visible:outline-primary"
         />
         <Button type="submit" variant="secondary" disabled={asked.status === "asking" || !words.trim()}>
           {t.submit}

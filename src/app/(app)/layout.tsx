@@ -7,7 +7,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
   await requireParent();
   return (
     <>
-      <main className="mx-auto min-h-dvh max-w-md px-4 pb-24 pt-4">{children}</main>
+      <main className="mx-auto min-h-dvh max-w-md px-4 pb-32 pt-4">{children}</main>
       <AppTabs />
     </>
   );

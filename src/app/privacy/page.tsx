@@ -19,7 +19,7 @@ export default async function PrivacyPage() {
     <main className="mx-auto flex min-h-dvh max-w-md flex-col gap-6 px-4 pb-10 pt-6">
       <p className="text-xl font-bold text-primary">{enCA.app.name}</p>
       <div>
-        <h1 className="text-title font-bold leading-tight">{t.title}</h1>
+        <h1 className="text-title font-extrabold tracking-tight leading-tight">{t.title}</h1>
         <p className="mt-2 text-muted">{t.intro}</p>
       </div>
       {t.sections.map((section) => (
