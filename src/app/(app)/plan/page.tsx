@@ -9,6 +9,7 @@ import { DEFAULT_ZONE } from "@/lib/rules/config";
 import { enCA, formatShortDay } from "@/lib/i18n/en-CA";
 import { places as placesProvider, PLACE_ID_PATTERN } from "@/lib/integrations/places";
 import { planAgainPrefill, planAgainValues } from "@/lib/domain/groups";
+import { readSaid } from "./said-cookie";
 
 export const dynamic = "force-dynamic";
 
@@ -17,9 +18,15 @@ export const dynamic = "force-dynamic";
 // From a place (T18, Plan a playdate here): ?place=<provider id> selects it, once the provider confirms it exists.
 // From a friend's page (T40): ?friend=<id> selects that friend, when they are one of this parent's.
 // From Home's Recent playdates (T38): ?again=<playdate id> alone fills in the same families, place, weekday and times, after today.
-export default async function PlanPage({ searchParams }: { searchParams: Promise<{ group?: string; again?: string; place?: string; friend?: string }> }) {
+// From Home's Or just say it (T43): ?said=1 fills in what the sentence said, from this parent's own cookie.
+export default async function PlanPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ group?: string; again?: string; place?: string; friend?: string; said?: string }>;
+}) {
   const { user, profile } = await requireParent();
-  const { group: groupId, again, place: placeId, friend: friendId } = await searchParams;
+  const { group: groupId, again, place: placeId, friend: friendId, said: fromSaid } = await searchParams;
+  const said = fromSaid === "1" ? await readSaid(user.id) : null;
   const isId = (v: string | undefined): v is string => !!v && z.uuid().safeParse(v).success;
   const [friends, places, groupList, group, favourites, chosen] = await Promise.all([
     listFriends(user.id),
@@ -43,18 +50,20 @@ export default async function PlanPage({ searchParams }: { searchParams: Promise
       groups={groups}
       favourites={favourites}
       prefill={
-        group
-          ? { friendIds: memberIds, ...(last && last.id === again ? planAgainValues(last) : {}) }
-          : repeat
-            ? {
-                ...planAgainPrefill(repeat.last, repeat.friendIds, friends.map((f) => f.id), today),
-                note: repeat.last.start ? enCA.plan.againNote(formatShortDay(repeat.last.start, repeat.last.timezone)) : undefined,
-              }
-            : chosen
-              ? { friendIds: [], place: chosen }
-              : friendId && friends.some((f) => f.id === friendId)
-                ? { friendIds: [friendId] }
-                : undefined
+        said
+          ? { ...said, friendIds: said.friendIds.filter((id) => friends.some((f) => f.id === id)), note: enCA.plan.saidNote }
+          : group
+            ? { friendIds: memberIds, ...(last && last.id === again ? planAgainValues(last) : {}) }
+            : repeat
+              ? {
+                  ...planAgainPrefill(repeat.last, repeat.friendIds, friends.map((f) => f.id), today),
+                  note: repeat.last.start ? enCA.plan.againNote(formatShortDay(repeat.last.start, repeat.last.timezone)) : undefined,
+                }
+              : chosen
+                ? { friendIds: [], place: chosen }
+                : friendId && friends.some((f) => f.id === friendId)
+                  ? { friendIds: [friendId] }
+                  : undefined
       }
     />
   );

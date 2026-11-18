@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { at } from "@/lib/rules/time";
-import { addDays, applyShortcut, checkSlots, pickerDays, shortcutSlots, checkWhen, clockLabel, dayHeading, dayLabel, endForNewStart, slotValues, timeOptions, weekFrom, whenRange, whenSummary } from "./plan-time";
+import { addDays, applyShortcut, prefillWhen, checkSlots, pickerDays, shortcutSlots, checkWhen, clockLabel, dayHeading, dayLabel, endForNewStart, slotValues, timeOptions, weekFrom, whenRange, whenSummary } from "./plan-time";
 
 const ZONE = "America/Toronto";
 const NOW = at("2026-11-14", 10, 0, ZONE);
@@ -85,5 +85,16 @@ describe("the faster picker (T31)", () => {
     const value = [...applyShortcut([], "weekend_mornings", TODAY), "2026-11-18|afternoon"];
     expect(value).toHaveLength(5);
     expect(checkSlots(value, ZONE, NOW).ok).toBe(true); // the grid and the shortcuts give the rule the same values
+  });
+});
+
+describe("prefillWhen (T43)", () => {
+  it("folds a set time only when the prefill has a day and a time", () => {
+    expect(prefillWhen({ day: "2026-11-21", start: "14:00", end: "16:00" })).toEqual({ mode: "set_time", day: "2026-11-21", start: "14:00", end: "16:00", slots: [], done: true });
+    expect(prefillWhen({ day: "2026-11-21" })).toEqual({ mode: "set_time", day: "2026-11-21", start: "10:00", end: "12:00", slots: [], done: false });
+    expect(prefillWhen(undefined)).toMatchObject({ mode: "set_time", day: "", done: false });
+  });
+  it("opens Share availability with the slots it brings", () => {
+    expect(prefillWhen({ slots: ["2026-11-21|afternoon", "2026-11-22|afternoon"] })).toMatchObject({ mode: "availability", slots: ["2026-11-21|afternoon", "2026-11-22|afternoon"], done: true });
   });
 });

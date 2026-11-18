@@ -29,10 +29,12 @@ export type HomeViewProps = {
   now: Date;
   /** The zone for the banner's date and greeting. */
   zone: string;
+  /** T43: the Or just say it box, under the Plan card (above the list once it has something). Passed in: it holds a server action. */
+  sayIt?: React.ReactNode;
 };
 
 // T37 (Q29): Home in the tester's mock-up look. What is on Home and its order are still KD-13 (src/lib/rules/home.ts).
-export function HomeView({ firstName, welcome = false, childName, childNames, playdates, notices = [], invites = [], recent = [], now, zone }: HomeViewProps) {
+export function HomeView({ firstName, welcome = false, childName, childNames, playdates, notices = [], invites = [], recent = [], now, zone, sayIt }: HomeViewProps) {
   const items = homeList(playdates, invites, now);
   const greeting = welcome && firstName ? enCA.home.welcome(firstName) : enCA.home.greeting[dayPartOf(now, zone)];
   const kids = childNames?.length ? childNames : childName ? [childName] : [];
@@ -49,58 +51,64 @@ export function HomeView({ firstName, welcome = false, childName, childNames, pl
       </header>
 
       {items.length === 0 ? (
-        <Link
-          href="/plan"
-          className="flex min-h-[72px] items-center gap-4 rounded-card bg-card p-4 shadow-card focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
-        >
-          <span aria-hidden="true" className="flex size-11 shrink-0 items-center justify-center rounded-[14px] bg-accent text-2xl font-bold leading-none text-white">
-            +
-          </span>
-          <span className="min-w-0 flex-1">
-            <span className="block text-lg font-bold tracking-tight">{enCA.home.planCard}</span>
-            <span className="block text-[14px] text-muted">{enCA.home.emptyNote}</span>
-          </span>
-          <Chevron />
-        </Link>
+        <>
+          <Link
+            href="/plan"
+            className="flex min-h-[72px] items-center gap-4 rounded-card bg-card p-4 shadow-card focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
+          >
+            <span aria-hidden="true" className="flex size-11 shrink-0 items-center justify-center rounded-[14px] bg-accent text-2xl font-bold leading-none text-white">
+              +
+            </span>
+            <span className="min-w-0 flex-1">
+              <span className="block text-lg font-bold tracking-tight">{enCA.home.planCard}</span>
+              <span className="block text-[14px] text-muted">{enCA.home.emptyNote}</span>
+            </span>
+            <Chevron />
+          </Link>
+          {sayIt}
+        </>
       ) : (
         /* KD-13 (Q24): one list, soonest first, the parent's own playdates and the invites they received together. */
-        <section aria-labelledby="home-list-title">
-          <div className="mb-2 flex items-center justify-between gap-3 px-1">
-            <h2 id="home-list-title" className="text-label font-bold uppercase tracking-wider text-muted">
-              {enCA.home.listTitle}
-            </h2>
-            <Link
-              href="/plan"
-              className="flex min-h-11 items-center gap-1 rounded-full bg-accent px-3.5 text-[14px] font-bold text-white focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
-            >
-              <span aria-hidden="true" className="text-lg leading-none">
-                +
-              </span>
-              {enCA.home.planAnother}
-            </Link>
-          </div>
-          <ul className="flex flex-col gap-3">
-            {items.map((item) =>
-              item.kind === "invite" ? (
-                <li key={`i-${item.invite.inviteId}`}>
-                  <InviteItem invite={item.invite} childName={childName ?? null} />
-                </li>
-              ) : (
-                <li key={item.playdate.id} className="flex flex-col gap-2">
-                  <PlaydateItem playdate={item.playdate} status={item.status} hostName={firstName ?? null} />
-                  {notices
-                    .filter((n) => n.playdateId === item.playdate.id)
-                    .map((n) => (
-                      <Card key={n.inviteId} className="flex items-center justify-between gap-3">
-                        <p className="min-w-0 text-[15px] font-medium">{enCA.home.majorityNotice(n.name, n.rangeText)}</p>
-                        <ShareButton text={n.body} name={n.name} />
-                      </Card>
-                    ))}
-                </li>
-              ),
-            )}
-          </ul>
-        </section>
+        <>
+          {sayIt}
+          <section aria-labelledby="home-list-title">
+            <div className="mb-2 flex items-center justify-between gap-3 px-1">
+              <h2 id="home-list-title" className="text-label font-bold uppercase tracking-wider text-muted">
+                {enCA.home.listTitle}
+              </h2>
+              <Link
+                href="/plan"
+                className="flex min-h-11 items-center gap-1 rounded-full bg-accent px-3.5 text-[14px] font-bold text-white focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
+              >
+                <span aria-hidden="true" className="text-lg leading-none">
+                  +
+                </span>
+                {enCA.home.planAnother}
+              </Link>
+            </div>
+            <ul className="flex flex-col gap-3">
+              {items.map((item) =>
+                item.kind === "invite" ? (
+                  <li key={`i-${item.invite.inviteId}`}>
+                    <InviteItem invite={item.invite} childName={childName ?? null} />
+                  </li>
+                ) : (
+                  <li key={item.playdate.id} className="flex flex-col gap-2">
+                    <PlaydateItem playdate={item.playdate} status={item.status} hostName={firstName ?? null} />
+                    {notices
+                      .filter((n) => n.playdateId === item.playdate.id)
+                      .map((n) => (
+                        <Card key={n.inviteId} className="flex items-center justify-between gap-3">
+                          <p className="min-w-0 text-[15px] font-medium">{enCA.home.majorityNotice(n.name, n.rangeText)}</p>
+                          <ShareButton text={n.body} name={n.name} />
+                        </Card>
+                      ))}
+                  </li>
+                ),
+              )}
+            </ul>
+          </section>
+        </>
       )}
 
       {recent.length > 0 && (

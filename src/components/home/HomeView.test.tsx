@@ -152,3 +152,15 @@ describe("Home: Recent playdates (T38)", () => {
     expect(view()).not.toContain("Recent playdates");
   });
 });
+
+describe("Home: Or just say it (T43)", () => {
+  const box = <div id="say-it-box" />;
+  it("sits right under the Plan card while Home is empty", () => {
+    const markup = view({ sayIt: box });
+    expect(markup.indexOf(EMPTY_NOTE)).toBeLessThan(markup.indexOf('id="say-it-box"'));
+  });
+  it("sits above Your playdates once the list has something", () => {
+    const markup = view({ playdates: [upcoming], sayIt: box });
+    expect(markup.indexOf('id="say-it-box"')).toBeLessThan(markup.indexOf("Your playdates"));
+  });
+});
