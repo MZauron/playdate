@@ -138,3 +138,17 @@ describe("Home: invites from other Kindred parents (T15)", () => {
     expect(answered).toContain("Pick a time that works");
   });
 });
+
+describe("Home: Recent playdates (T38)", () => {
+  const recent = [{ id: "r1", title: "Playdate: Mia & Arjun", timezone: ZONE, start: new Date("2026-11-07T19:00:00Z"), end: new Date("2026-11-07T21:00:00Z"), placeName: "High Park" }];
+  it("lists past confirmed playdates with Plan again, and is hidden when there are none", () => {
+    const markup = view({ recent });
+    expect(headings(markup)).toEqual(["Recent playdates"]);
+    expect(markup).toContain(">Mia &amp; Arjun<");
+    expect(markup).toContain(">High Park<");
+    expect(markup).toContain("2:00 PM to 4:00 PM");
+    expect(markup).toContain('href="/plan?again=r1"');
+    expect(markup).toContain(">Plan again<");
+    expect(view()).not.toContain("Recent playdates");
+  });
+});

@@ -149,6 +149,38 @@ describe.skipIf(!apiEnabled)("playdates repository", () => {
     expect(await q("select first_name from profiles where id = $1", [alex])).toEqual([{ first_name: "Alexandra" }]);
   });
 
+  it("lists only the organizer's own confirmed playdates that are over, newest first, two at most (T38)", async () => {
+    const alex = await parent();
+    const sam = await parent("Sam");
+    const dev = await friend(alex, "Arjun");
+    const playdate = async (status: string, finalStart: string | null, organizer = alex) => {
+      const start = new Date(finalStart!);
+      const end = new Date(start.getTime() + 7_200_000);
+      const confirmed = status === "confirmed";
+      const [p] = await q<{ id: string }>(
+        `insert into playdates (organizer_id, title, mode, status, start_at, end_at, final_start_at, final_end_at, confirmed_at, cancelled_at, message, links_expire_at)
+         values ($1, 'Playdate: Mia & Arjun', 'set_time', $2::playdate_status, $3, $4, $5, $6, $7, $8, 'Park?', '2030-12-31T00:00:00Z') returning id`,
+        [organizer, status, start, end, confirmed ? start : null, confirmed ? end : null, confirmed ? new Date("2030-10-01T00:00:00Z") : null, status === "cancelled" ? new Date("2030-10-01T00:00:00Z") : null],
+      );
+      await q("insert into invites (playdate_id, organizer_id, friend_id, channel, token_hash) values ($1, $2, $3, 'text', $4)", [p!.id, organizer, organizer === alex ? dev : await friend(sam, "Zoe"), `t-${randomUUID()}`]);
+      return p!.id;
+    };
+    const older = await playdate("confirmed", "2030-10-05T18:00:00Z");
+    const newest = await playdate("confirmed", "2030-10-19T18:00:00Z");
+    const middle = await playdate("confirmed", "2030-10-12T18:00:00Z");
+    await playdate("confirmed", "2030-11-20T18:00:00Z"); // not over yet
+    await playdate("cancelled", "2030-10-26T18:00:00Z");
+    await playdate("confirmed", "2030-10-26T18:00:00Z", sam);
+    const now = new Date("2030-11-01T12:00:00Z");
+    expect((await repo.listRecentPlaydates(alex, now)).map((r) => r.id)).toEqual([newest, middle]);
+    expect((await repo.listRecentPlaydates(alex, now, 5)).map((r) => r.id)).toEqual([newest, middle, older]);
+
+    const again = await repo.playdateToPlanAgain(alex, newest);
+    expect(again?.friendIds).toEqual([dev]);
+    expect(again?.last.start).toEqual(new Date("2030-10-19T18:00:00Z"));
+    expect(await repo.playdateToPlanAgain(sam, newest)).toBeNull(); // another parent's playdate
+  });
+
   it("lists the organizer's open playdates for Home, and nobody else's", async () => {
     const alex = await parent();
     const sam = await parent("Sam");

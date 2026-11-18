@@ -9,7 +9,7 @@ import { enCA } from "@/lib/i18n/en-CA";
 import { requireParent } from "@/lib/auth/require-parent";
 import { listInvitesForUser } from "@/lib/db/invites";
 import { listOpenAvailability } from "@/lib/db/playdate-page";
-import { listHomePlaydates } from "@/lib/db/playdates";
+import { listHomePlaydates, listRecentPlaydates } from "@/lib/db/playdates";
 import { homeNotices } from "@/lib/domain/majority";
 import { DEFAULT_ZONE } from "@/lib/rules/config";
 
@@ -38,6 +38,7 @@ export default async function HomePage({ searchParams }: { searchParams: Promise
       playdates={await listHomePlaydates(user.id, now)}
       notices={(await listOpenAvailability(user.id, now)).flatMap(homeNotices)}
       invites={await listInvitesForUser(user.id, now)}
+      recent={await listRecentPlaydates(user.id, now)}
       now={now}
       zone={DEFAULT_ZONE}
     />
