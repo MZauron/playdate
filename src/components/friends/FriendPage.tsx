@@ -5,7 +5,9 @@ import { enCA, formatDateTile, formatShortDay, formatTimeRange } from "@/lib/i18
 import type { PlaydateTogether } from "@/lib/db/friends";
 import type { Friend } from "@/lib/domain/friends";
 import { Avatar } from "./Avatar";
+import { FriendKids } from "./FriendKids";
 import { FriendRow } from "./FriendRow";
+import { knownKids } from "@/lib/domain/friend-kids";
 
 const t = enCA.friends.page;
 
@@ -13,7 +15,18 @@ const t = enCA.friends.page;
  * T40: initials, the label, has Kindred or gets a text, Plan a playdate with Dev (coral), the playdates together (open ones, then
  * past ones with Plan again), and Rename / Remove. Everything here is the owner's own; nothing from the friend's account (KD-17).
  */
-export function FriendPage({ friend, open, past }: { friend: Friend; open: readonly PlaydateTogether[]; past: readonly PlaydateTogether[] }) {
+export function FriendPage({
+  friend,
+  open,
+  past,
+  kids = [],
+}: {
+  friend: Friend;
+  open: readonly PlaydateTogether[];
+  past: readonly PlaydateTogether[];
+  /** T42: the owner's children; with two or more, "Friends with" chips. */
+  kids?: readonly { id: string; firstName: string }[];
+}) {
   const firstName = friend.parentName.trim().split(/\s+/)[0] ?? friend.parentName;
   return (
     <div className="flex flex-col gap-6 pb-6">
@@ -35,6 +48,8 @@ export function FriendPage({ friend, open, past }: { friend: Friend; open: reado
         </span>
         {!friend.hasKindred && <p className="mt-2 text-[14px] text-muted">{t.textNote}</p>}
       </Card>
+
+      {kids.length > 1 && <FriendKids friendId={friend.id} firstName={firstName} kids={kids} initial={knownKids(friend, kids)} />}
 
       <ButtonLink href={`/plan?friend=${friend.id}`} variant="main" fullWidth>
         {t.plan(firstName)}

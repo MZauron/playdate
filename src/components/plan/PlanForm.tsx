@@ -16,6 +16,7 @@ import { FindPlace } from "@/components/places/FindPlace";
 import { PlaceCard } from "@/components/places/PlaceCard";
 import type { Place } from "@/lib/integrations/places/types";
 import type { Friend } from "@/lib/domain/friends";
+import { friendsForKids } from "@/lib/domain/friend-kids";
 import type { TimeMode } from "@/lib/rules/types";
 import { enCA } from "@/lib/i18n/en-CA";
 import { LeaveDialog } from "./LeaveDialog";
@@ -78,6 +79,7 @@ export function PlanForm({
 
   const [selected, setSelected] = useState<string[]>(initial?.friendIds ?? prefill?.friendIds ?? []);
   const [forKids, setForKids] = useState<string[]>(initial?.childIds ?? []);
+  const [showAllFriends, setShowAllFriends] = useState(false);
   const [addingFriend, setAddingFriend] = useState(false);
   const [when, setWhen] = useState<WhenState>(
     initial
@@ -100,6 +102,10 @@ export function PlanForm({
   const touch = (field: string) => setEdited((e) => ({ after: state, fields: e.after === state ? [...e.fields, field] : [field] }));
 
   const invited = friends.filter((f) => selected.includes(f.id));
+  // T42: friends of the children this playdate is for first; the others fold under Show all friends (chosen ones always show).
+  const byKid = friendsForKids(friends, kids, kids.length > 1 ? forKids : []);
+  const hiddenFriends = showAllFriends ? [] : byKid.rest.filter((f) => !selected.includes(f.id));
+  const shownFriends = [...byKid.first, ...byKid.rest].filter((f) => !hiddenFriends.includes(f));
   // Two friends with the same label ("Noor's parent") would look the same: show the parent's name under those.
   const clashing = new Set(friends.map((f) => f.label).filter((label, i, all) => all.indexOf(label) !== i));
   const start = initial ?? { friendIds: [], mode: "set_time" as TimeMode, slots: [], day: "", start: when.start, end: when.end, place: null, placeName: "", placeAddress: "", message: "" };
@@ -256,7 +262,7 @@ export function PlanForm({
             <p className="text-muted">{t.noFriends}</p>
           ) : (
             <ul aria-label={t.friendsLabel} className="overflow-hidden rounded-card bg-card shadow-card">
-              {friends.map((friend) => {
+              {shownFriends.map((friend) => {
                 const on = selected.includes(friend.id);
                 return (
                   <li key={friend.id} className="border-line [&+&]:border-t">
@@ -287,6 +293,11 @@ export function PlanForm({
                 );
               })}
             </ul>
+          )}
+          {hiddenFriends.length > 0 && (
+            <Button type="button" compact className="w-fit" onClick={() => setShowAllFriends(true)}>
+              {t.showAllFriends(hiddenFriends.length)}
+            </Button>
           )}
           {errors.invitees && <ErrorLine>{errors.invitees}</ErrorLine>}
           <Button type="button" compact className="w-fit" aria-expanded={addingFriend} onClick={() => setAddingFriend((open) => !open)}>

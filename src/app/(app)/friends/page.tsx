@@ -9,6 +9,8 @@ import { Initials } from "@/components/groups/Initials";
 import { requireParent } from "@/lib/auth/require-parent";
 import { listFriends } from "@/lib/db/friends";
 import { listGroups } from "@/lib/db/groups";
+import { knownKids } from "@/lib/domain/friend-kids";
+import { cx } from "@/components/cx";
 import { enCA } from "@/lib/i18n/en-CA";
 
 export const dynamic = "force-dynamic";
@@ -17,10 +19,14 @@ const g = enCA.groups;
 
 // The Friends tab (T32, Q25): this parent's groups (T19), their friends (T07) and Add a friend. All of it private to them. The Plan
 // screen (T08) shows the same friends and groups under "Who's invited".
-export default async function FriendsPage({ searchParams }: { searchParams: Promise<{ befriended?: string }> }) {
-  const { user } = await requireParent();
-  const { befriended } = await searchParams;
-  const [friends, groups] = await Promise.all([listFriends(user.id), listGroups(user.id)]); // only this parent's
+export default async function FriendsPage({ searchParams }: { searchParams: Promise<{ befriended?: string; kid?: string }> }) {
+  const { user, profile } = await requireParent();
+  const { befriended, kid } = await searchParams;
+  const kids = profile.children;
+  // T42 (Q30): with two or more children, a switch shows one child's friends (the first child's by default, as in the mock-up) or All.
+  const kidId = kids.length > 1 ? (kid === "all" ? "all" : kids.some((k) => k.id === kid) ? kid! : kids[0]!.id) : "all";
+  const [allFriends, groups] = await Promise.all([listFriends(user.id), listGroups(user.id)]); // only this parent's
+  const friends = kidId === "all" ? allFriends : allFriends.filter((f) => knownKids(f, kids).includes(kidId));
   return (
     <div className="flex flex-col gap-6 pt-6 pb-6">
       <h1 className="text-title font-extrabold tracking-tight leading-tight">{enCA.friends.tabTitle}</h1>
@@ -62,8 +68,27 @@ export default async function FriendsPage({ searchParams }: { searchParams: Prom
         <h2 id="friends-list" className="px-1 text-label font-bold uppercase tracking-wider text-muted">
           {enCA.friends.title}
         </h2>
+        {kids.length > 1 && (
+          <nav aria-label={enCA.friends.kidSwitch} className="flex gap-1 rounded-full bg-fill p-1">
+            {[...kids.map((k) => ({ id: k.id, name: k.firstName })), { id: "all", name: enCA.friends.allKids }].map((k) => (
+              <Link
+                key={k.id}
+                href={`/friends?kid=${k.id}`}
+                aria-current={kidId === k.id ? "page" : undefined}
+                className={cx(
+                  "flex min-h-11 flex-1 items-center justify-center rounded-full px-3 text-[14px] font-bold focus-visible:outline-2 focus-visible:outline-primary",
+                  kidId === k.id ? "bg-card text-ink shadow-card" : "text-muted",
+                )}
+              >
+                {k.name}
+              </Link>
+            ))}
+          </nav>
+        )}
         {friends.length === 0 ? (
-          <p className="text-[15px] text-muted">{enCA.friends.empty}</p>
+          <p className="text-[15px] text-muted">
+            {allFriends.length && kidId !== "all" ? enCA.friends.noneForKid(kids.find((k) => k.id === kidId)?.firstName ?? "") : enCA.friends.empty}
+          </p>
         ) : (
           <Card className="px-4 py-1">
             <ul>

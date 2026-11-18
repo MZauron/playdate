@@ -1,7 +1,7 @@
 import { renderToStaticMarkup as html } from "react-dom/server";
 import { describe, expect, it, vi } from "vitest";
 
-vi.mock("@/app/(app)/friends/actions", () => ({ addFriendAction: vi.fn(), renameFriendAction: vi.fn(), removeFriendAction: vi.fn() }));
+vi.mock("@/app/(app)/friends/actions", () => ({ addFriendAction: vi.fn(), renameFriendAction: vi.fn(), removeFriendAction: vi.fn(), setFriendKidsAction: vi.fn() }));
 vi.mock("next/navigation", () => ({ useRouter: () => ({ replace: vi.fn(), push: vi.fn() }) }));
 
 const { AddFriendForm } = await import("./AddFriendForm");
@@ -82,6 +82,15 @@ describe("A page for each friend (T40)", async () => {
     expect(markup).toContain('href="/plan?again=p0"');
     expect(markup).toContain("Rename");
     expect(markup).not.toMatch(/\+1\d{10}/);
+  });
+  it("shows Friends with chips only for a parent with two or more children, the friend's known kids chosen (T42)", () => {
+    const kids = [{ id: "mia", firstName: "Mia" }, { id: "ethan", firstName: "Ethan" }];
+    const markup = html(<FriendPage friend={{ ...friend, childIds: ["ethan"] }} open={[]} past={[]} kids={kids} />);
+    expect(markup).toContain("Friends with");
+    expect(markup).toMatch(/aria-pressed="false"[^>]*>Mia</);
+    expect(markup).toMatch(/aria-pressed="true"[^>]*>Ethan</);
+    expect(markup).toContain("Which of your kids is Dev&#x27;s family friends with?");
+    expect(html(<FriendPage friend={friend} open={[]} past={[]} kids={kids.slice(0, 1)} />)).not.toContain("Friends with");
   });
   it("says so when there are no playdates together yet", () => {
     expect(html(<FriendPage friend={friend} open={[]} past={[]} />)).toContain("No playdates yet.");
