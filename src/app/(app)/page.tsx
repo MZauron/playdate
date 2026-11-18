@@ -1,11 +1,8 @@
-import Link from "next/link";
 import { redirect } from "next/navigation";
 import { pendingFriendLink } from "@/lib/auth/friend-link-cookie";
 import { friendLinkStore } from "@/lib/db/friend-links";
 import { loadFriendLink } from "@/lib/domain/friend-links";
-import { signOutAction } from "@/app/(app)/actions";
 import { HomeView } from "@/components/home/HomeView";
-import { enCA } from "@/lib/i18n/en-CA";
 import { requireParent } from "@/lib/auth/require-parent";
 import { listInvitesForUser } from "@/lib/db/invites";
 import { listOpenAvailability } from "@/lib/db/playdate-page";
@@ -29,7 +26,6 @@ export default async function HomePage({ searchParams }: { searchParams: Promise
   const { welcome } = await searchParams;
   const now = new Date();
   return (
-    <>
     <HomeView
       firstName={profile.firstName}
       welcome={welcome === "1"}
@@ -42,16 +38,5 @@ export default async function HomePage({ searchParams }: { searchParams: Promise
       now={now}
       zone={DEFAULT_ZONE}
     />
-      <div className="flex justify-center gap-2 pb-6">
-        <Link href="/privacy" className="flex min-h-11 items-center px-4 text-[15px] font-medium text-muted underline-offset-4 hover:underline">
-          {enCA.app.privacy}
-        </Link>
-        <form action={signOutAction}>
-          <button type="submit" className="min-h-11 px-4 text-[15px] font-medium text-muted underline-offset-4 hover:underline">
-            {enCA.app.signOut}
-          </button>
-        </form>
-      </div>
-    </>
   );
 }

@@ -23,7 +23,7 @@ Solo dev, ~8 h/week plus background sessions started from a phone. Keep changes 
 ## Layout
 ```
 src/app/(auth)/          sign in, setup
-src/app/(app)/           home, plan/[id?], playdates/[id], friends (+ groups/), places (signed-in parents)
+src/app/(app)/           home, plan/[id?], playdates/[id], friends (+ groups/), places, profile (signed-in parents)
 src/app/r/[token]/       invite page, same for every friend (no account)
 src/app/api/             cron/tick, health, places/, suggestions/
 src/lib/rules/           PURE rules: no I/O, no Date.now() (clock and zone are passed in)

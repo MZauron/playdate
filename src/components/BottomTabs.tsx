@@ -2,16 +2,17 @@ import Link from "next/link";
 import { enCA } from "@/lib/i18n/en-CA";
 import { cx } from "./cx";
 
-export type TabId = "home" | "friends" | "places";
+export type TabId = "home" | "friends" | "places" | "profile";
 
-/** T32 (Q25): Home · Friends (groups inside) · Places (Ask Kindred and Explore together, Q7). */
+/** T32 (Q25): Home · Friends (groups inside) · Places (Ask Kindred and Explore together, Q7); T39 adds Profile. */
 export const TABS: readonly { id: TabId; href: string }[] = [
   { id: "home", href: "/" },
   { id: "friends", href: "/friends" },
   { id: "places", href: "/places" },
+  { id: "profile", href: "/profile" },
 ];
 
-/** The three tabs at the bottom of every signed-in screen. Each is at least 44 px; the active one is teal. */
+/** The four tabs at the bottom of every signed-in screen. Each is at least 44 px; the active one is teal. */
 export function BottomTabs({ active }: { active: TabId | null }) {
   return (
     <nav aria-label={enCA.tabs.label} className="fixed inset-x-0 bottom-0 z-40 border-t border-black/5 bg-card pb-[env(safe-area-inset-bottom)]">
