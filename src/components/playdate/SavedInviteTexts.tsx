@@ -20,7 +20,7 @@ export function SavedInviteTexts({ playdateId }: { playdateId: string }) {
   if (!saved || saved.texts.every((x) => saved.texted.includes(x.key))) return null;
   return (
     <section aria-labelledby="saved-texts" className="flex flex-col gap-3">
-      <h2 id="saved-texts" className="text-lg font-semibold">
+      <h2 id="saved-texts" className="px-1 text-label font-bold uppercase tracking-wider text-muted">
         {enCA.playdate.savedTextsTitle}
       </h2>
       <p className="text-[15px] text-muted">{enCA.playdate.savedTextsNote}</p>

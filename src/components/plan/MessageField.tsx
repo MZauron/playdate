@@ -38,7 +38,7 @@ export function MessageField({ value, onChange, error, plan }: { value: string; 
 
   return (
     <div className="flex flex-col gap-2">
-      <label htmlFor="message" className="block text-[15px] font-semibold">
+      <label htmlFor="message" className="block text-[12px] font-bold uppercase tracking-wider text-muted">
         {t.messageLabel}
       </label>
       <textarea
@@ -50,7 +50,7 @@ export function MessageField({ value, onChange, error, plan }: { value: string; 
         maxLength={MESSAGE_MAX_LENGTH}
         aria-invalid={error ? true : undefined}
         aria-describedby={error ? "message-error" : undefined}
-        className="block w-full rounded-button bg-card px-4 py-3 text-base text-ink ring-1 ring-black/10 placeholder:text-muted focus-visible:outline-2 focus-visible:outline-primary aria-[invalid=true]:ring-danger"
+        className="block w-full rounded-xl bg-card px-4 py-3 text-base text-ink ring-1 ring-border placeholder:text-muted focus-visible:outline-2 focus-visible:outline-primary aria-[invalid=true]:ring-danger"
       />
       {error && (
         <p id="message-error" role="alert" className="text-[15px] font-medium text-danger">

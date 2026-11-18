@@ -42,7 +42,7 @@ export function TextButtons({ texts, playdateId, initiallyTexted = [] }: { texts
                   if (playdateId) markTexted(playdateId, text.key);
                 }}
                 className={cx(
-                  "inline-flex min-h-11 shrink-0 items-center justify-center rounded-button px-4 text-[15px] font-semibold focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary",
+                  "inline-flex min-h-11 shrink-0 items-center justify-center rounded-full px-4 text-[15px] font-semibold focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary",
                   done ? "text-success" : text.key === next ? "bg-accent text-white" : "bg-primary-tint text-primary",
                 )}
               >

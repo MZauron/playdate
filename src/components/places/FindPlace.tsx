@@ -52,7 +52,7 @@ export function FindPlace({ action, onClose }: { action: (place: PlaceForParent)
           maxLength={80}
           autoComplete="off"
           enterKeyHint="search"
-          className="h-[50px] min-w-0 flex-1 rounded-button bg-card px-4 text-base text-ink ring-1 ring-black/10 placeholder:text-muted focus-visible:outline-2 focus-visible:outline-primary"
+          className="h-[50px] min-w-0 flex-1 rounded-xl bg-card px-4 text-base text-ink ring-1 ring-border placeholder:text-muted focus-visible:outline-2 focus-visible:outline-primary"
         />
         <Button type="submit" disabled={found.status === "searching"}>
           {t.search}

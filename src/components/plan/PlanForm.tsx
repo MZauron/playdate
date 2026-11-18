@@ -189,7 +189,7 @@ export function PlanForm({
         >
           ← {t.back}
         </button>
-        <h1 className="text-title font-bold leading-tight">{edit ? t.editTitle : t.title}</h1>
+        <h1 className="text-title font-extrabold tracking-tight leading-tight">{edit ? t.editTitle : t.title}</h1>
         {prefill?.note && <p className="mt-2 rounded-button bg-primary-tint px-3.5 py-2.5 text-[15px] font-medium text-primary">{prefill.note}</p>}
       </header>
 
@@ -218,18 +218,18 @@ export function PlanForm({
           {friends.length === 0 ? (
             <p className="text-muted">{t.noFriends}</p>
           ) : (
-            <ul aria-label={t.friendsLabel} className="flex flex-col gap-2">
+            <ul aria-label={t.friendsLabel} className="overflow-hidden rounded-card bg-card shadow-card">
               {friends.map((friend) => {
                 const on = selected.includes(friend.id);
                 return (
-                  <li key={friend.id}>
+                  <li key={friend.id} className="border-line [&+&]:border-t">
                     <button
                       type="button"
                       aria-pressed={on}
                       onClick={() => toggle(friend.id)}
                       className={cx(
-                        "flex min-h-14 w-full items-center gap-3 rounded-card px-4 py-2 text-left shadow-card focus-visible:outline-2 focus-visible:outline-primary",
-                        on ? "bg-primary-tint ring-1 ring-primary" : "bg-card",
+                        "flex min-h-14 w-full items-center gap-3 px-4 py-2 text-left focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-primary",
+                        on ? "bg-primary-tint" : "bg-card",
                       )}
                     >
                       <span
@@ -407,7 +407,7 @@ export function PlanForm({
       </NumberedStep>
 
       <section aria-labelledby="details-title" className="flex flex-col gap-4">
-        <h2 id="details-title" className="text-lg font-semibold">
+        <h2 id="details-title" className="px-1 text-label font-bold uppercase tracking-wider text-muted">
           {t.detailsTitle}
         </h2>
         <Field

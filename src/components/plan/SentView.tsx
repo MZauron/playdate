@@ -16,7 +16,7 @@ export function SentView({ texts, playdateId, update = false, backTo = "/" }: { 
   useEffect(() => saveTexts(playdateId, buttons), [playdateId]); // eslint-disable-line react-hooks/exhaustive-deps
   return (
     <div className="flex flex-col gap-5 pb-6 pt-4">
-      <h1 className="text-title font-bold leading-tight">{update ? t.updateTitle : t.sentTitle}</h1>
+      <h1 className="text-title font-extrabold tracking-tight leading-tight">{update ? t.updateTitle : t.sentTitle}</h1>
       <p className="text-muted">{update ? t.updateNote : t.sentNote}</p>
       <TextButtons texts={buttons} playdateId={playdateId} />
       <ButtonLink href={backTo} fullWidth>

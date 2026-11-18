@@ -23,7 +23,7 @@ export function AddFriendForm({ submitVariant = "main", onAdded }: { submitVaria
   return (
     <Card>
       <form action={action} className="flex flex-col gap-4">
-        <h2 className="text-lg font-semibold">{enCA.friends.addTitle}</h2>
+        <h2 className="px-1 text-label font-bold uppercase tracking-wider text-muted">{enCA.friends.addTitle}</h2>
         <AddFriendFields key={state.version} errors={state.errors} />
         {state.errors.form && (
           <p role="alert" className="text-[15px] font-medium text-danger">

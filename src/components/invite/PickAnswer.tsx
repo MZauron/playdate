@@ -121,7 +121,7 @@ export function PickChooser({
       )}
 
       <section aria-labelledby="free-times" className="flex flex-col gap-2">
-        <h2 id="free-times" className="text-lg font-semibold">
+        <h2 id="free-times" className="px-1 text-label font-bold uppercase tracking-wider text-muted">
           {t.availabilityTitle(organizerFirstName)}
         </h2>
         <ul className="grid grid-cols-2 gap-2">

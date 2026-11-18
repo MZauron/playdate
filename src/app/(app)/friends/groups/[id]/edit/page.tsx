@@ -17,7 +17,7 @@ export default async function EditGroupPage({ params }: { params: Promise<{ id: 
   if (!group) notFound();
   return (
     <div className="flex flex-col gap-5 pb-6">
-      <h1 className="text-title font-bold leading-tight">{enCA.groups.editTitle}</h1>
+      <h1 className="text-title font-extrabold tracking-tight leading-tight">{enCA.groups.editTitle}</h1>
       <GroupForm friends={friends} group={{ id: group.id, name: group.name, friendIds: group.members.map((m) => m.friendId) }} />
     </div>
   );

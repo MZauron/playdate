@@ -19,7 +19,7 @@ export function SetupForm() {
   return (
     <form action={action} className="flex flex-col gap-5">
       <div>
-        <h1 className="text-title font-bold leading-tight">{enCA.setup.title}</h1>
+        <h1 className="text-title font-extrabold tracking-tight leading-tight">{enCA.setup.title}</h1>
         <p className="mt-1 text-muted">{enCA.setup.subtitle}</p>
       </div>
       <Field

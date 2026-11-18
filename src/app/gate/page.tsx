@@ -11,7 +11,7 @@ export default async function GatePage({ searchParams }: { searchParams: Promise
   return (
     <main className="mx-auto flex min-h-dvh max-w-md flex-col gap-4 px-4 pb-10 pt-10">
       <p className="text-xl font-bold text-primary">{enCA.app.name}</p>
-      <h1 className="text-title font-bold leading-tight">{enCA.gate.title}</h1>
+      <h1 className="text-title font-extrabold tracking-tight leading-tight">{enCA.gate.title}</h1>
       <p className="text-muted">{enCA.gate.note}</p>
       <GateForm next={safeNext(next)} />
     </main>

@@ -32,7 +32,7 @@ export default async function GroupPage({ params }: { params: Promise<{ id: stri
           </Link>
           <DeleteGroup groupId={group.id} />
         </div>
-        <h1 className="text-title font-bold leading-tight">{group.name}</h1>
+        <h1 className="text-title font-extrabold tracking-tight leading-tight">{group.name}</h1>
         <div className="flex items-center gap-3">
           <Initials letters={group.members.map((m) => (m.parentName.trim()[0] ?? "?").toUpperCase())} />
           <span className="text-[15px] text-muted">{t.families(group.members.length)}</span>

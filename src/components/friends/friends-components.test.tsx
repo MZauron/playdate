@@ -53,7 +53,7 @@ describe("AddFriendForm", () => {
   it("makes every box 48 px and every button at least 44 px", () => {
     expect(markup.match(/h-12/g)).toHaveLength(3);
     expect(markup).toContain("h-11"); // Paste a number
-    expect(markup).toContain("h-[50px]"); // Add friend
+    expect(markup).toContain("h-[52px]"); // Add friend
   });
 });
 

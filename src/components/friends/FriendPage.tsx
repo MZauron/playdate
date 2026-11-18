@@ -50,7 +50,7 @@ export function FriendPage({ friend, open, past }: { friend: Friend; open: reado
           <Card className="px-4 py-1">
             <ul>
               {open.map((p) => (
-                <li key={p.id} className="border-page [&+&]:border-t">
+                <li key={p.id} className="border-line [&+&]:border-t">
                   <Link href={`/playdates/${p.id}`} className="flex min-h-16 items-center gap-3 py-2.5 focus-visible:outline-2 focus-visible:outline-primary">
                     <Tile p={p} />
                     <span className="min-w-0 flex-1">

@@ -56,7 +56,7 @@ export function InvitePage({
     return (
       <InviteShell>
         {banner}
-        <h1 className="text-title font-bold leading-tight">{t.overTitle}</h1>
+        <h1 className="text-title font-extrabold tracking-tight leading-tight">{t.overTitle}</h1>
         <p className="text-muted">{view.title}</p>
         <p className="text-muted">{t.overNote}</p>
       </InviteShell>
@@ -86,7 +86,7 @@ export function InvitePage({
 
       <div className="flex flex-col gap-2">
         {view.label !== "none" && <p className="text-label font-semibold uppercase tracking-wider text-purple">{t.labels[view.label]}</p>}
-        <h1 className="text-title font-bold leading-tight">{view.title}</h1>
+        <h1 className="text-title font-extrabold tracking-tight leading-tight">{view.title}</h1>
       </div>
 
       <p className="whitespace-pre-wrap break-words rounded-card rounded-tl-md bg-card px-4 py-3 shadow-card">{view.message}</p>
@@ -124,7 +124,7 @@ export function InvitePage({
               href={view.placeFacts?.mapsUrl ?? directionsHref(view.placeName, view.placeAddress)}
               target="_blank"
               rel="noopener noreferrer"
-              className="inline-flex h-11 shrink-0 items-center rounded-button bg-primary-tint px-4 text-[15px] font-semibold text-primary"
+              className="inline-flex h-11 shrink-0 items-center rounded-full bg-primary-tint px-4 text-[15px] font-semibold text-primary"
             >
               {t.directions}
             </a>
@@ -135,7 +135,7 @@ export function InvitePage({
       {view.confirmed && view.state !== "cancelled" && (
         <a
           href={calendarHref}
-          className="inline-flex h-[50px] w-full items-center justify-center rounded-button bg-primary-tint px-5 text-base font-semibold text-primary"
+          className="inline-flex h-[52px] w-full items-center justify-center rounded-full bg-primary-tint px-5 text-base font-semibold text-primary"
         >
           {t.addToCalendar}
         </a>
