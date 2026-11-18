@@ -20,7 +20,7 @@ const t = enCA.playdate;
 
 /**
  * The organizer's playdate page (DESIGN.md "Screens"): the Plan layout with 1 Who's invited (status per friend, KD-08), 2 When
- * (who can come and Confirm and send update, KD-09), 3 Where, Details. `live` is the "· Live" marker; `texts` the confirmation's
+ * (who can come and Confirm · the time, KD-09, T44), 3 Where, Details. `live` is the "· Live" marker; `texts` the confirmation's
  * Text buttons once confirmed.
  */
 export function PlaydatePage({
@@ -116,7 +116,7 @@ export function PlaydatePage({
           ) : (
             <>
               <p className="text-[15px]">{view.comingNames.length ? t.canCome(view.comingNames) : t.nobodyYet}</p>
-              <ConfirmButton playdateId={p.id} enabled={view.canConfirm} />
+              <ConfirmButton playdateId={p.id} enabled={view.canConfirm} range={view.start && view.end ? { start: view.start, end: view.end } : null} zone={zone} />
             </>
           )}
         </div>

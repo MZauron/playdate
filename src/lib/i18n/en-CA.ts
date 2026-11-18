@@ -327,6 +327,12 @@ export const enCA = {
       `${names.length} ${names.length === 1 ? "family" : "families"} can come: ${names.join(", ")}`,
     nobodyYet: "Nobody can come yet. You can confirm once a family says yes.",
     confirm: "Confirm and send update",
+    /** T44: the one button, with the time it confirms ("Confirm · Sat, Nov 21, 10 to 12"). */
+    confirmAt: (when: string) => `Confirm · ${when}`,
+    /** T44: a suggested time as a chip: "Sat, Nov 21, 10 to 12 · 2 coming". */
+    timeChip: (when: string, families: number) => `${when} · ${families} coming`,
+    /** For screen readers: the full time and who picked it. */
+    timeChipLabel: (when: string, names: readonly string[]) => `${when}, ${names.join(", ")}`,
     edit: "Edit playdate",
     preview: "Preview what friends see",
     cancel: "Cancel playdate",
@@ -719,6 +725,20 @@ export function zoneName(date: Date, zone: string): string {
 /** "9:00 AM to 12:00 PM" */
 export function formatTimeRange(start: Date, end: Date, zone: string): string {
   return `${formatTime(start, zone)} to ${formatTime(end, zone)}`;
+}
+
+/** "10 to 12", "2:30 to 4": the short range on the confirm chips and button (T44, the mock-up's style). */
+export function formatShortTimeRange(start: Date, end: Date, zone: string): string {
+  const clock = (d: Date) => {
+    const p = parts(d, zone, { hour: "numeric", minute: "2-digit", hour12: true });
+    return part(p, "minute") === "00" ? part(p, "hour") : `${part(p, "hour")}:${part(p, "minute")}`;
+  };
+  return `${clock(start)} to ${clock(end)}`;
+}
+
+/** "Sat, Nov 21, 10 to 12" (T44). */
+export function formatShortWhen(start: Date, end: Date, zone: string): string {
+  return `${formatShortDay(start, zone)}, ${formatShortTimeRange(start, end, zone)}`;
 }
 
 /** "Saturday, November 14": the banner's date. */
