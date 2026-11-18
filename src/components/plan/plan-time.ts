@@ -148,3 +148,26 @@ export function checkSlots(values: readonly string[], zone: Zone, now: Date): De
   if (!decision.ok) return decision;
   return { ok: true, errors: [], value: decision.value.slots };
 }
+
+/**
+ * The When step for a new plan that starts filled in (a group, Plan again, Or just say it): Share availability when it brings slots
+ * (T43, several days); otherwise a set time, folded only when it has both a day and a time ("Dev, Saturday" leaves When open).
+ */
+export function prefillWhen(prefill?: { day?: string; start?: string; end?: string; slots?: string[] }): {
+  mode: "set_time" | "availability";
+  day: string;
+  start: string;
+  end: string;
+  slots: string[];
+  done: boolean;
+} {
+  if (prefill?.slots?.length) return { mode: "availability", day: "", start: DEFAULT_START, end: DEFAULT_END, slots: prefill.slots, done: true };
+  return {
+    mode: "set_time",
+    day: prefill?.day ?? "",
+    start: prefill?.start || DEFAULT_START,
+    end: prefill?.end || DEFAULT_END,
+    slots: [],
+    done: !!(prefill?.day && prefill.start),
+  };
+}

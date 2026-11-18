@@ -35,3 +35,33 @@ export type PlaceIdeas = {
   /** Up to four candidate ids, best first, each with a one-line reason; or an error the caller answers with the keyword fallback. */
   placeIdeas(request: PlaceIdeasRequest): Promise<{ id: string; reason: string }[]>;
 };
+
+/**
+ * Or just say it (T43): the parent's sentence, today on their clock, and their friends' first names under short refs ("f1"). Nothing
+ * else: no ids, no numbers, no children's names. The caller checks every value and falls back to its built-in reader.
+ */
+export type SayItRequest = {
+  words: string;
+  /** "2026-11-18" */
+  today: string;
+  /** "Wednesday" */
+  weekday: string;
+  friends: readonly { ref: string; name: string }[];
+};
+
+export type SayItAnswer = {
+  /** Refs from the request. */
+  friends: string[];
+  /** "2026-11-21", within the next two weeks. */
+  days: string[];
+  /** "14:00" or null. */
+  start: string | null;
+  end: string | null;
+  slot: "morning" | "afternoon" | "evening" | null;
+  /** The place as the parent said it, or null. */
+  place: string | null;
+};
+
+export type SayItIdeas = {
+  sayIt(request: SayItRequest): Promise<SayItAnswer>;
+};

@@ -3,6 +3,7 @@ import { pendingFriendLink } from "@/lib/auth/friend-link-cookie";
 import { friendLinkStore } from "@/lib/db/friend-links";
 import { loadFriendLink } from "@/lib/domain/friend-links";
 import { HomeView } from "@/components/home/HomeView";
+import { SayIt } from "@/components/home/SayIt";
 import { requireParent } from "@/lib/auth/require-parent";
 import { listInvitesForUser } from "@/lib/db/invites";
 import { listOpenAvailability } from "@/lib/db/playdate-page";
@@ -37,6 +38,7 @@ export default async function HomePage({ searchParams }: { searchParams: Promise
       recent={await listRecentPlaydates(user.id, now)}
       now={now}
       zone={DEFAULT_ZONE}
+      sayIt={<SayIt />}
     />
   );
 }

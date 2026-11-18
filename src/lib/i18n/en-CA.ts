@@ -119,6 +119,8 @@ export const enCA = {
     title: "Plan a playdate",
     /** T38: Plan again from Home's Recent playdates. */
     againNote: (day: string) => `Same families and place as ${day}. Check the new time, then send.`,
+    /** T43: Plan opened from Home's Or just say it. */
+    saidNote: "Filled in from what you said · Check each step, write your message, then send.",
     back: "Back",
     whoTitle: "Who's invited",
     /** T41 (Q30): only for a parent with two or more children. */
@@ -611,6 +613,14 @@ export const enCA = {
     listTitle: "Your playdates",
     /** T37: the coral pill beside Your playdates once the list has something (the Plan card shows only when it is empty). */
     planAnother: "Plan another",
+    /** T43: the box under the Plan card. It fills in Plan; it never sends anything. */
+    sayIt: {
+      label: "Or just say it",
+      placeholder: "Dev, Saturday 2 to 4 at the park",
+      button: "Fill in Plan",
+      pending: "Filling in…",
+      nothing: "Try who, when and where, like “Dev, Saturday 2 to 4 at the park”.",
+    },
     /** T37 (Q29): the tag at the top of each card. */
     tag: { confirmed: "✓ Confirmed", pending: "Pending" },
     sharedAvailability: "Shared availability",

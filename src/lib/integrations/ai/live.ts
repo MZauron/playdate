@@ -1,9 +1,9 @@
-// AI_MODE=live: message ideas (T08) and Ask Kindred's picks (T18) from Claude. Server only: the key never reaches a browser.
+// AI_MODE=live: message ideas (T08), Ask Kindred's picks (T18) and Or just say it (T43) from Claude. Server only: the key never reaches a browser.
 import "server-only";
 import Anthropic from "@anthropic-ai/sdk";
 import { zodOutputFormat } from "@anthropic-ai/sdk/helpers/zod";
 import { z } from "zod";
-import type { MessageIdeas, PlaceIdeas } from "./types";
+import type { MessageIdeas, PlaceIdeas, SayItIdeas } from "./types";
 
 const MODEL = "claude-opus-5-5";
 
@@ -54,6 +54,44 @@ export function livePlaceIdeas(apiKey: string): PlaceIdeas {
       });
       if (response.stop_reason !== "end_turn") throw new Error(`ai stopped: ${response.stop_reason}`);
       return response.parsed_output?.places ?? [];
+    },
+  };
+}
+
+const Said = z.object({
+  friends: z.array(z.string()),
+  days: z.array(z.string()),
+  start: z.string().nullable(),
+  end: z.string().nullable(),
+  slot: z.enum(["morning", "afternoon", "evening"]).nullable(),
+  place: z.string().nullable(),
+});
+
+const SAY_SYSTEM = `A parent in Canada types one sentence to start planning a playdate, like "Dev, Saturday 2 to 4 at the park".
+You get the sentence, today's date and weekday, and the parent's friends as refs with first names. Pick out only what the sentence says:
+- friends: the refs of the friends it names (match first names; never a friend it does not name).
+- days: the calendar days it means, as YYYY-MM-DD, from today to 13 days after today. A weekday's name means the next one after today;
+  "this weekend" means the coming Saturday and Sunday. Several days only when it names several ("Saturday or Sunday").
+- start and end: 24-hour "HH:MM" when it says a time. Playdates happen in the day: "2 to 4" is 14:00 to 16:00, "10 to 12" is 10:00 to
+  12:00. A single time ("at 2") has end two hours later. Otherwise null.
+- slot: "morning", "afternoon" or "evening" when it says that part of the day instead of a time, otherwise null.
+- place: the place as the parent wrote it ("the park", "Riverdale Farm"), otherwise null.
+Never guess what is not said: use an empty list or null.`;
+
+export function liveSayIt(apiKey: string): SayItIdeas {
+  const client = new Anthropic({ apiKey, maxRetries: 1, timeout: 20_000 });
+  return {
+    async sayIt(request) {
+      const response = await client.messages.parse({
+        model: MODEL,
+        max_tokens: 16000,
+        output_config: { effort: "low", format: zodOutputFormat(Said) },
+        system: SAY_SYSTEM,
+        messages: [{ role: "user", content: JSON.stringify(request) }],
+      });
+      if (response.stop_reason !== "end_turn") throw new Error(`ai stopped: ${response.stop_reason}`);
+      if (!response.parsed_output) throw new Error("ai returned nothing");
+      return response.parsed_output;
     },
   };
 }

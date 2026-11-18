@@ -21,7 +21,7 @@ import type { TimeMode } from "@/lib/rules/types";
 import { enCA } from "@/lib/i18n/en-CA";
 import { LeaveDialog } from "./LeaveDialog";
 import { MessageField } from "./MessageField";
-import { browserZone, DEFAULT_END, DEFAULT_START } from "./plan-time";
+import { browserZone, prefillWhen, DEFAULT_END, DEFAULT_START } from "./plan-time";
 import { SentView } from "./SentView";
 import { WhenStep, type WhenState } from "./WhenStep";
 
@@ -46,6 +46,8 @@ export type PlanPrefill = {
   place?: Place | null;
   placeName?: string;
   placeAddress?: string;
+  /** T43: Share availability on these slots ("2026-11-21|afternoon") instead of a set time. */
+  slots?: string[];
   /** T38: one line above the steps, e.g. "Same families and place as Sat, Nov 7. Check the new time, then send." */
   note?: string;
 };
@@ -84,7 +86,7 @@ export function PlanForm({
   const [when, setWhen] = useState<WhenState>(
     initial
       ? { mode: initial.mode, day: initial.day, start: initial.start || DEFAULT_START, end: initial.end || DEFAULT_END, slots: initial.slots, done: true }
-      : { mode: "set_time", day: prefill?.day ?? "", start: prefill?.start || DEFAULT_START, end: prefill?.end || DEFAULT_END, slots: [], done: !!prefill?.day },
+      : prefillWhen(prefill),
   );
   // 3 Where (T17): a place found by search. When there is one, the typed place under Details is not used.
   const [place, setPlace] = useState<Place | null>(initial?.place ?? prefill?.place ?? null);
