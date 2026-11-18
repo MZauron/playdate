@@ -4,6 +4,26 @@ import { adminClient } from "./admin";
 
 export type NewChild = { firstName: string; ageLabel: string };
 
+/** T39: a child as the Profile form posts it; `id` is one of the parent's own children, or null for a new one. */
+export type ProfileChild = { id: string | null; firstName: string; ageLabel: string };
+
+export type ProfileStore = {
+  /** Saves the parent's first name and children in one step (migration 0014). false when there is no profile yet. */
+  updateProfile(input: { userId: string; firstName: string; children: readonly ProfileChild[] }): Promise<boolean>;
+};
+
+export const profileStore: ProfileStore = {
+  async updateProfile({ userId, firstName, children }) {
+    const { data, error } = await adminClient().rpc("update_profile_with_children", {
+      p_id: userId,
+      p_first_name: firstName,
+      p_children: children.map((c, sort) => ({ id: c.id, first_name: c.firstName, age_label: c.ageLabel, sort })),
+    });
+    if (error) throw new Error(`updateProfile failed: ${error.code}`);
+    return data === true;
+  },
+};
+
 export type SetupStore = {
   /** Writes the parent and their children together. "exists" when this parent already finished Setup (Setup happens once). */
   createProfile(input: { userId: string; firstName: string; phoneHash: string; children: readonly NewChild[] }): Promise<"created" | "exists">;
@@ -24,7 +44,7 @@ export const setupStore: SetupStore = {
   },
 };
 
-export type ParentProfile = { id: string; firstName: string; children: { firstName: string; ageLabel: string }[] };
+export type ParentProfile = { id: string; firstName: string; children: { id: string; firstName: string; ageLabel: string }[] };
 
 /** The signed-in parent's own profile and children, or null before Setup. */
 export async function getParentProfile(userId: string): Promise<ParentProfile | null> {
@@ -34,10 +54,10 @@ export async function getParentProfile(userId: string): Promise<ParentProfile | 
   if (!profile) return null;
   const { data: children, error: childError } = await db
     .from("children")
-    .select("first_name, age_label")
+    .select("id, first_name, age_label")
     .eq("parent_id", userId)
     .order("sort")
     .order("created_at");
   if (childError) throw new Error(`getParentProfile children failed: ${childError.code}`);
-  return { id: profile.id, firstName: profile.first_name, children: (children ?? []).map((c) => ({ firstName: c.first_name, ageLabel: c.age_label })) };
+  return { id: profile.id, firstName: profile.first_name, children: (children ?? []).map((c) => ({ id: c.id, firstName: c.first_name, ageLabel: c.age_label })) };
 }

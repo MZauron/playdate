@@ -319,6 +319,9 @@ isOneToOne: false
                            },
 "update_playdate":
 { Args: { "p_add": Json,"p_delete_answers": boolean,"p_label": Database["public"]['Enums']["invite_label"],"p_organizer_id": string,"p_playdate": Json,"p_playdate_id": string,"p_remove": (string)[] }; Returns: undefined
+                           },
+"update_profile_with_children":
+{ Args: { "p_children": Json,"p_first_name": string,"p_id": string }; Returns: boolean
                            }
           }
           Enums: {

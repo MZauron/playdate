@@ -104,12 +104,13 @@ test("sign up, invite a friend by text link, the friend answers, the organizer s
   await expect(friend.getByText("Confirmed", { exact: true })).toBeVisible();
   await expect(friend.getByRole("link", { name: "Privacy" })).toHaveAttribute("href", "/privacy"); // T24, for friends too
 
-  // 7. Delete my account (T24): from Home's Privacy link, asked first; the organizer's playdate and the friend's link go with it.
+  // 7. Delete my account (T24): from the Profile tab (T39), asked first; the organizer's playdate and the friend's link go with it.
   // The playdate page reads itself again a few seconds after going live; that refresh can interrupt this jump, so it may try again.
   await expect(async () => {
     await page.goto("/");
   }).toPass({ timeout: 20_000 });
-  await page.getByRole("link", { name: "Privacy" }).click();
+  await page.getByRole("link", { name: "Profile" }).click();
+  await expect(page.getByRole("link", { name: "Privacy and your data" })).toHaveAttribute("href", "/privacy");
   await page.getByRole("button", { name: "Delete my account" }).click();
   await expect(page.getByRole("alertdialog", { name: "Delete your account?" })).toBeVisible();
   await page.getByRole("alertdialog").getByRole("button", { name: "Delete my account" }).click();
