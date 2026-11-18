@@ -10,7 +10,7 @@ import { playdateTitle } from "@/lib/rules/plan";
 import type { FreeSlot, InviteChannel, InviteLabel, PlaydateStatus, TimeMode } from "@/lib/rules/types";
 import { inviteLink, newInviteToken } from "./invite-token";
 import { isPlaydateId, type OrganizerPlaydate, type PlaydatePageStore } from "./playdate-page";
-import { checkPlanForm, checkSelectedPlace, firstWord, MAX_INVITEES, type NewInvite, type PlanError, type PlanFormInput, type PlaydateStore, type TextToSend } from "./playdates";
+import { checkPlanForm, checkSelectedPlace, chosenChildren, firstWord, MAX_INVITEES, type NewInvite, type Organizer, type PlanError, type PlanFormInput, type PlaydateStore, type TextToSend } from "./playdates";
 import { textBody } from "./text-message";
 
 export type PlaydateUpdate = {
@@ -32,6 +32,8 @@ export type PlaydateUpdate = {
   removeFriendIds: string[];
   deleteAnswers: boolean;
   label: InviteLabel | null;
+  /** T41: the organizer's children it is for, rewritten each time (null = leave them as they are). */
+  childIds: string[] | null;
 };
 
 export type ApplyUpdate = (organizerId: string, playdateId: string, update: PlaydateUpdate) => Promise<void>;
@@ -60,6 +62,7 @@ export function editFormValues(p: OrganizerPlaydate, zone = p.timezone) {
   const day = (d: Date) => new Intl.DateTimeFormat("en-CA", { timeZone: zone, year: "numeric", month: "2-digit", day: "2-digit" }).format(d);
   return {
     friendIds: p.invites.map((i) => i.friendId),
+    childIds: p.childIds ?? [],
     mode: p.mode as TimeMode,
     slots: p.slots.map((s) => `${s.day}|${s.slot}`),
     day: p.startAt ? day(p.startAt) : "",
@@ -90,7 +93,7 @@ function editablePlace(providerId: string | null, name: string | null, address: 
   return name ? { name, address, providerPlaceId: null } : null;
 }
 
-export async function sendUpdate(deps: UpdateDeps, organizer: { id: string; firstName: string; childFirstName: string }, playdateId: string, input: PlanFormInput, now: Date): Promise<UpdateResult> {
+export async function sendUpdate(deps: UpdateDeps, organizer: Organizer, playdateId: string, input: PlanFormInput, now: Date): Promise<UpdateResult> {
   if (!isPlaydateId(playdateId)) return { ok: false, errors: [{ code: "NOT_FOUND" }] };
   const p = await deps.pages.getForOrganizer(organizer.id, playdateId);
   if (!p) return { ok: false, errors: [{ code: "NOT_FOUND" }] };
@@ -101,7 +104,8 @@ export async function sendUpdate(deps: UpdateDeps, organizer: { id: string; firs
   const friends = ids.length ? await deps.playdates.friendsForInvite(organizer.id, ids) : [];
 
   const checked = checkPlanForm(input, friends.length, zone, now);
-  if (!checked.ok) return { ok: false, errors: checked.errors };
+  const kids = chosenChildren(organizer, input.childIds);
+  if (!checked.ok || !kids.ok) return { ok: false, errors: [...(kids.ok ? [] : kids.errors), ...(checked.ok ? [] : checked.errors)] };
   const { plan, yourName, placeName, placeAddress, placeProviderId } = checked;
   const selected = await checkSelectedPlace(deps.places, placeProviderId);
   if (!selected.ok) return { ok: false, errors: selected.errors };
@@ -111,12 +115,14 @@ export async function sendUpdate(deps: UpdateDeps, organizer: { id: string; firs
     place: editablePlace(p.searchedPlace?.id ?? null, p.placeName, p.placeAddress),
     message: p.message,
     friendIds: p.invites.map((i) => i.friendId),
+    ...(organizer.children?.length ? { childIds: p.childIds ?? [] } : {}),
   };
   const after: EditState = {
     time: { mode: plan.time.mode, start: plan.time.start, end: plan.time.end, slots: plan.time.slots },
     place: editablePlace(placeProviderId, placeName, placeAddress),
     message: plan.message,
     friendIds: friends.map((f) => f.id),
+    ...(organizer.children?.length ? { childIds: kids.ids } : {}),
   };
   const edit = planEdit({ status: p.status, timeVersion: p.timeVersion }, before, after);
 
@@ -133,8 +139,8 @@ export async function sendUpdate(deps: UpdateDeps, organizer: { id: string; firs
   const finalEnd = staysConfirmed ? p.finalEndAt : null;
 
   await deps.apply(organizer.id, playdateId, {
-    // KD-06: the title follows the families now invited (first child each, Q4 default).
-    title: playdateTitle(organizer.childFirstName, friends.map((f) => f.childFirstName).filter((n): n is string => !!n)),
+    // KD-06: the title follows the organizer's chosen children (T41) and the families now invited (first child each, Q4 default).
+    title: playdateTitle(kids.names, friends.map((f) => f.childFirstName).filter((n): n is string => !!n)),
     mode: plan.time.mode,
     startAt: plan.time.start,
     endAt: plan.time.end,
@@ -156,6 +162,7 @@ export async function sendUpdate(deps: UpdateDeps, organizer: { id: string; firs
     removeFriendIds: edit.removeFriendIds,
     deleteAnswers: edit.deleteAllAnswers,
     label: edit.existingInviteLabel,
+    childIds: organizer.children?.length ? kids.ids : null,
   });
 
   // Text buttons: families who stay get the update sentence; families just added get the invite with their own new link.

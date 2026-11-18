@@ -224,6 +224,31 @@ isOneToOne: false
       referencedColumns: ["id","organizer_id"]
     }
                   ]
+                },"playdate_children": {
+                  Row: {
+                    "child_id": string,"playdate_id": string
+                  }
+                  Insert: {
+                    "child_id": string,"playdate_id": string
+                  }
+                  Update: {
+                    "child_id"?: string,"playdate_id"?: string
+                  }
+                  Relationships: [
+                    {
+      foreignKeyName: "playdate_children_child_id_fkey"
+      columns: ["child_id"]
+isOneToOne: false
+      referencedRelation: "children"
+      referencedColumns: ["id"]
+    },{
+      foreignKeyName: "playdate_children_playdate_id_fkey"
+      columns: ["playdate_id"]
+isOneToOne: false
+      referencedRelation: "playdates"
+      referencedColumns: ["id"]
+    }
+                  ]
                 },"playdates": {
                   Row: {
                     "cancelled_at": string | null,"confirmed_at": string | null,"created_at": string,"end_at": string | null,"final_end_at": string | null,"final_start_at": string | null,"id": string,"links_expire_at": string,"message": string,"mode": Database["public"]['Enums']["time_mode"],"organizer_id": string,"place_address": string | null,"place_name": string | null,"place_provider_id": string | null,"start_at": string | null,"status": Database["public"]['Enums']["playdate_status"],"time_version": number,"timezone": string,"title": string,"updated_at": string
@@ -316,6 +341,9 @@ isOneToOne: false
                            },
 "save_group":
 { Args: { "p_friend_ids": (string)[],"p_group_id": string,"p_name": string,"p_owner_id": string }; Returns: string
+                           },
+"set_playdate_children":
+{ Args: { "p_child_ids": (string)[],"p_organizer_id": string,"p_playdate_id": string }; Returns: number
                            },
 "update_playdate":
 { Args: { "p_add": Json,"p_delete_answers": boolean,"p_label": Database["public"]['Enums']["invite_label"],"p_organizer_id": string,"p_playdate": Json,"p_playdate_id": string,"p_remove": (string)[] }; Returns: undefined

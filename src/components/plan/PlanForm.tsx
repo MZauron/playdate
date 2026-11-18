@@ -32,7 +32,7 @@ export type SavedPlace = { name: string; address: string };
 export type EditPlaydate = {
   playdateId: string;
   zone: string;
-  initial: { friendIds: string[]; mode: TimeMode; slots: string[]; day: string; start: string; end: string; place: Place | null; placeName: string; placeAddress: string; message: string };
+  initial: { friendIds: string[]; childIds?: string[]; mode: TimeMode; slots: string[]; day: string; start: string; end: string; place: Place | null; placeName: string; placeAddress: string; message: string };
 };
 
 /** The planning screen (T08): 1 Who's invited, 2 When, Details, Send. The server decides on Send; nothing here is trusted. */
@@ -54,6 +54,7 @@ export function PlanForm({
   savedPlaces,
   favourites = [],
   firstName,
+  kids = [],
   edit,
   groups = [],
   prefill,
@@ -63,6 +64,8 @@ export function PlanForm({
   /** T18: the parent's hearted places, as ♥ chips under Your places (T30). */
   favourites?: Place[];
   firstName: string;
+  /** T41 (Q30): the parent's children; with two or more, the form asks who the playdate is for. */
+  kids?: readonly { id: string; firstName: string }[];
   edit?: EditPlaydate;
   groups?: { id: string; name: string; friendIds: string[] }[];
   prefill?: PlanPrefill;
@@ -74,6 +77,7 @@ export function PlanForm({
   const leaveTo = edit ? `/playdates/${edit.playdateId}` : "/";
 
   const [selected, setSelected] = useState<string[]>(initial?.friendIds ?? prefill?.friendIds ?? []);
+  const [forKids, setForKids] = useState<string[]>(initial?.childIds ?? []);
   const [addingFriend, setAddingFriend] = useState(false);
   const [when, setWhen] = useState<WhenState>(
     initial
@@ -157,6 +161,7 @@ export function PlanForm({
   function send() {
     const form = new FormData();
     for (const id of selected) form.append("friendId", id);
+    for (const id of kids.length > 1 ? forKids : kids.map((k) => k.id)) form.append("childId", id);
     form.set("mode", when.mode);
     if (when.done && when.mode === "set_time") {
       form.set("day", when.day);
@@ -192,6 +197,38 @@ export function PlanForm({
         <h1 className="text-title font-extrabold tracking-tight leading-tight">{edit ? t.editTitle : t.title}</h1>
         {prefill?.note && <p className="mt-2 rounded-button bg-primary-tint px-3.5 py-2.5 text-[15px] font-medium text-primary">{prefill.note}</p>}
       </header>
+
+      {kids.length > 1 && (
+        <section aria-labelledby="for-kids-title" className="flex flex-col gap-2">
+          <h2 id="for-kids-title" className="px-1 text-label font-bold uppercase tracking-wider text-muted">
+            {t.forKidsTitle}
+          </h2>
+          <div className="flex flex-wrap gap-2">
+            {kids.map((k) => (
+              <Chip
+                key={k.id}
+                selected={forKids.includes(k.id)}
+                onClick={() => {
+                  touch("children");
+                  setForKids((list) => (list.includes(k.id) ? list.filter((id) => id !== k.id) : kids.map((x) => x.id).filter((id) => id === k.id || list.includes(id))));
+                }}
+              >
+                {k.firstName}
+              </Chip>
+            ))}
+            <Chip
+              selected={forKids.length === kids.length}
+              onClick={() => {
+                touch("children");
+                setForKids(kids.map((k) => k.id));
+              }}
+            >
+              {t.allMyKids}
+            </Chip>
+          </div>
+          {errors.children && <ErrorLine>{errors.children}</ErrorLine>}
+        </section>
+      )}
 
       <NumberedStep number={1} done={selected.length > 0} title={t.whoTitle}>
         <div className="mt-2 flex flex-col gap-3">

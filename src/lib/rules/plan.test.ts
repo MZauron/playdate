@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { checkMessage, checkPlan, checkTime, durationMinutes, moveStart, playdateTitle } from "./plan";
+import { checkChildren, checkMessage, checkPlan, checkTime, durationMinutes, moveStart, playdateTitle } from "./plan";
 import { MON, NOW, SAT, ZONE, range, t } from "./test-fixtures";
 import type { Decision } from "./types";
 
@@ -85,6 +85,20 @@ describe("KD-06 invitees and title", () => {
   });
   it("KD-06d four children", () => {
     expect(playdateTitle("Mia", ["Arjun", "Lily", "Zoe"])).toBe("Playdate: Mia, Arjun, Lily & Zoe");
+  });
+  it("KD-06f the organizer's chosen children come first in the title", () => {
+    expect(playdateTitle(["Mia", "Ethan"], ["Arjun"])).toBe("Playdate: Mia, Ethan & Arjun");
+  });
+  it("KD-06g one child: the playdate is for that child, whatever was sent", () => {
+    expect(checkChildren(["c-mia"], [])).toEqual({ ok: true, errors: [], value: ["c-mia"] });
+  });
+  it("KD-06h several children and none chosen is NO_CHILD", () => {
+    const d = checkChildren(["c-mia", "c-ethan"], []);
+    expect(codes(d)).toEqual(["NO_CHILD"]);
+  });
+  it("KD-06i several children: the chosen ones, in the parent's order; ids that aren't theirs are ignored", () => {
+    expect(checkChildren(["c-mia", "c-ethan", "c-leo"], ["c-leo", "someone-elses", "c-mia"])).toEqual({ ok: true, errors: [], value: ["c-mia", "c-leo"] });
+    expect(codes(checkChildren(["c-mia", "c-ethan"], ["someone-elses"]))).toEqual(["NO_CHILD"]);
   });
   it("KD-06e every error at once", () => {
     const d = checkPlan({ mode: null, message: " ", inviteeCount: 0, zone: ZONE }, NOW);

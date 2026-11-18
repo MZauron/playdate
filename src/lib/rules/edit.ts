@@ -15,6 +15,8 @@ export type EditState = {
   place: EditablePlace;
   message: string;
   friendIds: readonly string[];
+  /** T41: which of the organizer's children it is for; a change is an "other change" (Updated). Absent = not compared. */
+  childIds?: readonly string[];
 };
 
 export type EditPlan = {
@@ -51,8 +53,13 @@ export function planEdit(
   const afterIds = new Set(after.friendIds);
   const addFriendIds = [...afterIds].filter((id) => !beforeIds.has(id));
   const removeFriendIds = [...beforeIds].filter((id) => !afterIds.has(id));
+  const sameChildren = (before.childIds ?? []).slice().sort().join(",") === (after.childIds ?? before.childIds ?? []).slice().sort().join(",");
   const otherChanged =
-    !samePlace(before.place, after.place) || before.message !== after.message || addFriendIds.length > 0 || removeFriendIds.length > 0;
+    !samePlace(before.place, after.place) ||
+    before.message !== after.message ||
+    addFriendIds.length > 0 ||
+    removeFriendIds.length > 0 ||
+    !sameChildren;
 
   return {
     changed: timeChanged || otherChanged,

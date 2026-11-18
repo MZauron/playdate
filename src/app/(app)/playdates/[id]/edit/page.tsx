@@ -19,5 +19,17 @@ export default async function EditPlaydateRoute({ params }: { params: Promise<{ 
   if (!playdate) notFound();
   if (playdate.status === "cancelled") redirect(`/playdates/${id}`);
   const [friends, places, favourites] = await Promise.all([listFriends(user.id), listTypedPlaces(user.id), listFavouritePlaces(user.id)]);
-  return <PlanForm friends={friends} savedPlaces={places} favourites={favourites} firstName={profile.firstName} edit={{ playdateId: id, zone: playdate.timezone, initial: editFormValues(playdate) }} />;
+  const initial = editFormValues(playdate);
+  // T41: a playdate from before T41 has no children stored; it was for the first child (Q4 default).
+  if (!initial.childIds.length && profile.children[0]) initial.childIds = [profile.children[0].id];
+  return (
+    <PlanForm
+      friends={friends}
+      savedPlaces={places}
+      favourites={favourites}
+      firstName={profile.firstName}
+      kids={profile.children}
+      edit={{ playdateId: id, zone: playdate.timezone, initial }}
+    />
+  );
 }

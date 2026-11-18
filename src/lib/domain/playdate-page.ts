@@ -24,6 +24,8 @@ export type OrganizerInvite = {
 
 export type OrganizerPlaydate = {
   id: string;
+  /** T41: the organizer's children it is for (server only). */
+  childIds?: string[];
   title: string;
   mode: TimeMode;
   status: PlaydateStatus;

@@ -7,6 +7,7 @@ import { shownPlace } from "./shown-place";
 
 type Row = {
   id: string;
+  playdate_children: { child_id: string }[] | null;
   title: string;
   mode: TimeMode;
   status: PlaydateStatus;
@@ -40,7 +41,7 @@ export const playdatePageStore: PlaydatePageStore = {
     const { data, error } = await adminClient()
       .from("playdates")
       .select(
-        "id, title, mode, status, timezone, start_at, end_at, final_start_at, final_end_at, confirmed_at, place_name, place_address, place_provider_id, message, time_version, availability_slots(day, slot), invites(id, friend_id, channel, created_at, majority_notice_at, friends(parent_name, label), answers(kind, reason, note, answered_at, pick_start_at, pick_end_at, time_version))",
+        "id, title, mode, status, timezone, start_at, end_at, final_start_at, final_end_at, confirmed_at, place_name, place_address, place_provider_id, message, time_version, availability_slots(day, slot), invites(id, friend_id, channel, created_at, majority_notice_at, friends(parent_name, label), answers(kind, reason, note, answered_at, pick_start_at, pick_end_at, time_version)), playdate_children(child_id)",
       )
       .eq("id", playdateId)
       .eq("organizer_id", organizerId)
@@ -64,6 +65,7 @@ export const playdatePageStore: PlaydatePageStore = {
       message: data.message,
       timeVersion: data.time_version,
       slots: data.availability_slots,
+      childIds: (data.playdate_children ?? []).map((c) => c.child_id),
       invites: invites.map((i) => {
         const a = i.answers && i.answers.time_version === data.time_version ? i.answers : null;
         return {

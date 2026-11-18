@@ -178,7 +178,7 @@ describe("sendUpdate (KD-10)", () => {
 
 describe("editFormValues", () => {
   it("fills the form in the playdate's zone", () => {
-    expect(editFormValues(playdate())).toEqual({ friendIds: [F1, F2], mode: "set_time", slots: [], day: "2026-11-16", start: "10:00", end: "12:00", place: null, placeName: "High Park", placeAddress: "", message: "Park?" });
+    expect(editFormValues(playdate())).toEqual({ friendIds: [F1, F2], childIds: [], mode: "set_time", slots: [], day: "2026-11-16", start: "10:00", end: "12:00", place: null, placeName: "High Park", placeAddress: "", message: "Park?" });
     expect(editFormValues(playdate({ timezone: "Asia/Kolkata", startAt: at("2026-11-16", 23, 30, "Asia/Kolkata"), endAt: at("2026-11-17", 0, 30, "Asia/Kolkata") }))).toMatchObject({
       day: "2026-11-16",
       start: "23:30",
@@ -243,3 +243,24 @@ describe("Send update with a place found by search (T17)", () => {
     expect(applied).toHaveLength(0);
   });
 });
+
+describe("sendUpdate: who the playdate is for (T41)", () => {
+  const MIA_ID = "c1111111-1111-4111-8111-111111111111";
+  const ETHAN_ID = "c2222222-2222-4222-8222-222222222222";
+  const twoKids = { ...organizer, children: [{ id: MIA_ID, firstName: "Mia" }, { id: ETHAN_ID, firstName: "Ethan" }] };
+  it("adding a child is an other change: stays confirmed, Updated, a new title and the children rewritten", async () => {
+    const { deps, applied } = world(playdate({ childIds: [MIA_ID] }));
+    const result = await sendUpdate(deps, twoKids, ID, form({ childIds: [MIA_ID, ETHAN_ID] }), NOW);
+    expect(result).toMatchObject({ ok: true, changed: true, kind: "updated" });
+    expect(applied[0]).toMatchObject({ status: "confirmed", label: "updated", title: "Playdate: Mia, Ethan, Arjun & Lily", childIds: [MIA_ID, ETHAN_ID] });
+  });
+  it("the same children and nothing else: no change", async () => {
+    const { deps } = world(playdate({ childIds: [MIA_ID] }));
+    expect(await sendUpdate(deps, twoKids, ID, form({ childIds: [MIA_ID] }), NOW)).toEqual({ ok: true, changed: false });
+  });
+  it("choosing nobody is NO_CHILD", async () => {
+    const { deps } = world(playdate({ childIds: [MIA_ID] }));
+    expect(await sendUpdate(deps, twoKids, ID, form({ childIds: [] }), NOW)).toMatchObject({ ok: false, errors: [{ code: "NO_CHILD" }] });
+  });
+});
+
