@@ -12,7 +12,7 @@ Estimates are session time (1–2 h each).
 - **Phase 1 run-through (T11, 2026-11-15): passed twice in a row.** On the laptop's Wi-Fi, the organizer on an iPhone and two real friends answering from their text links (one We're in!, one Can't make it): answers appeared live, confirm and the Text buttons worked, the friend saw It's on! and Confirmed. Nothing broke. Phase 1's gate (three real parents without Kindred) is still the owner's prototype test.
 - **Next:** T17 and T18 are done against the fake places provider (live Google and live AI need keys); batch B is done; batch C needs the owner (staging for T20, Q6 for T17/T18, production for T25). **Batches (owner's decision, 2026-11-15):** the owner approves a group of tasks at once; Claude still makes one branch and PR per task, in order, and merges each when CI is green. **Staging is on hold (owner's decision, 2026-11-15):** T04's accounts are finished when the parent tests or T20 need a shared URL (see T04).
 - **Feedback round 1 (2026-11-15):** the first tester's notes are bundles D–H under Open tasks. E, F and G are done; D waits for the tester (T26) and staging (T28); H moved into bundle I.
-- **Mock-up round 2 (2026-11-18):** the tester's second mock-up is bundles I–L. I and J are done; K can start now; L waits for Q31–Q34.
+- **Mock-up round 2 (2026-11-18):** the tester's second mock-up is bundles I–L. I, J and K are done; L's questions are answered (T45 can start, T48 waits on Q6).
 - **Alongside the code:** test the clickable prototype with 5–8 parents (the doc's next step 2). Note what they stumble on in `docs/QUESTIONS.md`.
 
 ## Plan
@@ -166,11 +166,9 @@ From the tester's second clickable mock-up (a claude.ai artifact, 2026-11-17). I
 - [x] **T44 One-tap confirm** [phone] (KD-09 unchanged). On the organizer's page, the time most families can make is already chosen: chips "Sat, Nov 21, 10 to 12 · 2 coming" (the others one tap away) and one button "Confirm · Sat, Nov 21, 10 to 12"; ties go to the earliest. Done when: the preselection (most families, then earliest) is tested for availability picks and the button still needs a yes (`CONFIRM_NEEDS_YES`).
   Done 2026-11-18. Notes: Times friends suggested are now chips ("Sat, Nov 21, 10 to 12 · 2 coming"; screen readers hear the full time and who picked it), with the chosen one's names and Most picked under them. The time already chosen is `preselectedPick` in `rules/picks.ts`: KD-11's order (most families, then earliest start, then earliest end), cases KD-11d–f. The button names the time it confirms; the set time's button does too ("Confirm · Mon, Nov 16, 10 to 12") and still stays off until the first yes (KD-09, `CONFIRM_NEEDS_YES` on the server). The smoke test now finds the button by "Confirm ·".
 
-**Bundle L · New features that wait for an answer**
-- [ ] **T45 Free to play** [phone] (Q31, new rule KD-19). A status per child ("Free this afternoon", "This weekend", your own words up to 50 characters), off by itself when that time passes and after 2 days at most; shown with a green dot on the Friends tab and the friend's Home, free friends first. Nothing is sent. Done when: the KD-19 cases (who sees it, expiry) are tested, a migration with RLS tests stores it, and it never shows to someone the parent hasn't added.
-- [ ] **T46 A chat on each playdate** [phone] (Q32). Only if Q32 is yes: messages on the playdate page and its invite pages, to everyone or to the families picked; friends on a link write through their link; kept until the 30-day clean-up. Done when: written as KD-20 cases first.
-- [ ] **T47 Weather on Home** [laptop] (Q33). Only if Q33 is yes.
-- [ ] **T48 A map in Places** [laptop] (Q6, Q34). Category chips (Parks, Indoor play, Libraries, Pools, Climbing, Farms), a map with numbered pins, distance and "Open" per place, and Directions · Call · Plan here. Waits for the places provider (Q6) and the map (Q34).
+**Bundle L · Friends and places** (Q31–Q34 answered 2026-11-18; Q32 and Q33 are "not now", so T46 and T47 moved to Later)
+- [ ] **T45 Free to play** [phone] (Q31 answered: the default, new rule KD-19). A status per child ("Free this afternoon", "This weekend", your own words up to 50 characters), off by itself when that time passes and after 2 days at most; shown with a green dot on the Friends tab and the friend's Home, free friends first. Nothing is sent. Done when: the KD-19 cases (who sees it, expiry) are tested, a migration with RLS tests stores it, and it never shows to someone the parent hasn't added, to a friend who hasn't added them back, or on an invite link.
+- [ ] **T48 A map in Places** [laptop] (Q34 answered: decided with Q6). Category chips (Parks, Indoor play, Libraries, Pools, Climbing, Farms), a map with numbered pins, distance and "Open" per place, and Directions · Call · Plan here. Waits for the places provider (Q6); the map is chosen with it.
 
 ### The owner's list (not tasks for Claude)
 - **Test the prototype** with 5–8 parents, including two group playdates and two friends without the app (doc, next step 2). Ask iPhone parents whether typing a friend's number is OK (Q15).
@@ -186,6 +184,8 @@ From the tester's second clickable mock-up (a claude.ai artifact, 2026-11-17). I
 ## Later
 (Ideas that come up during a task go here instead of being built.)
 - A native shell (Capacitor or Expo) around the web app, only if parents need the iPhone contact picker or richer notifications (Q15).
+- **T46 A chat on each playdate** (Q32: not now, 2026-11-18). If wanted later: messages on the playdate page and its invite pages, to everyone or to the families picked; friends on a link write through their link; kept until the 30-day clean-up; written as KD-20 cases first.
+- **T47 Weather on Home** (Q33: not now, 2026-11-18). Needs a weather service and the parent's rough location.
 
 ## Done
 (Move each task here when it is ticked, with its note.)
