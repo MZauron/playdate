@@ -96,3 +96,17 @@ describe("A page for each friend (T40)", async () => {
     expect(html(<FriendPage friend={friend} open={[]} past={[]} />)).toContain("No playdates yet.");
   });
 });
+
+describe("FriendListRow (T45)", () => {
+  it("shows a green dot and the free line in place of the second line while a child of theirs is free", async () => {
+    const { FriendListRow } = await import("./FriendListRow");
+    const free = html(<FriendListRow friend={friend} free="Arjun is free tomorrow" />);
+    expect(free).toContain("Arjun is free tomorrow");
+    expect(free).toContain("bg-success");
+    expect(free).not.toContain("has Kindred");
+    const plain = html(<FriendListRow friend={friend} />);
+    expect(plain).not.toContain("bg-success");
+    expect(plain).toContain("has Kindred");
+  });
+});
+

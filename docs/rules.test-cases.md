@@ -175,3 +175,22 @@ Playdate confirmed for Mon 10:00–12:00; check-ins are We're here, Running late
 | KD-18h | Availability: a pick 11:00–12:30, then 12:00–13:00 | Accepted (overlaps the confirmed time), then `CHECKIN_NOT_COMING` *(reading: "coming" = a yes, or a pick that overlaps the confirmed time)* |
 | KD-18i | Note of 80 characters, 81, blank | Accepted, `CHECKIN_INVALID`, accepted with no note |
 | KD-18j | A check-in kind not in the list | `CHECKIN_INVALID` |
+
+## KD-19 Free to play (Q31, 2026-11-18; T45)
+A status per child that friends see in Kindred: one of the times below, or the parent's own words (up to 50 characters). It turns off when that time has passed, and after 2 days at most. Times are in the parent's zone (Toronto here); this afternoon is 12:00–17:00, this evening 17:00 to midnight, the weekend Saturday and Sunday. A time is offered once it starts within a day and until 15 minutes before it ends. Now = Sat 14 Nov 10:00 unless a case says otherwise. *Who sees it* (Kindred parents who are friends both ways, never on invite links, never anyone the parent hasn't added) is checked in the database and tested in `supabase/tests/free-to-play.test.ts`.
+
+| Id | Input | Expected |
+| --- | --- | --- |
+| KD-19a | The times offered | This afternoon, This evening, Tomorrow, This weekend |
+| KD-19b | This afternoon at 16:44, then 16:45 | Until Sat 17:00, then `FREE_NOT_NOW` |
+| KD-19c | This afternoon | Until Sat 17:00 |
+| KD-19d | This evening | Until Sun 00:00 |
+| KD-19e | Tomorrow | Until Mon 00:00 |
+| KD-19f | This weekend, set Sat 10:00 or Sun 10:00 | Until Mon 00:00 |
+| KD-19g | This weekend, Thu 19 Nov 23:59, then Fri 20 Nov 00:00 | `FREE_NOT_NOW`, then until Sun 22 Nov 00:00 *(reading: "2 days at most" counts from when it's set, so the end of the weekend is cut)* |
+| KD-19h | Own words "  Free   after school " | "Free after school", until Mon 10:00 (2 days) |
+| KD-19i | Own words of 50 characters, 51, blank | Accepted, `FREE_INVALID`, `FREE_INVALID` |
+| KD-19j | A time not in the list | `FREE_INVALID` |
+| KD-19k | A status until 17:00, at 16:59 and at 17:00 | Shown, then off |
+| KD-19l | Tomorrow and own words, set Sat 31 Oct 10:00 (clocks go back on Sun) | Until Mon 2 Nov 00:00; own words until exactly 48 hours later |
+
