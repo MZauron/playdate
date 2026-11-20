@@ -69,7 +69,8 @@ test("sign up, invite a friend by text link, the friend answers, the organizer s
 
   // 3. The organizer opens the playdate and waits for the live connection.
   await page.getByRole("link", { name: "Back to Home" }).click();
-  await page.getByRole("link", { name: /Leo & Ava/ }).click();
+  await page.getByRole("button", { name: /Leo & Ava/ }).click(); // T50: the card opens the quick sheet
+  await page.getByRole("link", { name: "Open playdate" }).click();
   await expect(page.getByText("0 of 1 answered")).toBeVisible();
   // Preview what friends see (T27): the friend's page with the answer buttons disabled, then back.
   await page.getByRole("link", { name: "Preview what friends see" }).click();
