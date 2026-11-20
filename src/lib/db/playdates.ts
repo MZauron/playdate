@@ -1,6 +1,7 @@
 // Playdates, invites and typed saved places (T08). Server only; every query is scoped to the organizer id the caller got from
 // `auth.getUser()`.
 import "server-only";
+import { recentPlaces } from "@/lib/domain/recent-places";
 import type { HomePlaydate } from "@/components/home/home-data";
 import type { InviteeFriend, PlaydateStore } from "@/lib/domain/playdates";
 import { playdateEnd } from "@/lib/rules/links";
@@ -187,6 +188,38 @@ export async function listRecentPlaydates(organizerId: string, now: Date, limit 
       placeName: (await shownPlace(row)).placeName,
     })),
   );
+}
+
+export type RecentPlace = { playdateId: string; placeName: string; setting: import("@/lib/integrations/places/types").PlaceSetting | null; lastVisit: Date; timezone: string };
+
+/** T51: the places of this organizer's past confirmed playdates, newest first, each place once (up to three). */
+export async function listRecentPlaces(organizerId: string, now: Date): Promise<RecentPlace[]> {
+  const { data, error } = await adminClient()
+    .from("playdates")
+    .select("id, timezone, final_start_at, place_name, place_address, place_provider_id")
+    .eq("organizer_id", organizerId)
+    .eq("status", "confirmed")
+    .lt("final_end_at", now.toISOString())
+    .order("final_start_at", { ascending: false })
+    .limit(30);
+  if (error) throw new Error(`listRecentPlaces failed: ${error.code}`);
+  const rows = (data ?? []).map((r) => ({ ...r, startAt: new Date(r.final_start_at!), placeName: r.place_name, placeAddress: r.place_address, placeProviderId: r.place_provider_id }));
+  const shown = await Promise.all(recentPlaces(rows).map(async (r) => ({ r, place: await shownPlace(r) })));
+  return shown.flatMap(({ r, place }) =>
+    place.placeName ? [{ playdateId: r.id, placeName: place.placeName, setting: place.searchedPlace?.setting ?? null, lastVisit: r.startAt, timezone: r.timezone }] : [],
+  );
+}
+
+/** T51, Plan here: the place of one of THIS organizer's playdates (provider place, or typed name and address); null when it isn't theirs. */
+export async function placeOfPlaydate(organizerId: string, playdateId: string) {
+  const { data, error } = await adminClient()
+    .from("playdates")
+    .select("place_name, place_address, place_provider_id")
+    .eq("organizer_id", organizerId)
+    .eq("id", playdateId)
+    .maybeSingle();
+  if (error) throw new Error(`placeOfPlaydate failed: ${error.code}`);
+  return data ? shownPlace(data) : null;
 }
 
 /** T38: one of THIS organizer's playdates for Plan again, with the friends it invited; null when it isn't theirs or was cancelled. */

@@ -231,3 +231,22 @@ describe("The playdate sheet's Confirm (T50, KD-09 unchanged)", () => {
   });
 });
 
+describe("Recently visited (T51)", () => {
+  it("lists the places with the last visit, indoor or outdoor when known, and Plan here", () => {
+    const markup = view({
+      recentPlaces: [
+        { playdateId: "p1", placeName: "Riverdale Park", setting: "outdoor", lastVisit: new Date("2026-11-08T15:00:00Z"), timezone: ZONE },
+        { playdateId: "p2", placeName: "Grandma's", setting: null, lastVisit: new Date("2026-11-01T15:00:00Z"), timezone: ZONE },
+      ],
+    });
+    expect(headings(markup)).toContain("Recently visited");
+    expect(markup).toContain("Last visit Nov 8 · Outdoor");
+    expect(markup).toContain("Last visit Nov 1<");
+    expect(markup).toContain('href="/plan?placeOf=p1"');
+    expect(markup).toContain('aria-label="Plan a playdate at Grandma&#x27;s"');
+  });
+  it("is not there without past places", () => {
+    expect(headings(view())).not.toContain("Recently visited");
+  });
+});
+

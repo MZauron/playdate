@@ -5,7 +5,7 @@ import { dayPartOf, enCA, formatDateTile, formatLongDay, formatShortDay, formatS
 import Link from "next/link";
 import type { MajorityNotice } from "@/lib/domain/majority";
 import type { HomeInvite } from "@/lib/db/invites";
-import type { RecentPlaydate } from "@/lib/db/playdates";
+import type { RecentPlace, RecentPlaydate } from "@/lib/db/playdates";
 import type { HomeStatus } from "@/lib/rules/home";
 import type { AnswerKind } from "@/lib/rules/types";
 import type { FreeKind } from "@/lib/rules/free";
@@ -41,6 +41,8 @@ export type HomeViewProps = {
   friendsFree?: readonly HomeFreeFriend[];
   /** T50 (T44): for each open availability playdate, the time most families can make, which the sheet's Confirm sends. */
   chosen?: Readonly<Record<string, { start: Date; end: Date }>>;
+  /** T51: places of the parent's past playdates, each place once, with Plan here. */
+  recentPlaces?: readonly RecentPlace[];
 };
 
 export type HomeFreeFriend = {
@@ -50,7 +52,7 @@ export type HomeFreeFriend = {
 };
 
 // T37 (Q29): Home in the tester's mock-up look. What is on Home and its order are still KD-13 (src/lib/rules/home.ts).
-export function HomeView({ firstName, welcome = false, childName, childNames, playdates, notices = [], invites = [], recent = [], now, zone, sayIt, free, friendsFree = [], chosen = {} }: HomeViewProps) {
+export function HomeView({ firstName, welcome = false, childName, childNames, playdates, notices = [], invites = [], recent = [], now, zone, sayIt, free, friendsFree = [], chosen = {}, recentPlaces = [] }: HomeViewProps) {
   const items = homeList(playdates, invites, now);
   const greeting = welcome && firstName ? enCA.home.welcome(firstName) : enCA.home.greeting[dayPartOf(now, zone)];
   const kids = childNames?.length ? childNames : childName ? [childName] : [];
@@ -187,6 +189,42 @@ export function HomeView({ firstName, welcome = false, childName, childNames, pl
                   </Link>
                 </li>
               ))}
+            </ul>
+          </Card>
+        </section>
+      )}
+
+      {recentPlaces.length > 0 && (
+        <section aria-labelledby="home-places-title">
+          <h2 id="home-places-title" className="mb-2 px-1 text-label font-bold uppercase tracking-wider text-muted">
+            {enCA.home.recentPlaces.title}
+          </h2>
+          <Card className="px-4 py-1">
+            <ul>
+              {recentPlaces.map((r) => {
+                const tile = formatDateTile(r.lastVisit, r.timezone);
+                const visit = enCA.home.recentPlaces.lastVisit(`${tile.month} ${tile.day}`);
+                return (
+                  <li key={r.playdateId} className="flex items-center gap-3 border-page py-3 [&+&]:border-t">
+                    <span aria-hidden="true" className="flex size-11 shrink-0 items-center justify-center rounded-[14px] bg-primary-tint text-primary">
+                      <PinIcon />
+                    </span>
+                    <span className="min-w-0 flex-1">
+                      <span className="block truncate font-bold tracking-tight">{r.placeName}</span>
+                      <span className="block text-[14px] text-muted">
+                        {r.setting ? `${visit} · ${enCA.home.recentPlaces.setting[r.setting]}` : visit}
+                      </span>
+                    </span>
+                    <Link
+                      href={`/plan?placeOf=${r.playdateId}`}
+                      aria-label={enCA.home.recentPlaces.planHereLabel(r.placeName)}
+                      className="flex min-h-11 shrink-0 items-center rounded-full bg-primary-tint px-3.5 text-[14px] font-bold text-primary focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
+                    >
+                      {enCA.home.recentPlaces.planHere}
+                    </Link>
+                  </li>
+                );
+              })}
             </ul>
           </Card>
         </section>
