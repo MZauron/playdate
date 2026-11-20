@@ -23,6 +23,8 @@ export const ERROR_CODES = [
   "CHECKIN_CLOSED", // KD-18 (not confirmed, cancelled, or outside the check-in window)
   "CHECKIN_NOT_COMING", // KD-18 (only parents who are coming, and the organizer)
   "CHECKIN_INVALID", // KD-18 (not one of the check-ins, or the note is too long)
+  "FREE_NOT_NOW", // KD-19 (that time has passed, or is more than a day away)
+  "FREE_INVALID", // KD-19 (not one of the times, or the own words are blank or too long)
 ] as const;
 
 export type ErrorCode = (typeof ERROR_CODES)[number];

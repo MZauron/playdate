@@ -1,6 +1,7 @@
 // Every user-facing string lives here (Canadian English), with the date and time formatters.
 import type { FriendStatus } from "@/lib/rules/answers";
 import type { DeclineReason } from "@/lib/rules/types";
+import type { FreeKind, FreeWhen } from "@/lib/rules/free";
 
 /** The pieces a built-in message idea is made of (see `suggestionTemplates`). */
 export type SuggestionWords = { child: string; kids: string; all: string; when: string; at: string };
@@ -481,6 +482,47 @@ export const enCA = {
       NOT_FOUND: "This playdate isn't there any more.",
       TOO_MANY_CHECKINS: "That's a lot of check-ins at once. Please wait a few minutes.",
     } as Record<string, string>,
+  },
+  /** T45 (KD-19, Q31): Free to play, a status per child that friends see. */
+  free: {
+    title: "Free to play",
+    sheetNote: "Let friends know when your children can play.",
+    privacy: "Only friends who have added you back see it, for 2 days at most. Nothing is sent.",
+    whens: { this_afternoon: "This afternoon", this_evening: "This evening", tomorrow: "Tomorrow", this_weekend: "This weekend" } satisfies Record<FreeWhen, string>,
+    /** "Mia is free this weekend", or the parent's own words: "Mia: after school". */
+    status: (kid: string, kind: FreeKind, words: string | null): string =>
+      kind === "own_words" ? `${kid}: ${words ?? ""}` : `${kid} is free ${enCA.free.whens[kind].toLowerCase()}`,
+    notSet: "Not set",
+    share: "Share",
+    change: "Change",
+    shareFor: (kid: string) => `Share when ${kid} is free`,
+    changeFor: (kid: string) => `Change ${kid}'s status`,
+    turnOff: "Turn off",
+    whenLabel: (kid: string) => `When is ${kid} free?`,
+    ownWordsLabel: "Or in your own words",
+    ownWordsPlaceholder: "e.g. Free after school",
+    save: "Save",
+    saving: "Saving…",
+    close: "Close",
+    /** The Home banner's line while no child is free. */
+    bannerShare: (kids: string) => `Share when ${kids} can play`,
+    bannerChange: "Change",
+    /** "1 day left", "5h left" (rounded, at least 1 h). */
+    left: (until: Date, now: Date): string => {
+      const hours = Math.max(1, Math.round((until.getTime() - now.getTime()) / 3_600_000));
+      if (hours < 24) return `${hours}h left`;
+      const days = Math.round(hours / 24);
+      return days === 1 ? "1 day left" : `${days} days left`;
+    },
+    plan: "Plan",
+    planLabel: (name: string) => `Plan a playdate with ${name}`,
+    dot: "Free to play",
+    errors: {
+      FREE_NOT_NOW: "That time has passed. Pick another one.",
+      FREE_INVALID: "Keep it to 50 characters.",
+      NOT_FOUND: "Something went wrong. Please try again.",
+      TOO_MANY: "That's a lot of changes at once. Please wait a few minutes.",
+    },
   },
   /** T27: the organizer's look at the invite page. */
   preview: {

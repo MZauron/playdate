@@ -43,3 +43,12 @@ export const DECLINE_REASONS: readonly DeclineReason[] = [
   "too_far",
   "other_plans",
 ];
+
+/** KD-19 (Q31 default): a "Free to play" status shows for 2 days at most, and the parent's own words are up to 50 characters. */
+export const FREE_MAX_HOURS = 48;
+export const FREE_WORDS_MAX_LENGTH = 50;
+/** KD-19: a time is offered once it starts within a day (so "This weekend" from Friday) and until 15 minutes before it ends. */
+export const FREE_OFFER_LEAD_HOURS = 24;
+export const FREE_LAST_CALL_MINUTES = 15;
+/** KD-19: this afternoon is 12:00–17:00, this evening 17:00 to midnight (the parent's zone). */
+export const FREE_AFTERNOON_HOURS = { start: 12, end: 17 };

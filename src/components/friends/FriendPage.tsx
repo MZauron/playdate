@@ -20,12 +20,15 @@ export function FriendPage({
   open,
   past,
   kids = [],
+  free,
 }: {
   friend: Friend;
   open: readonly PlaydateTogether[];
   past: readonly PlaydateTogether[];
   /** T42: the owner's children; with two or more, "Friends with" chips. */
   kids?: readonly { id: string; firstName: string }[];
+  /** T45 (KD-19): "Arjun is free tomorrow" while a child of theirs is free (friends both ways only). */
+  free?: string;
 }) {
   const firstName = friend.parentName.trim().split(/\s+/)[0] ?? friend.parentName;
   return (
@@ -47,6 +50,12 @@ export function FriendPage({
           {friend.hasKindred ? enCA.friends.hasKindred : enCA.friends.getsText}
         </span>
         {!friend.hasKindred && <p className="mt-2 text-[14px] text-muted">{t.textNote}</p>}
+        {free && (
+          <p className="mt-3 flex items-center gap-2 text-[15px] font-semibold text-success">
+            <span aria-hidden="true" className="size-2.5 rounded-full bg-success" />
+            {free}
+          </p>
+        )}
       </Card>
 
       {kids.length > 1 && <FriendKids friendId={friend.id} firstName={firstName} kids={kids} initial={knownKids(friend, kids)} />}

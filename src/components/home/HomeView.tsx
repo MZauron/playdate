@@ -8,6 +8,8 @@ import type { HomeInvite } from "@/lib/db/invites";
 import type { RecentPlaydate } from "@/lib/db/playdates";
 import type { HomeStatus } from "@/lib/rules/home";
 import type { AnswerKind } from "@/lib/rules/types";
+import type { FreeKind } from "@/lib/rules/free";
+import { Avatar } from "../friends/Avatar";
 import { homeList, type HomePlaydate } from "./home-data";
 import { Kite } from "./Kite";
 
@@ -31,13 +33,57 @@ export type HomeViewProps = {
   zone: string;
   /** T43: the Or just say it box, under the Plan card (above the list once it has something). Passed in: it holds a server action. */
   sayIt?: React.ReactNode;
+  /** T45 (KD-19): the banner's Free to play line, which opens the sheet. Passed in: it holds server actions. */
+  free?: React.ReactNode;
+  /** T45 (KD-19): friends' children who are free now (friends both ways only), each friend with Plan. */
+  friendsFree?: readonly HomeFreeFriend[];
+};
+
+export type HomeFreeFriend = {
+  friendId: string;
+  parentName: string;
+  statuses: readonly { childFirstName: string; kind: FreeKind; words: string | null; until: Date }[];
 };
 
 // T37 (Q29): Home in the tester's mock-up look. What is on Home and its order are still KD-13 (src/lib/rules/home.ts).
-export function HomeView({ firstName, welcome = false, childName, childNames, playdates, notices = [], invites = [], recent = [], now, zone, sayIt }: HomeViewProps) {
+export function HomeView({ firstName, welcome = false, childName, childNames, playdates, notices = [], invites = [], recent = [], now, zone, sayIt, free, friendsFree = [] }: HomeViewProps) {
   const items = homeList(playdates, invites, now);
   const greeting = welcome && firstName ? enCA.home.welcome(firstName) : enCA.home.greeting[dayPartOf(now, zone)];
   const kids = childNames?.length ? childNames : childName ? [childName] : [];
+
+  // T45 (KD-19): friends' children who are free now, right under Or just say it so it isn't lost below a long list.
+  const freeSection = friendsFree.length > 0 && (
+        <section aria-labelledby="home-free-title">
+          <h2 id="home-free-title" className="mb-2 px-1 text-label font-bold uppercase tracking-wider text-muted">
+            {enCA.free.title}
+          </h2>
+          <Card className="px-4 py-1">
+            <ul>
+              {friendsFree.map((f) => (
+                <li key={f.friendId} className="flex items-center gap-3 border-page py-3 [&+&]:border-t">
+                  <span className="relative">
+                    <Avatar name={f.parentName} size={40} />
+                    <span aria-hidden="true" className="absolute -bottom-0.5 -right-0.5 size-3 rounded-full bg-success ring-2 ring-card" />
+                  </span>
+                  <span className="min-w-0 flex-1">
+                    <span className="block font-bold tracking-tight">{f.statuses.map((st) => enCA.free.status(st.childFirstName, st.kind, st.words)).join(" · ")}</span>
+                    <span className="block truncate text-[14px] text-muted">
+                      {f.parentName} · {enCA.free.left(f.statuses[0]!.until, now)}
+                    </span>
+                  </span>
+                  <Link
+                    href={`/plan?friend=${f.friendId}`}
+                    aria-label={enCA.free.planLabel(f.parentName)}
+                    className="flex min-h-11 shrink-0 items-center rounded-full bg-primary-tint px-3.5 text-[14px] font-bold text-primary focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
+                  >
+                    {enCA.free.plan}
+                  </Link>
+                </li>
+              ))}
+            </ul>
+          </Card>
+        </section>
+  );
 
   return (
     <div className="flex flex-col gap-5 pb-6">
@@ -47,6 +93,7 @@ export function HomeView({ firstName, welcome = false, childName, childNames, pl
         <p className="relative text-[14px] opacity-85">{formatLongDay(now, zone)}</p>
         <h1 className="relative mt-1 text-[28px] font-extrabold leading-tight tracking-tight">{greeting}</h1>
         {kids.length > 0 && <p className="relative mt-1 text-[15px] opacity-90">{enCA.home.planFor(joinNames(kids))}</p>}
+        {free}
         <Kite className="absolute right-4 top-3 h-20 w-14 opacity-95" />
       </header>
 
@@ -66,11 +113,13 @@ export function HomeView({ firstName, welcome = false, childName, childNames, pl
             <Chevron />
           </Link>
           {sayIt}
+          {freeSection}
         </>
       ) : (
         /* KD-13 (Q24): one list, soonest first, the parent's own playdates and the invites they received together. */
         <>
           {sayIt}
+          {freeSection}
           <section aria-labelledby="home-list-title">
             <div className="mb-2 flex items-center justify-between gap-3 px-1">
               <h2 id="home-list-title" className="text-label font-bold uppercase tracking-wider text-muted">

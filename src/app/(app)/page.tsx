@@ -4,6 +4,11 @@ import { friendLinkStore } from "@/lib/db/friend-links";
 import { loadFriendLink } from "@/lib/domain/friend-links";
 import { HomeView } from "@/components/home/HomeView";
 import { SayIt } from "@/components/home/SayIt";
+import { FreeSheet } from "@/components/home/FreeSheet";
+import { listFriends } from "@/lib/db/friends";
+import { listFriendsFree, listOwnFree } from "@/lib/db/free-status";
+import { freeByFriend } from "@/lib/domain/free-status";
+import { enCA, joinNames } from "@/lib/i18n/en-CA";
 import { requireParent } from "@/lib/auth/require-parent";
 import { listInvitesForUser } from "@/lib/db/invites";
 import { listOpenAvailability } from "@/lib/db/playdate-page";
@@ -26,6 +31,20 @@ export default async function HomePage({ searchParams }: { searchParams: Promise
   }
   const { welcome } = await searchParams;
   const now = new Date();
+  // T45 (KD-19): the parent's own children's statuses for the banner, and the friends' children who are free (friends both ways).
+  const [own, friendsFree, friends] = await Promise.all([listOwnFree(user.id, now), listFriendsFree(user.id, now), listFriends(user.id)]);
+  const freeKids = profile.children.map((c) => {
+    const st = own.find((o) => o.childId === c.id);
+    return { id: c.id, firstName: c.firstName, status: st ? { kind: st.kind, words: st.words } : null };
+  });
+  const freeNow = freeKids.filter((k) => k.status);
+  const freeLabel = freeNow.length
+    ? freeNow.map((k) => enCA.free.status(k.firstName, k.status!.kind, k.status!.words)).join(" · ")
+    : enCA.free.bannerShare(joinNames(profile.children.map((c) => c.firstName)));
+  const names = new Map(friends.map((f) => [f.id, f.parentName]));
+  const homeFree = [...freeByFriend(friendsFree)].flatMap(([friendId, statuses]) =>
+    names.has(friendId) ? [{ friendId, parentName: names.get(friendId)!, statuses }] : [],
+  );
   return (
     <HomeView
       firstName={profile.firstName}
@@ -39,6 +58,8 @@ export default async function HomePage({ searchParams }: { searchParams: Promise
       now={now}
       zone={DEFAULT_ZONE}
       sayIt={<SayIt />}
+      free={profile.children.length > 0 ? <FreeSheet kids={freeKids} label={freeLabel} anyFree={freeNow.length > 0} /> : undefined}
+      friendsFree={homeFree}
     />
   );
 }

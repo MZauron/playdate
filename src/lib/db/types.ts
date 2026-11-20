@@ -105,6 +105,31 @@ isOneToOne: false
       referencedColumns: ["id"]
     }
                   ]
+                },"free_statuses": {
+                  Row: {
+                    "child_id": string,"kind": string,"parent_id": string,"set_at": string,"until": string,"words": string | null
+                  }
+                  Insert: {
+                    "child_id": string,"kind": string,"parent_id": string,"set_at"?: string,"until": string,"words"?: string | null
+                  }
+                  Update: {
+                    "child_id"?: string,"kind"?: string,"parent_id"?: string,"set_at"?: string,"until"?: string,"words"?: string | null
+                  }
+                  Relationships: [
+                    {
+      foreignKeyName: "free_statuses_child_id_fkey"
+      columns: ["child_id"]
+isOneToOne: true
+      referencedRelation: "children"
+      referencedColumns: ["id"]
+    },{
+      foreignKeyName: "free_statuses_parent_id_fkey"
+      columns: ["parent_id"]
+isOneToOne: false
+      referencedRelation: "profiles"
+      referencedColumns: ["id"]
+    }
+                  ]
                 },"friend_children": {
                   Row: {
                     "child_id": string,"friend_id": string
@@ -345,6 +370,11 @@ isOneToOne: false
 "create_profile_with_children":
 { Args: { "p_children": Json,"p_first_name": string,"p_id": string,"p_phone_hash": string }; Returns: undefined
                            },
+"friends_free_now":
+{ Args: { "p_now": string,"p_viewer": string }; Returns: {
+              "child_first_name": string,"friend_id": string,"kind": string,"until": string,"words": string
+            }[]
+                           },
 "is_invited_to":
 { Args: { "p_playdate": string }; Returns: boolean
                            },
@@ -366,6 +396,9 @@ isOneToOne: false
                            },
 "save_group":
 { Args: { "p_friend_ids": (string)[],"p_group_id": string,"p_name": string,"p_owner_id": string }; Returns: string
+                           },
+"set_free_status":
+{ Args: { "p_child_id": string,"p_kind": string,"p_parent_id": string,"p_until": string,"p_words": string }; Returns: boolean
                            },
 "set_friend_children":
 { Args: { "p_child_ids": (string)[],"p_friend_id": string,"p_owner_id": string }; Returns: number

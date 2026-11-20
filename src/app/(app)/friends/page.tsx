@@ -8,6 +8,8 @@ import { FriendListRow } from "@/components/friends/FriendListRow";
 import { Initials } from "@/components/groups/Initials";
 import { requireParent } from "@/lib/auth/require-parent";
 import { listFriends } from "@/lib/db/friends";
+import { listFriendsFree } from "@/lib/db/free-status";
+import { freeByFriend } from "@/lib/domain/free-status";
 import { listGroups } from "@/lib/db/groups";
 import { knownKids } from "@/lib/domain/friend-kids";
 import { cx } from "@/components/cx";
@@ -25,8 +27,11 @@ export default async function FriendsPage({ searchParams }: { searchParams: Prom
   const kids = profile.children;
   // T42 (Q30): with two or more children, a switch shows one child's friends (the first child's by default, as in the mock-up) or All.
   const kidId = kids.length > 1 ? (kid === "all" ? "all" : kids.some((k) => k.id === kid) ? kid! : kids[0]!.id) : "all";
-  const [allFriends, groups] = await Promise.all([listFriends(user.id), listGroups(user.id)]); // only this parent's
-  const friends = kidId === "all" ? allFriends : allFriends.filter((f) => knownKids(f, kids).includes(kidId));
+  const [allFriends, groups, freeRows] = await Promise.all([listFriends(user.id), listGroups(user.id), listFriendsFree(user.id, new Date())]); // only this parent's
+  // T45 (KD-19): friends with a child free now come first, with a green dot and when.
+  const free = new Map([...freeByFriend(freeRows)].map(([id, rows]) => [id, rows.map((r) => enCA.free.status(r.childFirstName, r.kind, r.words)).join(" · ")]));
+  const shown = kidId === "all" ? allFriends : allFriends.filter((f) => knownKids(f, kids).includes(kidId));
+  const friends = [...shown.filter((f) => free.has(f.id)), ...shown.filter((f) => !free.has(f.id))];
   return (
     <div className="flex flex-col gap-6 pt-6 pb-6">
       <h1 className="text-title font-extrabold tracking-tight leading-tight">{enCA.friends.tabTitle}</h1>
@@ -94,7 +99,7 @@ export default async function FriendsPage({ searchParams }: { searchParams: Prom
             <ul>
               {friends.map((friend) => (
                 <li key={friend.id} className="border-line [&+&]:border-t">
-                  <FriendListRow friend={friend} />
+                  <FriendListRow friend={friend} free={free.get(friend.id)} />
                 </li>
               ))}
             </ul>

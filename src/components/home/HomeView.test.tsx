@@ -164,3 +164,32 @@ describe("Home: Or just say it (T43)", () => {
     expect(markup.indexOf('id="say-it-box"')).toBeLessThan(markup.indexOf("Your playdates"));
   });
 });
+
+describe("Free to play on Home (T45)", () => {
+  const friendsFree = [
+    {
+      friendId: "f1",
+      parentName: "Dev Patel",
+      statuses: [
+        { childFirstName: "Arjun", kind: "tomorrow" as const, words: null, until: new Date(NOW.getTime() + 30 * 3_600_000) },
+        { childFirstName: "Asha", kind: "own_words" as const, words: "after school", until: new Date(NOW.getTime() + 40 * 3_600_000) },
+      ],
+    },
+  ];
+
+  it("lists friends' free children with when, how long, and Plan with that friend", () => {
+    const markup = view({ friendsFree });
+    expect(headings(markup)).toContain("Free to play");
+    expect(markup).toContain("Arjun is free tomorrow · Asha: after school");
+    expect(markup).toContain("Dev Patel · 1 day left");
+    expect(markup).toContain('href="/plan?friend=f1"');
+    expect(markup).toContain('aria-label="Plan a playdate with Dev Patel"');
+  });
+
+  it("is not there while no friend's child is free, and the banner shows the line passed in", () => {
+    const markup = view({ free: <button>Share when Mia can play</button> });
+    expect(headings(markup)).not.toContain("Free to play");
+    expect(markup).toContain("Share when Mia can play");
+  });
+});
+
