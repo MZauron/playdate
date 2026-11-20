@@ -684,6 +684,14 @@ export const enCA = {
     chipState: { yes: "coming", pick: "picked a time", no: "can't make it", waiting: "waiting" },
     noTime: "Time to be decided",
     noPlace: "Place not set yet",
+    /** T51: places of the parent's past playdates, each with Plan here. */
+    recentPlaces: {
+      title: "Recently visited",
+      lastVisit: (day: string) => `Last visit ${day}`,
+      setting: { indoor: "Indoor", outdoor: "Outdoor", both: "Indoor and outdoor" },
+      planHere: "Plan here",
+      planHereLabel: (place: string) => `Plan a playdate at ${place}`,
+    },
     /** T38: the organizer's last confirmed playdates that are over. */
     recentTitle: "Recent playdates",
     planAgain: "Plan again",

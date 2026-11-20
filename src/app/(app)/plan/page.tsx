@@ -4,7 +4,7 @@ import { requireParent } from "@/lib/auth/require-parent";
 import { listFriends } from "@/lib/db/friends";
 import { getGroup, lastPlaydateWith, listGroups } from "@/lib/db/groups";
 import { listFavouritePlaces } from "@/lib/db/favourites";
-import { listTypedPlaces, playdateToPlanAgain } from "@/lib/db/playdates";
+import { listTypedPlaces, placeOfPlaydate, playdateToPlanAgain } from "@/lib/db/playdates";
 import { DEFAULT_ZONE } from "@/lib/rules/config";
 import { enCA, formatShortDay } from "@/lib/i18n/en-CA";
 import { places as placesProvider, PLACE_ID_PATTERN } from "@/lib/integrations/places";
@@ -18,23 +18,25 @@ export const dynamic = "force-dynamic";
 // From a place (T18, Plan a playdate here): ?place=<provider id> selects it, once the provider confirms it exists.
 // From a friend's page (T40): ?friend=<id> selects that friend, when they are one of this parent's.
 // From Home's Recent playdates (T38): ?again=<playdate id> alone fills in the same families, place, weekday and times, after today.
+// From Home's Recently visited (T51): ?placeOf=<playdate id> fills in only the place of one of this parent's own playdates.
 // From Home's Or just say it (T43): ?said=1 fills in what the sentence said, from this parent's own cookie.
 export default async function PlanPage({
   searchParams,
 }: {
-  searchParams: Promise<{ group?: string; again?: string; place?: string; friend?: string; said?: string }>;
+  searchParams: Promise<{ group?: string; again?: string; place?: string; friend?: string; said?: string; placeOf?: string }>;
 }) {
   const { user, profile } = await requireParent();
-  const { group: groupId, again, place: placeId, friend: friendId, said: fromSaid } = await searchParams;
+  const { group: groupId, again, place: placeId, friend: friendId, said: fromSaid, placeOf } = await searchParams;
   const said = fromSaid === "1" ? await readSaid(user.id) : null;
   const isId = (v: string | undefined): v is string => !!v && z.uuid().safeParse(v).success;
-  const [friends, places, groupList, group, favourites, chosen] = await Promise.all([
+  const [friends, places, groupList, group, favourites, chosen, visited] = await Promise.all([
     listFriends(user.id),
     listTypedPlaces(user.id),
     listGroups(user.id),
     isId(groupId) ? getGroup(user.id, groupId) : null,
     listFavouritePlaces(user.id),
     placeId && PLACE_ID_PATTERN.test(placeId) ? placesProvider().details(placeId).catch(() => null) : null,
+    isId(placeOf) ? placeOfPlaydate(user.id, placeOf).catch(() => null) : null,
   ]);
   const memberIds = group?.members.map((m) => m.friendId) ?? [];
   const last = group && isId(again) ? await lastPlaydateWith(user.id, memberIds) : null;
@@ -61,6 +63,10 @@ export default async function PlanPage({
                 }
               : chosen
                 ? { friendIds: [], place: chosen }
+                : visited?.searchedPlace
+                  ? { friendIds: [], place: visited.searchedPlace }
+                  : visited?.placeName
+                    ? { friendIds: [], placeName: visited.placeName, placeAddress: visited.placeAddress ?? "" }
                 : friendId && friends.some((f) => f.id === friendId)
                   ? { friendIds: [friendId] }
                   : undefined
