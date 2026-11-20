@@ -101,9 +101,9 @@ describe("Toast", () => {
 });
 
 describe("BottomTabs", () => {
-  it("has Home, Friends, Places (T32, Q25) and Profile (T39), each at least 44 px, linking to its screen", () => {
+  it("has Home, Friends, Places (T32, Q25) and Account (T39, T54), each at least 44 px, linking to its screen", () => {
     const markup = html(<BottomTabs active="home" />);
-    for (const [label, href] of [["Home", "/"], ["Friends", "/friends"], ["Places", "/places"], ["Profile", "/profile"]]) {
+    for (const [label, href] of [["Home", "/"], ["Friends", "/friends"], ["Places", "/places"], ["Account", "/profile"]]) {
       expect(markup).toContain(`href="${href}"`);
       expect(markup).toContain(`>${label}<`);
     }

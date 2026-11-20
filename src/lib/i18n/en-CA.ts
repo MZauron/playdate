@@ -646,11 +646,11 @@ export const enCA = {
     home: "Home",
     friends: "Friends",
     places: "Places",
-    profile: "Profile",
+    profile: "Account",
   },
-  /** T39: the Profile tab. */
+  /** T39: the Profile tab; T54: called Account. */
   profile: {
-    title: "Profile",
+    title: "Account",
     parentOf: (names: string) => `Parent of ${names}`,
     edit: "Edit",
     editLabel: "Edit your name and kids",
@@ -664,6 +664,11 @@ export const enCA = {
     accountTitle: "Your account",
     privacy: "Privacy and your data",
     signOut: "Sign out",
+    /** T54: Sign out asks first. */
+    signOutAsk: "Sign out of Kindred?",
+    signOutNote: "Your family, friends and playdates stay saved. Sign in any time to pick up where you left off.",
+    signOutYes: "Sign out",
+    signOutKeep: "Stay signed in",
   },
   home: {
     welcome: (firstName: string) => `Welcome, ${firstName}`,
