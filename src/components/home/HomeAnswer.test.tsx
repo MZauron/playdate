@@ -20,7 +20,7 @@ describe("HomeAnswer (T49)", () => {
     const fields = hidden(markup);
     expect(fields).toEqual({ inviteId: INVITE, timeVersion: "3", kind: "yes" });
     const form = new FormData();
-    for (const [k, v] of Object.entries(fields)) form.set(k, v!);
+    for (const [k, v] of Object.entries(fields)) form.set(k, String(v));
     expect(parseAnswerForm(form)).toMatchObject({ success: true, data: { kind: "yes", timeVersion: 3 } });
   });
 
