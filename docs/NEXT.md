@@ -110,7 +110,7 @@ Estimates are session time (1–2 h each).
   Done when: planning from a group pre-selects its members; removing a member keeps them as a friend.
 
 ### Phase 3 · Private beta
-- [ ] **T20 Add to Home Screen and Web Push** [laptop] (Q11). Service worker, install prompt after the first playdate, VAPID keys, push on invite, confirmation, update and cancellation only. Done when: a push arrives on an iPhone with Kindred on the Home Screen and opens the right page.
+- [ ] **T20 Add to Home Screen and Web Push** [laptop] (Q11). Service worker, install prompt after the first playdate, VAPID keys, push on invite, confirmation, update and cancellation only. With it, on Account (Q42): switches for New invites and Replies, and a reminder before each confirmed playdate (Off, 1 hour, 1 day; off by default). Done when: a push arrives on an iPhone with Kindred on the Home Screen and opens the right page.
 - [x] **T21 Cancel playdate** [phone] (Q1, KD-15). Done when: cancelling asks first, invites show Cancelled, links say so, text friends get a Text button.
 - [x] **T22 Add to calendar** [phone]. `.ics` on the invite page and the playdate page, only after confirmation. Done when: the event has the final time, place and message, and opens in iPhone and Google calendars.
 - [x] **T23 Clean-up in the cron tick** [phone]. Playdates over for 30 days lose their invite token hashes and notes. Done when: tested and idempotent.
@@ -173,7 +173,7 @@ From the tester's second clickable mock-up (a claude.ai artifact, 2026-11-17). I
 - [ ] **T48 A map in Places** [laptop] (Q34 answered: decided with Q6). Category chips (Parks, Indoor play, Libraries, Pools, Climbing, Farms), a map with numbered pins, distance and "Open" per place, and Directions · Call · Plan here. Waits for the places provider (Q6); the map is chosen with it.
 
 ### Mock-up round 3 · bundles M–O (2026-11-19)
-From the tester's third clickable mock-up (a claude.ai artifact, 2026-11-19). New in it: an Assistant tab, an Account tab, more ways to connect and message families, and a landing page. These bundles take what fits the rules already agreed; the rest is Q39–Q43, or already decided against: one-to-one chat (Q32), weather (Q33), the Explore map (T48, Q6), Confirm anyway (Q36), hiding groups and Suggest a different time (both kept), email sign-in (Kindred signs in by phone). Each bundle is approved as a group; Claude still makes one branch and PR per task, in order.
+From the tester's third clickable mock-up (a claude.ai artifact, 2026-11-19). New in it: an Assistant tab, an Account tab, more ways to connect and message families, and a landing page. These bundles take what fits the rules already agreed; the rest is Q39–Q43 (answered 2026-11-20: the defaults; see Later and T20), or already decided against: one-to-one chat (Q32), weather (Q33), the Explore map (T48, Q6), Confirm anyway (Q36), hiding groups and Suggest a different time (both kept), email sign-in (Kindred signs in by phone). Each bundle is approved as a group; Claude still makes one branch and PR per task, in order.
 
 **Bundle M · Act from Home** (no open questions)
 - [x] **T49 Answer invites from Home** [phone] (KD-07 unchanged). The invites a parent received (T15) show on Home under **Invites for you**: who invited which child, when · where, the message, and **Coming** / **Can't make it** on the card for a set-time invite (Can't make it opens the reason chips and the optional note). An availability invite, or one with several times or places, opens the invite page as today. Once answered, the card shows the answer and **Change my answer**. Done when: an answer from Home goes through the same service and rules as the invite page (tested), and Home stays one coral action.
@@ -211,6 +211,11 @@ From the tester's third clickable mock-up (a claude.ai artifact, 2026-11-19). Ne
 - A native shell (Capacitor or Expo) around the web app, only if parents need the iPhone contact picker or richer notifications (Q15).
 - **T46 A chat on each playdate** (Q32: not now, 2026-11-18). If wanted later: messages on the playdate page and its invite pages, to everyone or to the families picked; friends on a link write through their link; kept until the 30-day clean-up; written as KD-20 cases first.
 - **T47 Weather on Home** (Q33: not now, 2026-11-18). Needs a weather service and the parent's rough location.
+- **An Assistant tab** (Q39: not now, 2026-11-20). If wanted later, first merge Or just say it (T43) and Ask Kindred (T18) into one box, always asking before it acts.
+- **A class code and friend requests** (Q40: not now, 2026-11-20). One code for a class group; joining sends a request the parent accepts, saying which child it's for.
+- **Message everyone** (Q41: not now, 2026-11-20). A WhatsApp group link invitees see as Join, and quick messages through WhatsApp.
+- **Blocking a parent** (Q42: not now, 2026-11-20). Removing a friend already stops new invites from your side.
+- **A landing page** (Q43: not before the beta, 2026-11-20). How it works, connecting, FAQ, and a welcome screen before Setup; the owner writes or approves its claims, pricing and contact email.
 
 ## Done
 (Move each task here when it is ticked, with its note.)
