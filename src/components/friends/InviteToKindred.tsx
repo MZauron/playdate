@@ -6,6 +6,7 @@ import { Button } from "@/components/Button";
 import { Card } from "@/components/Card";
 import { shareText } from "@/components/share";
 import { enCA } from "@/lib/i18n/en-CA";
+import { QrCode } from "./QrCode";
 
 const t = enCA.friendLink;
 
@@ -19,6 +20,16 @@ export function InviteToKindred() {
   const [asking, setAsking] = useState(false);
   const [note, setNote] = useState<{ text: string; error: boolean } | null>(null);
   const [pending, start] = useTransition();
+  const [qr, setQr] = useState(false);
+  const makeLink = (then?: () => void) =>
+    start(async () => {
+      setNote(null);
+      const result = await newFriendLinkAction();
+      if (result.url) {
+        setUrl(result.url);
+        then?.();
+      } else setNote({ text: result.error ?? t.failed, error: true });
+    });
 
   return (
     <Card className="flex flex-col gap-3">
@@ -41,20 +52,19 @@ export function InviteToKindred() {
           </Button>
         </>
       ) : (
-        <Button
-          fullWidth
-          disabled={pending}
-          onClick={() =>
-            start(async () => {
-              setNote(null);
-              const result = await newFriendLinkAction();
-              if (result.url) setUrl(result.url);
-              else setNote({ text: result.error ?? t.failed, error: true });
-            })
-          }
-        >
+        <Button fullWidth disabled={pending} onClick={() => makeLink()}>
           {t.make}
         </Button>
+      )}
+      {/* T52: the same link as a QR code; a new link is made first when none is shown yet. */}
+      <Button fullWidth disabled={pending} aria-expanded={qr && !!url} onClick={() => (url ? setQr((q) => !q) : makeLink(() => setQr(true)))}>
+        {qr && url ? t.hideQr : t.showQr}
+      </Button>
+      {qr && url && (
+        <div className="flex flex-col items-center gap-2 rounded-card bg-white p-4 ring-1 ring-line">
+          <QrCode text={url} label={t.qrLabel} />
+          <p className="text-center text-[15px] text-muted">{t.qrNote}</p>
+        </div>
       )}
       {asking ? (
         <div className="flex flex-col gap-2">
@@ -74,6 +84,7 @@ export function InviteToKindred() {
                   setAsking(false);
                   setUrl(null);
                   setShared("no");
+                  setQr(false);
                   setNote(result.ok ? { text: t.stopped, error: false } : { text: t.failed, error: true });
                 })
               }
