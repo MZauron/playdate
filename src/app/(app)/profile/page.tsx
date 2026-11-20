@@ -25,6 +25,15 @@ export default async function ProfilePage({ searchParams }: { searchParams: Prom
         <Link href="/privacy" className="flex min-h-12 items-center rounded-card bg-card px-4 font-semibold shadow-card focus-visible:outline-2 focus-visible:outline-primary">
           {t.privacy}
         </Link>
+        {/* T55 (Q13): a JSON file of what Kindred keeps about this parent, from /api/my-data. */}
+        <a
+          href="/api/my-data"
+          download
+          className="flex min-h-12 flex-col justify-center rounded-card bg-card px-4 py-2 shadow-card focus-visible:outline-2 focus-visible:outline-primary"
+        >
+          <span className="font-semibold">{t.download}</span>
+          <span className="text-[14px] text-muted">{t.downloadNote}</span>
+        </a>
         <SignOutButton />
         <DeleteAccountButton />
       </section>
