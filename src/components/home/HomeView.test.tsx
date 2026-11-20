@@ -193,3 +193,14 @@ describe("Free to play on Home (T45)", () => {
   });
 });
 
+describe("Answering an invite from Home (T49)", () => {
+  it("puts Coming / Can't make it under a set-time invite, and keeps availability invites to the invite page", () => {
+    const setTime = view({ invites: [{ ...invite, timeVersion: 1 }] });
+    expect(setTime).toContain(">Coming<");
+    expect(setTime).not.toContain("Waiting for your answer");
+    const availability = view({ invites: [{ ...invite, mode: "availability" as const, start: null, end: null, timeVersion: 1 }] });
+    expect(availability).not.toContain(">Coming<");
+    expect(availability).toContain("Waiting for your answer");
+  });
+});
+

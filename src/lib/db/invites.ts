@@ -159,6 +159,9 @@ export type HomeInvite = {
   end: Date | null;
   placeName: string | null;
   myAnswer: AnswerKind | null;
+  /** T49: the reason with a no, and the time version an answer from Home is sent with (KD-07, KD-10). */
+  myReason?: DeclineReason | null;
+  timeVersion?: number;
 };
 
 type HomeInviteRow = {
@@ -179,7 +182,7 @@ type HomeInviteRow = {
     links_expire_at: string;
     profiles: { first_name: string } | null;
   } | null;
-  answers: { kind: AnswerKind; time_version: number } | null;
+  answers: { kind: AnswerKind; time_version: number; reason: DeclineReason | null } | null;
 };
 
 /**
@@ -189,7 +192,7 @@ type HomeInviteRow = {
 export async function listInvitesForUser(userId: string, now: Date): Promise<HomeInvite[]> {
   const { data, error } = await adminClient()
     .from("invites")
-    .select("id, playdates(title, mode, status, timezone, start_at, end_at, final_start_at, final_end_at, place_name, place_address, place_provider_id, time_version, links_expire_at, profiles(first_name)), answers(kind, time_version)")
+    .select("id, playdates(title, mode, status, timezone, start_at, end_at, final_start_at, final_end_at, place_name, place_address, place_provider_id, time_version, links_expire_at, profiles(first_name)), answers(kind, time_version, reason)")
     .eq("invitee_user_id", userId)
     .order("created_at", { ascending: false })
     .overrideTypes<HomeInviteRow[], { merge: false }>();
@@ -212,6 +215,8 @@ export async function listInvitesForUser(userId: string, now: Date): Promise<Hom
         end: date(confirmed ? p.final_end_at : p.end_at),
         placeName: places[index]!.placeName,
         myAnswer: r.answers && r.answers.time_version === p.time_version ? r.answers.kind : null,
+        myReason: r.answers && r.answers.time_version === p.time_version ? r.answers.reason : null,
+        timeVersion: p.time_version,
       },
     ];
   });
