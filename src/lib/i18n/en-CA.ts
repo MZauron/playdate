@@ -100,6 +100,19 @@ export const enCA = {
       openLabel: (label: string) => `Open ${label}`,
       textNote: "Invites go to their phone as a text from you.",
       plan: (firstName: string) => `Plan a playdate with ${firstName}`,
+      /** T53 (KD-05): ready lines the parent picks and edits, then shares from their own phone. Kindred keeps none of it. */
+      quick: {
+        open: "Send a quick message",
+        close: "Not now",
+        label: "Your message",
+        hint: "Pick one, change it if you like, then share it from your phone.",
+        lines: (theirKid: string, ourKids: string) => [
+          { label: "Playdate?", text: `Want to get ${theirKid} and ${ourKids} together this weekend?` },
+          { label: "Free soon?", text: `Is ${theirKid} free for a playdate soon?` },
+          { label: "Miss you!", text: `${ourKids} would love to play with ${theirKid}!` },
+        ],
+        theirKidFallback: "your little one",
+      },
       together: "Playdates together",
       none: "No playdates yet.",
       confirmed: "Confirmed",

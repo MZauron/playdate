@@ -1,15 +1,23 @@
 import Link from "next/link";
 import { ButtonLink } from "@/components/Button";
 import { Card } from "@/components/Card";
-import { enCA, formatDateTile, formatShortDay, formatTimeRange } from "@/lib/i18n/en-CA";
+import { enCA, formatDateTile, formatShortDay, formatTimeRange, joinNames } from "@/lib/i18n/en-CA";
 import type { PlaydateTogether } from "@/lib/db/friends";
 import type { Friend } from "@/lib/domain/friends";
 import { Avatar } from "./Avatar";
 import { FriendKids } from "./FriendKids";
 import { FriendRow } from "./FriendRow";
+import { QuickMessage } from "./QuickMessage";
 import { knownKids } from "@/lib/domain/friend-kids";
 
 const t = enCA.friends.page;
+
+/** T53: the three ready lines, with their child's first name and the owner's children this friend knows (T42). */
+export function quickLines(friend: Friend, kids: readonly { id: string; firstName: string }[]) {
+  const known = knownKids(friend, kids);
+  const ours = kids.filter((k) => known.includes(k.id)).map((k) => k.firstName);
+  return t.quick.lines(friend.childFirstName?.trim() || t.quick.theirKidFallback, joinNames(ours.length ? ours : kids.map((k) => k.firstName)));
+}
 
 /**
  * T40: initials, the label, has Kindred or gets a text, Plan a playdate with Dev (coral), the playdates together (open ones, then
@@ -63,6 +71,8 @@ export function FriendPage({
       <ButtonLink href={`/plan?friend=${friend.id}`} variant="main" fullWidth>
         {t.plan(firstName)}
       </ButtonLink>
+
+      <QuickMessage name={firstName} lines={quickLines(friend, kids)} />
 
       <section aria-labelledby="together-title">
         <h2 id="together-title" className="mb-2 px-1 text-label font-bold uppercase tracking-wider text-muted">
