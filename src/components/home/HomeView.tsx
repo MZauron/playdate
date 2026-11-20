@@ -11,6 +11,7 @@ import type { AnswerKind } from "@/lib/rules/types";
 import type { FreeKind } from "@/lib/rules/free";
 import { Avatar } from "../friends/Avatar";
 import { homeList, type HomePlaydate } from "./home-data";
+import { HomeAnswer } from "./HomeAnswer";
 import { Kite } from "./Kite";
 
 export type HomeViewProps = {
@@ -374,7 +375,9 @@ function PlaydateItem({ playdate: p, status, hostName }: { playdate: HomePlaydat
 
 /** "Alex invited Mia": tag, when, where, the host and this parent's own answer (T15); waiting for their answer needs them. */
 function InviteItem({ invite: i, childName }: { invite: HomeInvite; childName: string | null }) {
-  return (
+  // T49: a set-time invite is answered right here (Coming / Can't make it); availability still opens the invite page to pick a time.
+  const answerHere = i.mode === "set_time" && i.timeVersion !== undefined;
+  const card = (
     <Link href={`/invites/${i.inviteId}`} className={itemLink}>
       <SlimCard
         start={i.start}
@@ -389,8 +392,17 @@ function InviteItem({ invite: i, childName }: { invite: HomeInvite; childName: s
             <FamilyChip name={enCA.home.youChip} state={i.myAnswer ?? "waiting"} />
           </>
         }
-        note={i.myAnswer ? null : <Note tone="ready">{enCA.home.waitingForYou}</Note>}
+        note={i.myAnswer || answerHere ? null : <Note tone="ready">{enCA.home.waitingForYou}</Note>}
       />
     </Link>
+  );
+  if (!answerHere) return card;
+  return (
+    <div className="flex flex-col gap-2">
+      {card}
+      <Card className="px-4 py-3">
+        <HomeAnswer inviteId={i.inviteId} timeVersion={i.timeVersion!} organizer={i.organizerFirstName} answer={i.myAnswer} reason={i.myReason ?? null} />
+      </Card>
+    </div>
   );
 }
