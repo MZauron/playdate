@@ -34,6 +34,7 @@ export default async function PrivacyPage() {
       ))}
       <section className="flex flex-col gap-3">
         <h2 className="text-lg font-semibold">{t.deleteTitle}</h2>
+        <p>{t.downloadLine}</p>
         <p>{t.deleteNote}</p>
         {user ? <DeleteAccountButton /> : <p className="text-muted">{t.deleteSignedOut}</p>}
       </section>

@@ -25,7 +25,7 @@ Solo dev, ~8 h/week plus background sessions started from a phone. Keep changes 
 src/app/(auth)/          sign in, setup
 src/app/(app)/           home, plan/[id?], playdates/[id], friends (+ groups/), places, profile (signed-in parents)
 src/app/r/[token]/       invite page, same for every friend (no account)
-src/app/api/             cron/tick, health, places/, suggestions/
+src/app/api/             cron/tick, health, my-data (T55), places/, suggestions/
 src/lib/rules/           PURE rules: no I/O, no Date.now() (clock and zone are passed in)
 src/lib/db/              server-only repositories; the only place that talks to Supabase with the service role
 src/lib/domain/          services: call the rules, then the repositories (playdates, invites, answers, friends, places)

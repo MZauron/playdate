@@ -385,7 +385,7 @@ export const enCA = {
   privacy: {
     title: "Privacy",
     intro: "Kindred helps you plan playdates with families you already know. Here's what it keeps, who sees it, and how to delete it.",
-    updated: "Last updated November 16, 2026.",
+    updated: "Last updated November 19, 2026.",
     sections: [
       {
         title: "What Kindred keeps",
@@ -433,6 +433,8 @@ export const enCA = {
         ],
       },
     ],
+    /** T55 (Q13). */
+    downloadLine: "You can download everything Kindred keeps about you from Account → Download my data.",
     deleteTitle: "Delete your account",
     deleteNote:
       "This removes your profile, your children, friends, groups, saved places and the playdates you planned. Links you sent stop working, and invites you received are removed from those playdates.",
@@ -646,11 +648,11 @@ export const enCA = {
     home: "Home",
     friends: "Friends",
     places: "Places",
-    profile: "Profile",
+    profile: "Account",
   },
-  /** T39: the Profile tab. */
+  /** T39: the Profile tab; T54: called Account. */
   profile: {
-    title: "Profile",
+    title: "Account",
     parentOf: (names: string) => `Parent of ${names}`,
     edit: "Edit",
     editLabel: "Edit your name and kids",
@@ -663,7 +665,15 @@ export const enCA = {
     saved: "✓ Saved.",
     accountTitle: "Your account",
     privacy: "Privacy and your data",
+    /** T55 (Q13). */
+    download: "Download my data",
+    downloadNote: "Your profile, kids, friends, groups, places and playdates, as a file.",
     signOut: "Sign out",
+    /** T54: Sign out asks first. */
+    signOutAsk: "Sign out of Kindred?",
+    signOutNote: "Your family, friends and playdates stay saved. Sign in any time to pick up where you left off.",
+    signOutYes: "Sign out",
+    signOutKeep: "Stay signed in",
   },
   home: {
     welcome: (firstName: string) => `Welcome, ${firstName}`,

@@ -1,7 +1,7 @@
 import Link from "next/link";
-import { signOutAction } from "@/app/(app)/actions";
 import { DeleteAccountButton } from "@/app/privacy/DeleteAccountButton";
 import { ProfileView } from "@/components/profile/ProfileView";
+import { SignOutButton } from "@/components/profile/SignOutButton";
 import { requireParent } from "@/lib/auth/require-parent";
 import { enCA } from "@/lib/i18n/en-CA";
 
@@ -9,7 +9,8 @@ export const dynamic = "force-dynamic";
 
 const t = enCA.profile;
 
-// T39: the Profile tab: the parent's first name and kids (Edit), privacy, sign out and Delete my account.
+// T39: the Profile tab, called Account since T54: the parent's first name and kids (Edit), privacy, Sign out (asks first) and Delete
+// my account (asks first). The route stays /profile.
 export default async function ProfilePage({ searchParams }: { searchParams: Promise<{ saved?: string }> }) {
   const { profile } = await requireParent();
   const { saved } = await searchParams;
@@ -24,11 +25,16 @@ export default async function ProfilePage({ searchParams }: { searchParams: Prom
         <Link href="/privacy" className="flex min-h-12 items-center rounded-card bg-card px-4 font-semibold shadow-card focus-visible:outline-2 focus-visible:outline-primary">
           {t.privacy}
         </Link>
-        <form action={signOutAction}>
-          <button type="submit" className="flex min-h-12 w-full items-center rounded-card bg-card px-4 text-left font-semibold shadow-card focus-visible:outline-2 focus-visible:outline-primary">
-            {t.signOut}
-          </button>
-        </form>
+        {/* T55 (Q13): a JSON file of what Kindred keeps about this parent, from /api/my-data. */}
+        <a
+          href="/api/my-data"
+          download
+          className="flex min-h-12 flex-col justify-center rounded-card bg-card px-4 py-2 shadow-card focus-visible:outline-2 focus-visible:outline-primary"
+        >
+          <span className="font-semibold">{t.download}</span>
+          <span className="text-[14px] text-muted">{t.downloadNote}</span>
+        </a>
+        <SignOutButton />
         <DeleteAccountButton />
       </section>
     </div>
