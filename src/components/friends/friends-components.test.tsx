@@ -110,3 +110,26 @@ describe("FriendListRow (T45)", () => {
   });
 });
 
+describe("A quick message to a friend (T53)", () => {
+  const kids = [
+    { id: "k1", firstName: "Mia" },
+    { id: "k2", firstName: "Ethan" },
+  ];
+  it("builds three lines from their child and the owner's children this friend knows", async () => {
+    const { quickLines } = await import("./FriendPage");
+    expect(quickLines({ ...friend, childIds: ["k2"] }, kids).map((l) => l.text)).toEqual([
+      "Want to get Arjun and Ethan together this weekend?",
+      "Is Arjun free for a playdate soon?",
+      "Ethan would love to play with Arjun!",
+    ]);
+    expect(quickLines({ ...friend, childFirstName: null }, kids)[1]!.text).toBe("Is your little one free for a playdate soon?");
+    expect(quickLines(friend, kids).map((l) => l.label)).toEqual(["Playdate?", "Free soon?", "Miss you!"]);
+  });
+  it("starts folded under the friend's page's Plan button, with nothing sent or saved", async () => {
+    const { FriendPage } = await import("./FriendPage");
+    const markup = html(<FriendPage friend={friend} open={[]} past={[]} kids={kids} />);
+    expect(markup).toContain(">Send a quick message<");
+    expect(markup).not.toContain("<form"); // a share sheet from the phone, never a form to the server
+  });
+});
+
