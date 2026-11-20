@@ -14,6 +14,8 @@ import { listInvitesForUser } from "@/lib/db/invites";
 import { listOpenAvailability } from "@/lib/db/playdate-page";
 import { listHomePlaydates, listRecentPlaydates } from "@/lib/db/playdates";
 import { homeNotices } from "@/lib/domain/majority";
+import { familyPicks } from "@/lib/domain/playdate-page";
+import { preselectedPick, groupPicks } from "@/lib/rules/picks";
 import { DEFAULT_ZONE } from "@/lib/rules/config";
 
 // Always the current time and the current parent.
@@ -45,6 +47,12 @@ export default async function HomePage({ searchParams }: { searchParams: Promise
   const homeFree = [...freeByFriend(friendsFree)].flatMap(([friendId, statuses]) =>
     names.has(friendId) ? [{ friendId, parentName: names.get(friendId)!, statuses }] : [],
   );
+  // T50 (T44): each open availability playdate's time most families can make, for the sheet's Confirm.
+  const open = await listOpenAvailability(user.id, now);
+  const chosen = Object.fromEntries(open.flatMap((p) => {
+    const top = preselectedPick(groupPicks(familyPicks(p)));
+    return top ? [[p.id, top.range]] : [];
+  }));
   return (
     <HomeView
       firstName={profile.firstName}
@@ -52,7 +60,8 @@ export default async function HomePage({ searchParams }: { searchParams: Promise
       childName={profile.children[0]?.firstName} // Q4 default: the first child
       childNames={profile.children.map((c) => c.firstName)}
       playdates={await listHomePlaydates(user.id, now)}
-      notices={(await listOpenAvailability(user.id, now)).flatMap(homeNotices)}
+      notices={open.flatMap(homeNotices)}
+      chosen={chosen}
       invites={await listInvitesForUser(user.id, now)}
       recent={await listRecentPlaydates(user.id, now)}
       now={now}

@@ -1,13 +1,16 @@
 import { renderToStaticMarkup as html } from "react-dom/server";
-import { describe, expect, it } from "vitest";
-import { homeList } from "./home-data";
-import { HomeView } from "./HomeView";
+import { describe, expect, it, vi } from "vitest";
+
+vi.mock("next/navigation", () => ({ useRouter: () => ({ push: vi.fn() }) }));
+vi.mock("@/app/(app)/playdates/[id]/actions", () => ({ confirmAction: vi.fn(), cancelAction: vi.fn() }));
+const { homeList } = await import("./home-data");
+const { HomeView, sheetConfirm } = await import("./HomeView");
 import { cancelled, needsYou, NOW, over, upcoming, upcomingLater, waiting, ZONE } from "./fixtures";
 
 const view = (props: Partial<Parameters<typeof HomeView>[0]> = {}) => html(<HomeView playdates={[]} now={NOW} zone={ZONE} {...props} />);
 const headings = (markup: string) => [...markup.matchAll(/<h2[^>]*>([^<]*)<\/h2>/g)].map((m) => m[1]);
 /** The playdate pages and invites linked from the list, in order. */
-const order = (markup: string) => [...markup.matchAll(/href="\/(?:playdates|invites)\/([^"]+)"/g)].map((m) => m[1]);
+const order = (markup: string) => [...markup.matchAll(/(?:href="\/(?:playdates|invites)\/|aria-labelledby="sheet-)([^"/]+)"/g)].map((m) => m[1]);
 
 const invite = {
   inviteId: "11111111-2222-4333-8444-555555555555",
@@ -106,8 +109,11 @@ describe("Home as one list (KD-13, Q24)", () => {
     expect(changed).toContain("Someone can&#x27;t make it now · tap to see");
     expect(view({ playdates: [waiting] })).not.toContain("tap to");
   });
-  it("links each playdate to its page", () => {
-    expect(view({ playdates: [needsYou] })).toContain('href="/playdates/p-needs"');
+  it("opens a sheet for each playdate (T50), drawn only once it is opened", () => {
+    const markup = view({ playdates: [needsYou] });
+    expect(markup).toContain('aria-labelledby="sheet-p-needs"');
+    expect(markup).toContain('aria-haspopup="dialog"');
+    expect(markup).not.toContain("Open playdate");
   });
 });
 
@@ -201,6 +207,27 @@ describe("Answering an invite from Home (T49)", () => {
     const availability = view({ invites: [{ ...invite, mode: "availability" as const, start: null, end: null, timeVersion: 1 }] });
     expect(availability).not.toContain(">Coming<");
     expect(availability).toContain("Waiting for your answer");
+  });
+});
+
+describe("The playdate sheet's Confirm (T50, KD-09 unchanged)", () => {
+  it("names the set time, and stays off until a family says yes", () => {
+    expect(sheetConfirm(needsYou, null)).toEqual({ label: "Confirm · Sun, Nov 15, 10 to 12", enabled: true, hint: "You can confirm once a family says yes." });
+    const noYes = { ...needsYou, families: needsYou.families.map((f) => ({ ...f, answer: null })) };
+    expect(sheetConfirm(noYes, null)).toMatchObject({ enabled: false });
+  });
+  it("for availability, sends the time most families can make, and is off while nobody picked", () => {
+    const availability = { ...needsYou, mode: "availability" as const, start: null };
+    const chosen = { start: new Date("2026-11-21T15:00:00Z"), end: new Date("2026-11-21T17:00:00Z") };
+    expect(sheetConfirm(availability, chosen)).toEqual({
+      label: "Confirm · Sat, Nov 21, 10 to 12",
+      enabled: true,
+      chosen: { start: "2026-11-21T15:00:00.000Z", end: "2026-11-21T17:00:00.000Z" },
+    });
+    expect(sheetConfirm(availability, null)).toMatchObject({ enabled: false, hint: "You can confirm once a family picks a time." });
+  });
+  it("has no Confirm once confirmed", () => {
+    expect(sheetConfirm(upcoming, null)).toBeNull();
   });
 });
 

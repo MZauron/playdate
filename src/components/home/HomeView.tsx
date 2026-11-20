@@ -1,7 +1,7 @@
 import { Card } from "@/components/Card";
 import { ShareButton } from "@/components/ShareButton";
 import { cx } from "@/components/cx";
-import { dayPartOf, enCA, formatDateTile, formatLongDay, formatTimeRange, formatWeekday, joinNames } from "@/lib/i18n/en-CA";
+import { dayPartOf, enCA, formatDateTile, formatLongDay, formatShortDay, formatShortWhen, formatTimeRange, formatWeekday, joinNames } from "@/lib/i18n/en-CA";
 import Link from "next/link";
 import type { MajorityNotice } from "@/lib/domain/majority";
 import type { HomeInvite } from "@/lib/db/invites";
@@ -12,6 +12,7 @@ import type { FreeKind } from "@/lib/rules/free";
 import { Avatar } from "../friends/Avatar";
 import { homeList, type HomePlaydate } from "./home-data";
 import { HomeAnswer } from "./HomeAnswer";
+import { PlaydateSheet, type SheetConfirm } from "./PlaydateSheet";
 import { Kite } from "./Kite";
 
 export type HomeViewProps = {
@@ -38,6 +39,8 @@ export type HomeViewProps = {
   free?: React.ReactNode;
   /** T45 (KD-19): friends' children who are free now (friends both ways only), each friend with Plan. */
   friendsFree?: readonly HomeFreeFriend[];
+  /** T50 (T44): for each open availability playdate, the time most families can make, which the sheet's Confirm sends. */
+  chosen?: Readonly<Record<string, { start: Date; end: Date }>>;
 };
 
 export type HomeFreeFriend = {
@@ -47,7 +50,7 @@ export type HomeFreeFriend = {
 };
 
 // T37 (Q29): Home in the tester's mock-up look. What is on Home and its order are still KD-13 (src/lib/rules/home.ts).
-export function HomeView({ firstName, welcome = false, childName, childNames, playdates, notices = [], invites = [], recent = [], now, zone, sayIt, free, friendsFree = [] }: HomeViewProps) {
+export function HomeView({ firstName, welcome = false, childName, childNames, playdates, notices = [], invites = [], recent = [], now, zone, sayIt, free, friendsFree = [], chosen = {} }: HomeViewProps) {
   const items = homeList(playdates, invites, now);
   const greeting = welcome && firstName ? enCA.home.welcome(firstName) : enCA.home.greeting[dayPartOf(now, zone)];
   const kids = childNames?.length ? childNames : childName ? [childName] : [];
@@ -144,7 +147,7 @@ export function HomeView({ firstName, welcome = false, childName, childNames, pl
                   </li>
                 ) : (
                   <li key={item.playdate.id} className="flex flex-col gap-2">
-                    <PlaydateItem playdate={item.playdate} status={item.status} hostName={firstName ?? null} />
+                    <PlaydateItem playdate={item.playdate} status={item.status} hostName={firstName ?? null} chosen={chosen[item.playdate.id] ?? null} />
                     {notices
                       .filter((n) => n.playdateId === item.playdate.id)
                       .map((n) => (
@@ -342,7 +345,23 @@ const whenLine = (start: Date | null, end: Date | null, zone: string, unset: str
   start && end ? `${formatWeekday(start, zone)} · ${formatTimeRange(start, end, zone)}` : unset;
 
 /** One of the parent's own playdates: tag, title, when, where, a chip per family, and a note when it needs them (KD-13). */
-function PlaydateItem({ playdate: p, status, hostName }: { playdate: HomePlaydate; status: HomeStatus; hostName: string | null }) {
+/** T50: what the sheet's Confirm says and sends: the set time once a family says yes; for availability, the time most can make. */
+export function sheetConfirm(p: HomePlaydate, chosen: { start: Date; end: Date } | null): SheetConfirm | null {
+  if (p.status !== "collecting") return null;
+  const t = enCA.home.sheet;
+  if (p.mode === "set_time") {
+    if (!p.start) return null;
+    return { label: enCA.playdate.confirmAt(formatShortWhen(p.start, p.end, p.timezone)), enabled: p.families.some((f) => f.answer === "yes"), hint: t.waitingYes };
+  }
+  if (!chosen) return { label: enCA.playdate.confirm, enabled: false, hint: t.waitingPicks };
+  return {
+    label: enCA.playdate.confirmAt(formatShortWhen(chosen.start, chosen.end, p.timezone)),
+    enabled: true,
+    chosen: { start: chosen.start.toISOString(), end: chosen.end.toISOString() },
+  };
+}
+
+function PlaydateItem({ playdate: p, status, hostName, chosen }: { playdate: HomePlaydate; status: HomeStatus; hostName: string | null; chosen: { start: Date; end: Date } | null }) {
   const picks = p.families.filter((f) => f.answer === "pick").length;
   const note =
     status.kind !== "needs_you" ? null : status.why === "changed_to_no" ? (
@@ -351,7 +370,13 @@ function PlaydateItem({ playdate: p, status, hostName }: { playdate: HomePlaydat
       <Note tone="ready">{status.why === "times_picked" ? enCA.home.needsYou.times_picked(picks) : enCA.home.needsYou.all_answered}</Note>
     );
   return (
-    <Link href={`/playdates/${p.id}`} className={itemLink}>
+    <PlaydateSheet
+      id={p.id}
+      title={p.title.replace(/^Playdate:\s*/, "")}
+      when={p.start ? `${formatShortDay(p.start, p.timezone)} · ${formatTimeRange(p.start, p.end, p.timezone)}` : p.mode === "availability" ? enCA.home.sharedAvailability : enCA.home.noTime}
+      families={p.families.map((f) => ({ name: f.name, state: enCA.home.chipState[f.answer ?? "waiting"] }))}
+      confirm={sheetConfirm(p, chosen)}
+    >
       <SlimCard
         start={p.start}
         zone={p.timezone}
@@ -369,7 +394,7 @@ function PlaydateItem({ playdate: p, status, hostName }: { playdate: HomePlaydat
         }
         note={note}
       />
-    </Link>
+    </PlaydateSheet>
   );
 }
 

@@ -692,6 +692,15 @@ export const enCA = {
     invitedBy: (organizer: string, child: string | null) => (child ? `${organizer} invited ${child}` : `${organizer} invited you`),
     pickATime: "Pick a time that works",
     waitingForYou: "Waiting for your answer · tap to answer",
+    /** T50: the quick sheet for the parent's own playdate. */
+    sheet: {
+      openPage: "Open playdate",
+      close: "Close",
+      family: (name: string, state: string) => `${name} · ${state}`,
+      waitingYes: "You can confirm once a family says yes.",
+      waitingPicks: "You can confirm once a family picks a time.",
+      cancelYes: "Yes, cancel playdate",
+    },
     /** T49 (KD-07): answering a set-time invite right on Home. */
     answer: {
       label: (organizer: string) => `Your answer to ${organizer}`,
