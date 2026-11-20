@@ -442,6 +442,11 @@ export const enCA = {
     shared: "✓ Shared",
     copied: "✓ Copied: paste it in a message",
     shareText: (url: string) => `Let's plan playdates on Kindred: ${url}`,
+    /** T52: the same link as a QR code, to scan in person. */
+    showQr: "Show a QR code",
+    hideQr: "Hide the QR code",
+    qrNote: "Ask the other parent to scan this with their phone camera.",
+    qrLabel: "QR code of your Kindred link",
     stop: "Stop my old links",
     stopAsk: "Stop your old links?",
     stopNote: "Friends who haven't joined yet will need a new link from you.",
